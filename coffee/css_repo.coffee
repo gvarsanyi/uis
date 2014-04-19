@@ -1,11 +1,12 @@
 CssConcatenator = require './CssConcatenator'
 CssFile         = require './CssFile'
 CssMinifier     = require './CssMinifier'
-Deployable      = require './Deployable'
+Repo            = require './Repo'
 SassFile        = require './SassFile'
+messenger       = require './messenger'
 
 
-class CssRepo extends Deployable
+class CssRepo extends Repo
   constructor: ->
     @concatenator = new CssConcatenator @
     @minifier     = new CssMinifier @
@@ -14,3 +15,5 @@ class CssRepo extends Deployable
   extensions: {css: CssFile, sass: SassFile, scss: SassFile}
 
 module.exports = new CssRepo
+
+messenger module.exports

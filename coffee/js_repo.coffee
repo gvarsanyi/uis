@@ -1,11 +1,12 @@
 CoffeeFile     = require './CoffeeFile'
-Deployable     = require './Deployable'
 JsConcatenator = require './JsConcatenator'
 JsFile         = require './JsFile'
 JsMinifier     = require './JsMinifier'
+Repo           = require './Repo'
+messenger      = require './messenger'
 
 
-class JsRepo extends Deployable
+class JsRepo extends Repo
   constructor: ->
     @concatenator = new JsConcatenator @
     @minifier     = new JsMinifier @
@@ -14,3 +15,5 @@ class JsRepo extends Deployable
   extensions: {js: JsFile, coffee: CoffeeFile}
 
 module.exports = new JsRepo
+
+messenger module.exports

@@ -2,8 +2,7 @@
 esc   = String.fromCharCode 27
 first = true
 
-
-output = ->
+output = (stats) ->
   if first
     #             14,5    22,6     31,12          46,5    54,8       65,12          80,12          95,12          110,6
     process.stdout.write """
@@ -44,33 +43,27 @@ output = ->
       msg = msg.substr msg.length - len
     process.stdout.write '\r' + esc + '[' + x + 'C' + msg
 
-  process.stdout.write esc + '[4A'
-  repos =
-    js:   require './js_repo'
-    css:  require './css_repo'
-    html: require './html_repo'
-  for name, repo of repos
-    write 14, 5, repo.pathes.length
-    write 22, 6, repo.loaded
-    write 31, 12, repo.size
+  process.stdout.write esc + '[4A\r'
+  for name, repo of {js: stats.js, css: stats.css, html: stats.html}
+    if repo
+      write 14, 5, repo.source.file
+      write 22, 6, repo.source.load, repo.source.error
+      write 31, 12, repo.source.size
 
-    write 46, 5, repo.compilable
-    write 54, 8, repo.compiled, repo.compileError
-    write 65, 12, repo.compiledSize
+      if repo.compile
+        write 46, 5, repo.compile.file
+        write 54, 8, repo.compile.done, repo.compile.error
+        write 65, 12, repo.compile.size
 
-    write 46, 5, repo.compilable
-    write 54, 8, repo.compiled, repo.compileError
-    write 65, 12, repo.compiledSize
+      if repo.concat?.error
+        write 80, 12, '', 'error'
+      else if repo.concat?.size
+        write 80, 12, repo.concat.size
 
-    if repo.concatenator?.error
-      write 80, 12, '', 'error'
-    else if repo.concatenator?.src
-      write 80, 12, repo.concatenator.src.length
-
-    if repo.minifier?.error
-      write 95, 12, '', 'error'
-    else if repo.minifier?.src
-      write 95, 12, repo.minifier.src.length
+      if repo.minify?.error
+        write 95, 12, '', 'error'
+      else if repo.minify?.size
+        write 95, 12, repo.minify.size
 
     process.stdout.write '\r' + esc + '[1B'
   process.stdout.write '\r' + esc + '[1B'

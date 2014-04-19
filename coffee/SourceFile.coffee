@@ -7,8 +7,10 @@ class SourceFile
       return console.error(err) if err
       @src = data
       @loaded = true
-      @repo.update()
-      @compiler?.compile(@repo.update) if @compiler
 
+      if @compiler
+        @compiler.compile @repo.check
+      else
+        @repo.check()
 
 module.exports = SourceFile
