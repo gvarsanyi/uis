@@ -1,5 +1,5 @@
-HtmlFile     = require './HtmlFile'
-JadeCompiler = require './JadeCompiler'
+HtmlFile     = require './html'
+JadeCompiler = require '../compiler/jade'
 
 
 class JadeFile extends HtmlFile

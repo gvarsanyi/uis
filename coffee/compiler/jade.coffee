@@ -1,5 +1,5 @@
-Compiler     = require './Compiler'
-Dependencies = require './Dependencies'
+Compiler     = require '../compiler'
+Dependencies = require '../dependencies'
 
 
 class JadeCompiler extends Compiler
@@ -13,7 +13,7 @@ class JadeCompiler extends Compiler
         pretty:   true
     catch err
       @error = err
-      console.error '\nJADE COMPILE ERROR', @source.path, err
+#       console.error '\nJADE COMPILE ERROR', @source.path, err
 
     callback? @error, @src
 

@@ -1,9 +1,10 @@
-Dependencies = require './Dependencies'
+Dependencies = require './dependencies'
 config       = require './config'
 messenger    = require './messenger'
+RepoStats    = require './repo-stats'
 
 
-class Repo
+class Repo extends RepoStats
   constructor: ->
     @pathes  = []
     @sources = {}
@@ -13,20 +14,24 @@ class Repo
 
     @watch()
 
-  deploy: =>
-    @deployed = true
+  deployDone: =>
     messenger.sendStats()
 
   minificationDone: =>
     messenger.sendStats()
-    @deploy()
+    if @deployer
+      @deployer.deploy @deployDone
+    else
+      @deployDone()
 
   concatDone: =>
     messenger.sendStats()
     if @minifier
       @minifier.minify @minificationDone
+    else if @deployer
+      @deployer.deploy @deployDone
     else
-      @deploy()
+      @deployDone()
 
   loadDone: =>
     messenger.sendStats()
@@ -34,59 +39,10 @@ class Repo
       @concatenator.concat @concatDone
     else if @minifier
       @minifier.minify @minificationDone
+    else if @deployer
+      @deployer.deploy @deployDone
     else
-      @deploy()
-
-  stats: =>
-    inf = source: file: 0
-
-    for x, source of @sources
-      inf.source.file += 1
-
-      if source.src?
-        inf.source.load ?= 0
-        inf.source.load += 1
-        inf.source.size ?= 0
-        inf.source.size += source.src.length
-      if source.error?
-        inf.source.error ?= 0
-        inf.source.error += 1
-
-      if source.compiler?
-        inf.compile ?= {}
-        inf.compile.file ?= 0
-        inf.compile.file += 1
-
-        if source.compiler.src?
-          inf.compile.done ?= 0
-          inf.compile.done += 1
-          inf.compile.size ?= 0
-          inf.compile.size += source.compiler.src.length
-        if source.compiler.error?
-          inf.compile.error ?= 0
-          inf.compile.error += 1
-
-    if @concatenator?
-      inf.concat ?= {}
-
-      if @concatenator.src?
-        inf.concat.size ?= 0
-        inf.concat.size += @concatenator.src.length
-      if @concatenator.error?
-        inf.concat.error ?= 0
-        inf.concat.error += 1
-
-    if @minifier?
-      inf.minify ?= {}
-
-      if @minifier.src?
-        inf.minify.size ?= 0
-        inf.minify.size += @minifier.src.length
-      if @minifier.error?
-        inf.minify.error ?= 0
-        inf.minify.error += 1
-
-    inf
+      @deployDone()
 
   check: =>
     if @watchingAll

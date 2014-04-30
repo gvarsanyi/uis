@@ -1,5 +1,5 @@
-Compiler     = require './Compiler'
-Dependencies = require './Dependencies'
+Compiler     = require '../compiler'
+Dependencies = require '../dependencies'
 
 
 class CoffeeCompiler extends Compiler
@@ -14,7 +14,7 @@ class CoffeeCompiler extends Compiler
       @src = Dependencies::coffee().compile @source.src, bare: true
     catch err
       @error = err
-      console.error '\nCOFFEE COMPILE ERROR', @source.path, err
+#       console.error '\nCOFFEE COMPILE ERROR', @source.path, err
 
     callback? @error, @src
 

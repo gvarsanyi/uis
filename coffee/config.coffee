@@ -8,8 +8,8 @@ config.repo =
   js:   ['third-party/js/**/*.js', 'coffee/**/*.coffee']
 
 config.deploy =
-  css:  'static/site.css'
-  html: 'static/'
-  js:   'static/site.js'
+  css:  'static/_site.css'
+  html: 'static/_'
+  js:   'static/_site.js'
 
 module.exports[k] = v for k, v of config or {}

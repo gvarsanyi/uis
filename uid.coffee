@@ -12,7 +12,7 @@ for name in ['js', 'css', 'html']
     polled  = 0
     replied = 0
 
-    path = __dirname + '/coffee/' + name + '_repo.coffee'
+    path = __dirname + '/coffee/repo/' + name + '.coffee'
     repo = child_process.fork path, {cwd: process.cwd(), silent: true}
 
     repo.stdout.on 'data', (data) ->

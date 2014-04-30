@@ -1,5 +1,5 @@
-Dependencies = require './Dependencies'
-Minifier     = require './Minifier'
+Dependencies = require '../dependencies'
+Minifier     = require '../minifier'
 
 
 class CssMinifier extends Minifier
@@ -14,7 +14,7 @@ class CssMinifier extends Minifier
       @src = minifier.minify src or ''
     catch err
       @error = err
-      console.error '\nCSS MINIFY ERROR', @source.path, err
+#       console.error '\nCSS MINIFY ERROR', @source.path, err
 
     callback? @error, @src
 

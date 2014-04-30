@@ -1,5 +1,5 @@
-Compiler     = require './Compiler'
-Dependencies = require './Dependencies'
+Compiler     = require '../compiler'
+Dependencies = require '../dependencies'
 
 
 class SassCompiler extends Compiler
@@ -11,7 +11,7 @@ class SassCompiler extends Compiler
       file: @source.path
       error: (err) =>
         @error = err
-        console.error '\nSASS COMPILE ERROR', @source.path, err
+#         console.error '\nSASS COMPILE ERROR', @source.path, err
         callback? @error, @src
       success: (data) =>
         @src = data

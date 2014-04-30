@@ -1,5 +1,5 @@
-Dependencies = require './Dependencies'
-Minifier     = require './Minifier'
+Dependencies = require '../dependencies'
+Minifier     = require '../minifier'
 
 
 class JsMinifier extends Minifier
@@ -13,7 +13,7 @@ class JsMinifier extends Minifier
       @src = Dependencies::jsminify().minify(src, fromString: true).code
     catch err
       @error = err
-      console.error '\nJS MINIFY ERROR', @source.path, err
+#       console.error '\nJS MINIFY ERROR', @source.path, err
 
     callback? @error, @src
 

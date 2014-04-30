@@ -8,8 +8,15 @@ class SourceFile
       @src = data
       @loaded = true
 
-      if @compiler
-        @compiler.compile @repo.check
+      if @constructor.name is 'CoffeeFile'
+        @repo.check()
+        @compiler.compile()
+      else if @compiler
+        @compiler.compile =>
+          if @minifier
+            @minifier.minify @repo.check
+          else
+            @repo.check()
       else
         @repo.check()
 

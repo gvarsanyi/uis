@@ -7,9 +7,10 @@ module.exports = (_repo) ->
   name = _repo.constructor.name.replace('Repo', '').toLowerCase()
 
 module.exports.sendStats = ->
-  msg = stats: {}
-  msg.stats[name] = repo.stats()
-  process.send msg
+  if repo and process.send
+    msg = stats: {}
+    msg.stats[name] = repo.stats()
+    process.send msg
 
 process.on 'message', (msg) ->
   if msg is 'stats'

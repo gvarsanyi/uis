@@ -1,5 +1,5 @@
-CoffeeCompiler = require './CoffeeCompiler'
-Concatenator   = require './Concatenator'
+CoffeeCompiler = require '../compiler/coffee'
+Concatenator   = require '../concatenator'
 
 
 class JsConcatenator extends Concatenator
@@ -25,7 +25,7 @@ class JsConcatenator extends Concatenator
       @src = concatenated
     catch err
       @error = err
-      console.error '\nJS CONCAT ERROR', err
+#       console.error '\nJS CONCAT ERROR', err
 
     callback? @error, @src
 

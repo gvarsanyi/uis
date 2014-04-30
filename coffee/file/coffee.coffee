@@ -1,5 +1,5 @@
-CoffeeCompiler = require './CoffeeCompiler'
-JsFile         = require './JsFile'
+CoffeeCompiler = require '../compiler/coffee'
+JsFile         = require './js'
 
 
 class CoffeeFile extends JsFile

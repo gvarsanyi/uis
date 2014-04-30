@@ -1,4 +1,4 @@
-Concatenator = require './Concatenator'
+Concatenator = require '../concatenator'
 
 
 class CssConcatenator extends Concatenator
@@ -13,7 +13,7 @@ class CssConcatenator extends Concatenator
       @src = concatenated
     catch err
       @error = err
-      console.error '\nCSS CONCAT ERROR', @source.path, err
+#       console.error '\nCSS CONCAT ERROR', @source.path, err
 
     callback? @error, @src
 
