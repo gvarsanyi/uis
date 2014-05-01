@@ -56,20 +56,22 @@ class Repo extends RepoStats
           @loadDone()
 
   watch: =>
-    instanciate_file = (file) =>
+    instanciate_file = (file, basedir) =>
       ext = file.substr file.lastIndexOf('.') + 1
       if class_ref = @extensions[ext]
-        return new class_ref @, file
+        return new class_ref @, file, basedir
 
     watched = (err, tree) =>
+      basedir = null
       return console.error(err) if err
 
       add_nodes = (tree) =>
         for path, node of tree
+          basedir ?= if typeof node is 'string' then path else node[0]
           if typeof node is 'object'
             add_nodes node
           else if '/' isnt node.substr node.length - 1
-            if not @sources[node] and inst = instanciate_file node
+            if not @sources[node] and inst = instanciate_file node, basedir
               @sources[node] = inst
               @pathes.push node
 

@@ -6,9 +6,6 @@ messenger    = require '../messenger'
 
 
 class HtmlRepo extends Repo
-  constructor: ->
-    super
-
   extensions: {html: HtmlFile, jade: JadeFile}
 
 module.exports = new HtmlRepo

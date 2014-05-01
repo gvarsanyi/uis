@@ -1,6 +1,8 @@
-fs = require 'fs'
+fs   = require 'fs'
+path = require 'path'
 
-config = require './config'
+Dependencies = require './dependencies'
+config       = require './config'
 
 
 class Deployer
@@ -20,12 +22,18 @@ class Deployer
       unless config.deploy?[name]
         throw new Error 'No deploy.' + name + ' target found in config'
 
-      fs.writeFile config.deploy[name], @getSrc(), (err) =>
+      dir = path.dirname config.deploy[name]
+      Dependencies::mkdirp() dir, (err) =>
         if err
           @error = err
-        else
-          @deployed = true
-        callback? @error
+          callback? @error
+
+        fs.writeFile config.deploy[name], @getSrc(), (err) =>
+          if err
+            @error = err
+          else
+            @deployed = true
+          callback? @error
 
       @deployed = true
     catch err

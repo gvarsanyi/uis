@@ -8,7 +8,9 @@ class HtmlMinifier extends Minifier
     delete @src
 
     try
-      @src = Dependencies::htmlminify().minify @source.src,
+      minifiable = @source.compiler?.src or @source.src
+
+      @src = Dependencies::htmlminify().minify minifiable,
         removeComments:               true
         removeCommentsFromCDATA:      true
         removeCDATASectionsFromCDATA: true
@@ -17,7 +19,6 @@ class HtmlMinifier extends Minifier
         removeRedundantAttributes:    true
         useShortDoctype:              true
         removeEmptyAttributes:        true
-        removeOptionalTags:           true
     catch err
       @error = err
 #       console.error '\nHTML MINIFY ERROR', @source.path, err

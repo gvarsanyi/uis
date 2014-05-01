@@ -44,10 +44,10 @@ class RepoStats
       if source.deployer?
         inf.deploy ?= {}
 
-        if source.minifier.src?
+        if source.deployer.deployed?
           inf.deploy.done ?= 0
           inf.deploy.done += 1
-        if source.minifier.error?
+        if source.deployer.error?
           inf.deploy.error ?= 0
           inf.deploy.error += 1
 

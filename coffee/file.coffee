@@ -1,23 +1,26 @@
 fs = require 'fs'
 
 
-class SourceFile
-  constructor: (@repo, @path) ->
+class File
+  constructor: (@repo, @path, @basedir) ->
     fs.readFile @path, encoding: 'utf8', (err, data) =>
       return console.error(err) if err
       @src = data
       @loaded = true
 
-      if @constructor.name is 'CoffeeFile'
-        @repo.check()
-        @compiler.compile()
-      else if @compiler
-        @compiler.compile =>
-          if @minifier
-            @minifier.minify @repo.check
-          else
-            @repo.check()
-      else
-        @repo.check()
+      compile = =>
+        @compiler?.compile(minify) or minify()
 
-module.exports = SourceFile
+      minify = =>
+        @minifier?.minify(deploy) or deploy()
+
+      deploy = =>
+        @deployer?.deploy(@repo.check) or @repo.check()
+
+      if @constructor.name is 'CoffeeFile' # compiling the concatenated repo
+        @repo.check()                      # for js/coffee is higher priority
+        @compiler?.compile()               # then per-file compilation
+      else
+        compile()
+
+module.exports = File

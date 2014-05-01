@@ -8,6 +8,7 @@ class Dependencies
   htmlminify: -> dynmod 'html-minifier@0.5.6'
   jade:       -> dynmod 'jade@1.3.1'
   jsminify:   -> dynmod 'uglify-js@2.4.13'
+  mkdirp:     -> dynmod 'mkdirp@0.4.0'
   sass:       -> dynmod 'node-sass@0.8.4'
 
 
