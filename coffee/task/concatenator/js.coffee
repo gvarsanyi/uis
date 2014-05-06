@@ -3,30 +3,32 @@ Concatenator   = require '../concatenator'
 
 
 class JsConcatenator extends Concatenator
-  concat: (callback) =>
-    delete @error
-    delete @src
-
-    concatenated = ''
+  work: (callback) => @clear =>
+    @status 0
 
     try
       parts = []
       for path, source of @source.sources
         unless part?.compiled is compiled = source.constructor.name is 'CoffeeFile'
           parts.push part = {compiled, src: ''}
-        throw new Error(source.compiler.error) if source.compiler?.error
-        part.src += (source.src or '') + '\n\n'
 
+        unless (src = source.tasks.loader.result())?
+          throw new Error '[JsConcatenator] Missing source: ' + source.path
+
+        part.src += src + '\n\n'
+
+      concatenated = ''
       for part in parts
         if part.compiled
           concatenated += CoffeeCompiler::compileSrc part.src
         else
           concatenated += part.src
-      @src = concatenated
-    catch err
-      @error = err
-#       console.error '\nJS CONCAT ERROR', err
 
-    callback? @error, @src
+      @result concatenated
+    catch err
+      @error err
+
+    @status 1
+    callback?()
 
 module.exports = JsConcatenator

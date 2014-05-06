@@ -1,10 +1,16 @@
+HtmlDeployer = require '../task/deployer/html'
 HtmlFile     = require './html'
-JadeCompiler = require '../compiler/jade'
+HtmlMinifier = require '../task/minifier/html'
+JadeCompiler = require '../task/compiler/jade'
+Loader       = require '../task/loader'
 
 
 class JadeFile extends HtmlFile
-  constructor: ->
-    @compiler = new JadeCompiler @
-    super
+  constructor: (@repo, @path, @basedir) ->
+    @tasks =
+      loader:   new Loader @
+      compiler: new JadeCompiler @
+      deployer: new HtmlDeployer @
+      minifier: new HtmlMinifier @
 
 module.exports = JadeFile

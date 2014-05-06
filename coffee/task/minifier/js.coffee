@@ -1,20 +1,21 @@
-Dependencies = require '../dependencies'
-Minifier     = require '../minifier'
+jsminify = require 'uglify-js'
+
+Minifier = require '../minifier'
 
 
 class JsMinifier extends Minifier
-  minify: (callback) =>
-    delete @error
-    delete @src
+  work: (callback) => @clear =>
+    @status 0
 
     try
-      src = @source.concatenator?.src or @source.compiler?.src or @source.src
-      throw new Error('No source found') unless src
-      @src = Dependencies::jsminify().minify(src, fromString: true).code
-    catch err
-      @error = err
-#       console.error '\nJS MINIFY ERROR', @source.path, err
+      unless (src = @source.tasks.concatenator.result())?
+        throw new Error '[CssMinifier] Missing source: ' + @source.path
 
-    callback? @error, @src
+      @result jsminify.minify(src, fromString: true).code
+    catch err
+      @error err
+
+    @status 1
+    callback?()
 
 module.exports = JsMinifier

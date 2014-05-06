@@ -3,6 +3,7 @@ Task = require '../task'
 
 class Multi extends Task
   constructor: (@source, @taskName) ->
+    @path = @source.path
 
   count: ->
     i = 0

@@ -1,16 +1,18 @@
-Dependencies = require '../dependencies'
-Minifier     = require '../minifier'
+htmlminify = require 'html-minifier'
+
+Minifier = require '../minifier'
 
 
 class HtmlMinifier extends Minifier
-  minify: (callback) =>
-    delete @error
-    delete @src
+  work: (callback) => @clear =>
+    @status 0
 
     try
-      minifiable = @source.compiler?.src or @source.src
+      unless (src = @source.tasks.compiler?.result())?
+        unless (src = @source.tasks.loader.result())?
+          throw new Error '[CssMinifier] Missing source: ' + @source.path
 
-      @src = Dependencies::htmlminify().minify minifiable,
+      @result htmlminify.minify src,
         removeComments:               true
         removeCommentsFromCDATA:      true
         removeCDATASectionsFromCDATA: true
@@ -20,9 +22,9 @@ class HtmlMinifier extends Minifier
         useShortDoctype:              true
         removeEmptyAttributes:        true
     catch err
-      @error = err
-#       console.error '\nHTML MINIFY ERROR', @source.path, err
+      @error err
 
-    callback? @error, @src
+    @status 1
+    callback?()
 
 module.exports = HtmlMinifier

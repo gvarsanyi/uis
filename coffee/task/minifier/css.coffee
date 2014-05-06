@@ -1,21 +1,22 @@
-Dependencies = require '../dependencies'
-Minifier     = require '../minifier'
+cssminify = require 'clean-css'
+
+Minifier = require '../minifier'
 
 
 class CssMinifier extends Minifier
-  minify: (callback) =>
-    delete @error
-    delete @src
+  work: (callback) => @clear =>
+    @status 0
 
     try
-      src = @source.concatenator?.src or @source.compiler?.src or @source.src
-      throw new Error('No source found') unless src
-      minifier = new Dependencies::cssminify() keepSpecialComments: 0
-      @src = minifier.minify src or ''
-    catch err
-      @error = err
-#       console.error '\nCSS MINIFY ERROR', @source.path, err
+      unless (src = @source.tasks.concatenator.result())?
+        throw new Error '[CssMinifier] Missing source: ' + @source.path
 
-    callback? @error, @src
+      minifier = new cssminify keepSpecialComments: 0
+      @result minifier.minify src or ''
+    catch err
+      @error err
+
+    @status 1
+    callback?()
 
 module.exports = CssMinifier

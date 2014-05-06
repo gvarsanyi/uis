@@ -1,10 +1,10 @@
-Dependencies = require './dependencies'
-config       = require './config'
-messenger    = require './messenger'
-RepoStats    = require './repo-stats'
+gaze = require 'gaze'
+
+config    = require './config'
+messenger = require './messenger'
 
 
-class Repo extends RepoStats
+class Repo
   constructor: ->
     @pathes  = []
     @sources = {}
@@ -14,46 +14,30 @@ class Repo extends RepoStats
 
     @watch()
 
-  deployDone: =>
-    messenger.sendStats()
+  stats: =>
+    inf = {}
+    for type, worker of @tasks
+      inf[type] ?= {}
+      for stat in ['count', 'error', 'warning', 'size', 'status']
+        inf[type][stat] = val if val = worker[stat]()
+    inf
 
-  minificationDone: =>
-    messenger.sendStats()
-    if @deployer
-      @deployer.deploy @deployDone
-    else
-      @deployDone()
-
-  concatDone: =>
-    messenger.sendStats()
-    if @minifier
-      @minifier.minify @minificationDone
-    else if @deployer
-      @deployer.deploy @deployDone
-    else
-      @deployDone()
-
-  loadDone: =>
-    messenger.sendStats()
-    if @concatenator
-      @concatenator.concat @concatDone
-    else if @minifier
-      @minifier.minify @minificationDone
-    else if @deployer
-      @deployer.deploy @deployDone
-    else
-      @deployDone()
-
-  check: =>
-    if @watchingAll
-      stats = @stats()
-      messenger.sendStats()
-      if stats.compile and @constructor.name isnt 'JsRepo'
-        if (stats.compile?.done or 0) + (stats.compile?.error or 0) is stats.compile?.file
-          @loadDone()
+  work: (callback) =>
+    round = (err) ->
+      if tasks.length
+        unit = tasks.shift()
+        unit.task.work ->
+          if err = unit.task.error()
+            messenger.sendStats()
+            return callback?()
+          messenger.sendStats()
+          round()
       else
-        if (stats.source?.load or 0) + (stats.source?.error or 0) is stats.source?.file
-          @loadDone()
+        callback?()
+
+    tasks = ({name, task} for name, task of @tasks)
+    round()
+    return
 
   watch: =>
     instanciate_file = (file, basedir) =>
@@ -89,11 +73,11 @@ class Repo extends RepoStats
     watch_dir = =>
       unless dir_pool.length
         @watchingAll = true
-        return
+        return @work()
 
       dir = dir_pool.shift()
 
-      Dependencies::gaze() dir, (err, watcher) ->
+      gaze dir, (err, watcher) ->
         return console.error('watching failed: ' + dir) if err
 
         @on 'all', updated

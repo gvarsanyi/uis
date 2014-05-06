@@ -1,15 +1,20 @@
 fs   = require 'fs'
 path = require 'path'
 
-Dependencies = require '../dependencies'
-Deployer     = require '../deployer'
-config       = require '../config'
+mkdirp = require 'mkdirp'
+
+Deployer = require '../deployer'
+config   = require '../../config'
 
 
 class HtmlDeployer extends Deployer
-  deploy: (callback) =>
-    delete @error
-    delete @deployed
+  work: (callback) => @clear =>
+    @status 0
+
+    finish = (err) =>
+      @error(err) if err
+      @status 1
+      callback?()
 
     try
       unless config.deploy?.html
@@ -19,21 +24,11 @@ class HtmlDeployer extends Deployer
       if target.toLowerCase().substr(target.length - 5) is '.jade'
         target = target.substr(0, target.length - 4) + 'html'
 
-      Dependencies::mkdirp() path.dirname(target), null, (err) =>
-        if err
-          @error = err
-          callback? @error
-
-        fs.writeFile target, @getSrc(), (err) =>
-          if err
-            @error = err
-          else
-            @deployed = true
-          callback? @error
-
-      @deployed = true
+      mkdirp path.dirname(target), null, (err) =>
+        return finish(err) if err
+        fs.writeFile target, @getSrc(), finish
     catch err
-      @error = err
-      callback? @error
+      finish err
+
 
 module.exports = HtmlDeployer

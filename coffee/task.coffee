@@ -22,7 +22,7 @@ class Task
     @_warning
 
   result: (value) ->
-    @_result = add if value?
+    @_result = value if value?
     @_result
 
   size: ->

@@ -1,20 +1,23 @@
-Compiler     = require '../compiler'
-Dependencies = require '../dependencies'
+jade = require 'jade'
+
+Compiler = require '../compiler'
 
 
 class JadeCompiler extends Compiler
-  compile: (callback) =>
-    delete @error
-    delete @src
+  work: (callback) => @clear =>
+    @status 0
 
     try
-      @src = Dependencies::jade().render @source.src,
+      unless (src = @source.tasks.loader.result())?
+        throw new Error '[JadeCompiler] Missing source'
+
+      @result jade.render src,
         filename: @source.path
         pretty:   true
     catch err
-      @error = err
-#       console.error '\nJADE COMPILE ERROR', @source.path, err
+      @error err
 
-    callback? @error, @src
+    @status 1
+    callback?()
 
 module.exports = JadeCompiler

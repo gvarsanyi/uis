@@ -1,60 +1,49 @@
 fs   = require 'fs'
 path = require 'path'
 
-Dependencies = require './dependencies'
-config       = require './config'
+mkdirp = require 'mkdirp'
+
+Task   = require '../task'
+config = require '../config'
 
 
-class Deployer
+class Deployer extends Task
   constructor: (@source) ->
 
-  deploy: (callback) =>
-    delete @error
-    delete @deployed
+  work: (callback) => @clear =>
+    @status 0
 
-    abbreviations =
-      cs: 'css'
-      ht: 'html'
-      js: 'js'
-    name = abbreviations[@constructor.name.toLowerCase().substr 0, 2]
+    finish = (err) =>
+      @error(err) if err
+      @status 1
+      callback?()
 
     try
+      abbreviations =
+        cs: 'css'
+        ht: 'html'
+        js: 'js'
+      name = abbreviations[@source.constructor.name.toLowerCase().substr 0, 2]
+
       unless config.deploy?[name]
         throw new Error 'No deploy.' + name + ' target found in config'
 
       dir = path.dirname config.deploy[name]
-      Dependencies::mkdirp() dir, (err) =>
-        if err
-          @error = err
-          callback? @error
+      mkdirp dir, (err) =>
+        return finish(err) if err
 
-        fs.writeFile config.deploy[name], @getSrc(), (err) =>
-          if err
-            @error = err
-          else
-            @deployed = true
-          callback? @error
-
-      @deployed = true
+        fs.writeFile config.deploy[name], @getSrc(), finish
     catch err
-      @error = err
-      callback? @error
+      finish err
 
   getSrc: =>
-    if @source.minifier?
-      throw new Error(@source.minifier.error) if @source.minifier.error
-      src = @source.minifier.src
-    else if @source.concatenator?
-      throw new Error(@source.concatenator.error) if @source.concatenator.error
-      src = @source.concatenator.src
-    else if @source.compiler?
-      throw new Error(@source.compiler.error) if @source.compiler.error
-      src = @source.compiler.src
-    else
-      throw new Error(@source.error) if @source.error
-      src = @source.src
+    for task in ['minifier', 'concatenator', 'compiler', 'loader']
+      if @source.tasks[task]?
+        unless (src = @source.tasks[task].result())?
+          throw new Error '[Deployer] Missing source'
 
-    throw new Error('Source is empty') unless src
-    src
+        return src
+
+    throw new Error '[Deployer] Source is empty'
 
 module.exports = Deployer

@@ -1,6 +1,7 @@
+Task = require '../task'
 
-class Compiler
+
+class Compiler extends Task
   constructor: (@source) ->
-
 
 module.exports = Compiler

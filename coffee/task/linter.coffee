@@ -1,7 +1,7 @@
 Task = require '../task'
 
 
-class Minifier extends Task
+class Linter extends Task
   constructor: (@source) ->
 
-module.exports = Minifier
+module.exports = Linter

@@ -1,20 +1,21 @@
-Compiler     = require '../compiler'
-Dependencies = require '../dependencies'
+sass = require 'node-sass'
+
+Compiler = require '../compiler'
 
 
 class SassCompiler extends Compiler
-  compile: (callback) =>
-    delete @error
-    delete @src
+  work: (callback) => @clear =>
+    @status 0
 
-    Dependencies::sass().render
+    sass.render
       file: @source.path
-      error: (err) =>
-        @error = err
-#         console.error '\nSASS COMPILE ERROR', @source.path, err
-        callback? @error, @src
       success: (data) =>
-        @src = data
-        callback? @error, @src
+        @result data
+        @status 1
+        callback?()
+      error: (err) =>
+        @error err
+        @status 1
+        callback?()
 
 module.exports = SassCompiler

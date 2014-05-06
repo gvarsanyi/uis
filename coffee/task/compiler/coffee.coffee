@@ -1,21 +1,24 @@
-Compiler     = require '../compiler'
-Dependencies = require '../dependencies'
+coffee = require 'coffee-script'
+
+Compiler = require '../compiler'
 
 
 class CoffeeCompiler extends Compiler
   compileSrc: (src) ->
-    Dependencies::coffee().compile src, bare: true
+    coffee.compile src, bare: true
 
-  compile: (callback) =>
-    delete @error
-    delete @src
+  work: (callback) => @clear =>
+    @status 0
 
     try
-      @src = Dependencies::coffee().compile @source.src, bare: true
-    catch err
-      @error = err
-#       console.error '\nCOFFEE COMPILE ERROR', @source.path, err
+      unless (src = @source.tasks.loader.result())?
+        throw new Error '[CoffeeCompiler] Missing source'
 
-    callback? @error, @src
+      @result coffee.compile src, bare: true
+    catch err
+      @error err
+
+    @status 1
+    callback?()
 
 module.exports = CoffeeCompiler

@@ -15,7 +15,7 @@ class Loader extends Task
       callback?()
 
     try
-      fs.readFile @path, encoding: 'utf8', (err, data) =>
+      fs.readFile @source.path, encoding: 'utf8', (err, data) =>
         return finish(err) if err
         @result data
         @status 1
