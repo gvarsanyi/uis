@@ -27,6 +27,9 @@ class CssRepo extends Repo
 
     super
 
+  fileUpdate: (event, file) =>
+    console.log event, file
+
 module.exports = new CssRepo
 
 messenger module.exports

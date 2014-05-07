@@ -45,6 +45,9 @@ class Repo
       if class_ref = @extensions[ext]
         return new class_ref @, file, basedir
 
+    update = (event, file) =>
+      @fileUpdate event, file
+
     watched = (err, tree) =>
       basedir = null
       return console.error(err) if err
@@ -64,11 +67,6 @@ class Repo
 
       watch_dir()
 
-    updated = (event, file) =>
-      if inst = instanciate_file file
-        @sources[file] = inst
-        @fileUpdate inst, 'event'
-
     dir_pool = (dir for dir in @dirs)
     watch_dir = =>
       unless dir_pool.length
@@ -77,10 +75,10 @@ class Repo
 
       dir = dir_pool.shift()
 
-      gaze dir, (err, watcher) ->
+      gaze dir, mode: 'watch', (err, watcher) ->
         return console.error('watching failed: ' + dir) if err
 
-        @on 'all', updated
+        @on 'all', update
 
         @watched watched
 

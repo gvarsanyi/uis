@@ -28,6 +28,9 @@ class JsRepo extends Repo
     @tasks.linter   =  new Multi @, 'linter'
     super
 
+  fileUpdate: (event, file) =>
+    console.log event, file
+
 module.exports = new JsRepo
 
 messenger module.exports

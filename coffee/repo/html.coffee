@@ -23,6 +23,9 @@ class HtmlRepo extends Repo
 
     super
 
+  fileUpdate: (event, file) =>
+    console.log event, file
+
 module.exports = new HtmlRepo
 
 messenger module.exports
