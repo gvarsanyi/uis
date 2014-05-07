@@ -4,7 +4,6 @@ path = require 'path'
 mkdirp = require 'mkdirp'
 
 Deployer = require '../deployer'
-config   = require '../../config'
 
 
 class HtmlDeployer extends Deployer
@@ -17,10 +16,7 @@ class HtmlDeployer extends Deployer
       callback?()
 
     try
-      unless config.deploy?.html
-        throw new Error 'No deploy.html target found in config'
-
-      target = config.deploy.html + @source.path.substr @source.basedir.length
+      target = @deployTarget + @source.path.substr @source.basedir.length
       if target.toLowerCase().substr(target.length - 5) is '.jade'
         target = target.substr(0, target.length - 4) + 'html'
 

@@ -2,6 +2,7 @@ HtmlFile  = require '../file/html'
 JadeFile  = require '../file/jade'
 Multi     = require '../task/multi'
 Repo      = require '../repo'
+config    = require '../config'
 messenger = require '../messenger'
 
 
@@ -12,8 +13,14 @@ class HtmlRepo extends Repo
     @tasks =
       loader:   new Multi @, 'loader'
       compiler: new Multi @, 'compiler'
-      minifier: new Multi @, 'minifier'
-      deployer: new Multi @, 'deployer'
+
+    if config.deploy?.html
+      @tasks.deployer = new Multi @, 'deployer'
+
+    if config.minifiedDeploy?.html
+      @tasks.minifier         = new Multi @, 'minifier'
+      @tasks.minifiedDeployer = new Multi @, 'minifiedDeployer'
+
     super
 
 module.exports = new HtmlRepo

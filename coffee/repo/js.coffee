@@ -5,6 +5,7 @@ JsFile         = require '../file/js'
 JsMinifier     = require '../task/minifier/js'
 Multi          = require '../task/multi'
 Repo           = require '../repo'
+config         = require '../config'
 messenger      = require '../messenger'
 
 
@@ -15,10 +16,16 @@ class JsRepo extends Repo
     @tasks =
       loader:       new Multi @, 'loader'
       concatenator: new JsConcatenator @
-      minifier:     new JsMinifier @
-      deployer:     new Deployer @
-      linter:       new Multi @, 'linter'
-      compiler:     new Multi @, 'compiler'
+
+    if val = config.deploy?.js
+      @tasks.deployer = new Deployer @, val
+
+    if val = config.minifiedDeploy?.js
+      @tasks.minifier         = new JsMinifier @
+      @tasks.minifiedDeployer = new Deployer @, val, true
+
+    @tasks.compiler = new Multi @, 'compiler'
+    @tasks.linter   =  new Multi @, 'linter'
     super
 
 module.exports = new JsRepo

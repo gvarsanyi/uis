@@ -14,7 +14,7 @@ class JsLinter extends Linter
       worker = jslint.load 'latest'
       worker src
 
-      for msg in jslint.lint worker.errors
+      for msg in worker.errors
         @warning msg
     catch err
       @error err

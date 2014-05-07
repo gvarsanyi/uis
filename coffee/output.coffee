@@ -1,88 +1,99 @@
+Outblock = require './outblock'
+
+
+outblock = null
 
 esc   = String.fromCharCode 27
 first = true
 hourglass = '⌛'
 
+heads =
+  css:  ['    ╔═╗╔═╗╔═╗  ', '    ║  ╚═╗╚═╗', '    ╚═╝╚═╝╚═╝']
+  html: [' ╦ ╦╔╦╗╔╦╗╦    ', ' ╠═╣ ║ ║║║║', ' ╩ ╩ ╩ ╩ ╩╩═╝']
+  js:   ['         ╦╔═╗  ', '         ║╚═╗', '       ╚═╝╚═╝']
+  test: [' ╔╦╗╔═╗╔═╗╔╦╗  ', '  ║ ╠╣ ╚═╗ ║', '  ╩ ╚═╝╚═╝ ╩']
+head_shown = {}
+
+types =
+  compiler:         'compile'
+  concatenator:     'concat'
+  deployer:         'deploy'
+  minifiedDeployer: 'deploy-minified'
+  loader:           'load'
+  linter:           'lint'
+  minifier:         'minify'
+
+n_grouped = (n) ->
+  _n = String(n).split('').reverse()
+  n = ''
+  for char, i in _n
+    n = ',' + n if i % 3 is 0 and i
+    n = char + n
+  n
+
+print_block = (push_x, push_y, title, inf, prev_inf) ->
+  outblock
+    .pos(push_x, push_y).bgcolor([36, 36, 36]).write(title, 20).reset()
+    .pos(push_x, push_y + 1)
+
+  if (inf.status? and inf.status < inf.count) or
+  not prev_inf? or
+  (prev_inf.status and prev_inf.status is prev_inf.count and not prev_inf.error)
+    outblock.color([86, 86, 86]).write(hourglass, prev_inf).x(push_x).reset()
+
+  has_n = ''
+  if inf.status
+    n = n_grouped(inf.status - (inf.warning?.length or 0) -
+                  (inf.error?.length or 0))
+    outblock.color([220, 255, 220]).write(n).reset()
+    has_n = '+'
+  if inf.warning?.length
+    n = n_grouped inf.warning.length
+    outblock.write(has_n).color([255, 236, 160]).write(n).reset()
+    has_n = '+'
+  if inf.error?.length
+    n = n_grouped inf.error.length
+    outblock.write(has_n).color([255, 127, 127]).write(n).reset()
+    has_n = '+'
+  if has_n
+    plural = if inf.status > 1 then 's' else ''
+    outblock.color([63, 63, 63]).write(' file' + plural).reset()
+
+  if inf.size
+    outblock
+      .pos(push_x, push_y + 2).write(n_grouped inf.size)
+      .color([63, 63, 63]).write(' b').reset()
+
+shown_types = []
+
 output = (stats) ->
-  if first
-    process.stdout.write esc + '[48;5;236m    ╔═╗╔═╗╔═╗  ' + esc + '[0m\n'
-    process.stdout.write '    ║  ╚═╗╚═╗\n'
-    process.stdout.write '    ╚═╝╚═╝╚═╝\n\n'
-    process.stdout.write esc + '[48;5;236m ╦ ╦╔╦╗╔╦╗╦    ' + esc + '[0m\n'
-    process.stdout.write ' ╠═╣ ║ ║║║║\n'
-    process.stdout.write ' ╩ ╩ ╩ ╩ ╩╩═╝\n\n'
-    process.stdout.write esc + '[48;5;236m         ╦╔═╗  ' + esc + '[0m\n'
-    process.stdout.write '         ║╚═╗\n'
-    process.stdout.write '       ╚═╝╚═╝\n\n'
-    process.stdout.write esc + '[48;5;236m ╔╦╗╔═╗╔═╗╔╦╗  ' + esc + '[0m\n'
-    process.stdout.write '  ║ ╠╣ ╚═╗ ║\n'
-    process.stdout.write '  ╩ ╚═╝╚═╝ ╩\n\n'
+  if (received_types = (name for name of stats)).length isnt shown_types
+    if outblock?
+#       outblock.setHeight received_types.length * 4
+      outblock.clear()
+      head_shown = {}
+    else
+      outblock = new Outblock process.stdout.rows - 1 # received_types.length * 4
+      outblock.reset()
+    shown_types = received_types
 
-    first = false
-
-  n_grouped = (n) ->
-    _n = String(n).split('').reverse()
-    n = ''
-    for char, i in _n
-      n = ',' + n if i % 3 is 0 and i
-      n = char + n
-    n
-
-  print_block = (push, title, inf) ->
-    process.stdout.write esc + '[' + push + 'C'
-
-    title = (title + '                      ').substr 0, 18
-    title = title + in_progress(inf) + ' '
-    process.stdout.write esc + '[48;5;236m' + title + esc + '[0m' + esc +
-                         '[1B' + esc + '[20D                    ' + esc + '[20D'
-
-    has_n = ''
-    if inf.status
-      n = n_grouped(inf.status - (inf.warning?.length or 0) -
-                    (inf.error?.length or 0))
-      process.stdout.write esc + '[38;5;193m' + n + esc + '[0m'
-      has_n = '+'
-    if inf.warning?.length
-      process.stdout.write has_n + esc + '[38;5;202m' +
-                           n_grouped(inf.warning.length) + esc + '[0m'
-      has_n = '+'
-    if inf.error?.length
-      process.stdout.write has_n + esc + '[38;5;202m' +
-                           n_grouped(inf.error.length) + esc + '[0m'
-      has_n = '+'
-    if has_n
-      process.stdout.write esc + '[38;5;246m files' + esc + '[0m'
-
-    process.stdout.write '\n' + esc + '[' + push + 'C' +
-                         '                    ' + esc + '[20D'
-    if inf.size
-      process.stdout.write esc + '[38;5;252m' + n_grouped(inf.size) + esc + '[0m'
-      process.stdout.write esc + '[38;5;246m b' + esc + '[0m'
-
-    process.stdout.write esc + '[2A\r'
-
-
-  in_progress = (inf) ->
-    if inf.status? and inf.status < inf.count then hourglass else ' '
-
-  types =
-    compiler:     'compile'
-    concatenator: 'concat'
-    deployer:     'deploy'
-    loader:       'load'
-    linter:       'lint'
-    minifier:     'minify'
-
-#   process.stdout.write(JSON.stringify stats.html) if stats.html
-  process.stdout.write esc + '[16A\r'
+  push_y = 0
   for name, repo of {css: stats.css, html: stats.html, js: stats.js, test: stats.test}
     if repo
-      push = 15
-      for type, inf of repo
-        print_block push, types[type], inf
-        push += 20
+      prev_inf = null
+      unless head_shown[name]?
+        outblock
+          .pos(0, push_y).bgcolor([36, 36, 36]).write(heads[name][0]).reset()
+          .pos(0, push_y + 1).write(heads[name][1])
+          .pos(0, push_y + 2).write(heads[name][2])
+        head_shown[name] = true
 
-    process.stdout.write '\r' + esc + '[4B'
+      push_x = 15
+      for type, inf of repo
+        print_block push_x, push_y, types[type], inf, prev_inf
+        push_x += 20
+        prev_inf = inf
+      push_y += 4
 
 
 module.exports = output

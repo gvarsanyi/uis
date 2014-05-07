@@ -3,12 +3,14 @@ path = require 'path'
 
 mkdirp = require 'mkdirp'
 
-Task   = require '../task'
-config = require '../config'
+Task = require '../task'
 
 
 class Deployer extends Task
-  constructor: (@source) ->
+  constructor: (@source, @deployTarget, @minified) ->
+    @_tasks = ['concatenator', 'compiler', 'loader']
+    if @minified
+      @_tasks.unshift 'minifier'
 
   work: (callback) => @clear =>
     @status 0
@@ -25,19 +27,16 @@ class Deployer extends Task
         js: 'js'
       name = abbreviations[@source.constructor.name.toLowerCase().substr 0, 2]
 
-      unless config.deploy?[name]
-        throw new Error 'No deploy.' + name + ' target found in config'
-
-      dir = path.dirname config.deploy[name]
+      dir = path.dirname @deployTarget
       mkdirp dir, (err) =>
         return finish(err) if err
 
-        fs.writeFile config.deploy[name], @getSrc(), finish
+        fs.writeFile @deployTarget, @getSrc(), finish
     catch err
       finish err
 
   getSrc: =>
-    for task in ['minifier', 'concatenator', 'compiler', 'loader']
+    for task in @_tasks
       if @source.tasks[task]?
         unless (src = @source.tasks[task].result())?
           throw new Error '[Deployer] Missing source'

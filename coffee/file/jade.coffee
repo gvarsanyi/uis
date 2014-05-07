@@ -3,6 +3,7 @@ HtmlFile     = require './html'
 HtmlMinifier = require '../task/minifier/html'
 JadeCompiler = require '../task/compiler/jade'
 Loader       = require '../task/loader'
+config       = require '../config'
 
 
 class JadeFile extends HtmlFile
@@ -10,7 +11,12 @@ class JadeFile extends HtmlFile
     @tasks =
       loader:   new Loader @
       compiler: new JadeCompiler @
-      deployer: new HtmlDeployer @
       minifier: new HtmlMinifier @
+
+    if val = config.deploy?.html
+      @tasks.deployer = new HtmlDeployer @, val
+
+    if val = config.minifiedDeploy?.html
+      @tasks.minifiedDeployer = new HtmlDeployer @, val, true
 
 module.exports = JadeFile

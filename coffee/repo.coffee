@@ -66,8 +66,8 @@ class Repo
 
     updated = (event, file) =>
       if inst = instanciate_file file
-        console.log 'event', event, file
         @sources[file] = inst
+        @fileUpdate inst, 'event'
 
     dir_pool = (dir for dir in @dirs)
     watch_dir = =>

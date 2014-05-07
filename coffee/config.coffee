@@ -11,7 +11,12 @@ try
 
 config.deploy =
   css:  '.deploy/site.css'
-  html: '.deploy/'
+#   html: '.deploy/'
   js:   '.deploy/site.js'
+
+config.minifiedDeploy =
+  css:  '.deploy/site.min.css'
+  html: '.deploy/'
+  js:   '.deploy/site.min.js'
 
 module.exports[k] = v for k, v of config or {}
