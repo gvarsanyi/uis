@@ -24,6 +24,6 @@ class Concatenator extends Task
       @error err
 
     @status 1
-    callback?()
+    callback? err
 
 module.exports = Concatenator

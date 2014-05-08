@@ -19,6 +19,6 @@ class CoffeeCompiler extends Compiler
       @error err
 
     @status 1
-    callback?()
+    callback? err
 
 module.exports = CoffeeCompiler

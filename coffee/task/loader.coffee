@@ -1,5 +1,7 @@
 fs = require 'fs'
 
+md5 = require 'MD5'
+
 Task = require '../task'
 
 
@@ -11,15 +13,20 @@ class Loader extends Task
 
     finish = (err) =>
       @error(err) if err
+
+      hash = md5 @_result or ''
+      if hash isnt @hash or ''
+        changed = true
+      @hash = hash
+
       @status 1
-      callback?()
+      callback? err, changed
 
     try
       fs.readFile @source.path, encoding: 'utf8', (err, data) =>
-        return finish(err) if err
+        finish(err) if err
         @result data
-        @status 1
-        callback?()
+        finish()
     catch err
       finish err
 

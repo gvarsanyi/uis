@@ -12,23 +12,19 @@ messenger    = require '../messenger'
 class CssRepo extends Repo
   extensions: {css: CssFile, sass: SassFile, scss: SassFile}
 
-  constructor: ->
-    @tasks =
-      loader:       new Multi @, 'loader'
+  getTasks: ->
+    tasks =
       compiler:     new Multi @, 'compiler'
       concatenator: new Concatenator @
 
     if val = config.deploy?.css
-      @tasks.deployer = new Deployer @, val
+      tasks.deployer = new Deployer @, val
 
     if val = config.minifiedDeploy?.css
-      @tasks.minifier         = new CssMinifier @
-      @tasks.minifiedDeployer = new Deployer @, val, true
+      tasks.minifier         = new CssMinifier @
+      tasks.minifiedDeployer = new Deployer @, val, true
 
-    super
-
-  fileUpdate: (event, file) =>
-    console.log event, file
+    tasks
 
 module.exports = new CssRepo
 

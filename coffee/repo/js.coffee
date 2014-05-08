@@ -12,24 +12,20 @@ messenger      = require '../messenger'
 class JsRepo extends Repo
   extensions: {js: JsFile, coffee: CoffeeFile}
 
-  constructor: ->
-    @tasks =
-      loader:       new Multi @, 'loader'
-      concatenator: new JsConcatenator @
+  getTasks: ->
+    tasks = concatenator: new JsConcatenator @
 
     if val = config.deploy?.js
-      @tasks.deployer = new Deployer @, val
+      tasks.deployer = new Deployer @, val
 
     if val = config.minifiedDeploy?.js
-      @tasks.minifier         = new JsMinifier @
-      @tasks.minifiedDeployer = new Deployer @, val, true
+      tasks.minifier         = new JsMinifier @
+      tasks.minifiedDeployer = new Deployer @, val, true
 
-    @tasks.compiler = new Multi @, 'compiler'
-    @tasks.linter   =  new Multi @, 'linter'
-    super
+    tasks.compiler = new Multi @, 'compiler'
+    tasks.linter   = new Multi @, 'linter'
 
-  fileUpdate: (event, file) =>
-    console.log event, file
+    tasks
 
 module.exports = new JsRepo
 

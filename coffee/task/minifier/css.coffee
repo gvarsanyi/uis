@@ -17,6 +17,6 @@ class CssMinifier extends Minifier
       @error err
 
     @status 1
-    callback?()
+    callback? err
 
 module.exports = CssMinifier

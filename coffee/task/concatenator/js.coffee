@@ -29,6 +29,6 @@ class JsConcatenator extends Concatenator
       @error err
 
     @status 1
-    callback?()
+    callback? err
 
 module.exports = JsConcatenator

@@ -18,7 +18,7 @@ class Deployer extends Task
     finish = (err) =>
       @error(err) if err
       @status 1
-      callback?()
+      callback? err
 
     try
       abbreviations =

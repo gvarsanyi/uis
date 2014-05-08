@@ -13,18 +13,20 @@ class Multi extends Task
     i
 
   error: ->
+    value = undefined
     for path, source of @source.sources
       if add = source.tasks[@taskName]?.error()
-        @_error ?= []
-        @_error.push add
-    @_error
+        value ?= []
+        value.push add
+    value
 
   warning: ->
+    value = undefined
     for path, source of @source.sources
       if add = source.tasks[@taskName]?.warning()
-        @_warning ?= []
-        @_warning.push add
-    @_warning
+        value ?= []
+        value.push add
+    value
 
   result: -> @_result # undefined
 
@@ -47,6 +49,13 @@ class Multi extends Task
           count ?= 0
     count
 
+  updatedAt: ->
+    latest = 0
+    for path, source of @source.sources
+      if latest < t = source.tasks[@taskName]?.updatedAt()
+        latest = t
+    latest
+
   work: (callback) ->
     sources = for path, source of @source.sources when source.tasks[@taskName]
       source
@@ -54,10 +63,15 @@ class Multi extends Task
     callback?() unless sources.length
 
     done = 0
-    finished = ->
+    errors = undefined
+    finished = (err) ->
+      if err
+        errors ?= []
+        errors.push err
+
       done += 1
       if done is sources.length
-        callback?()
+        callback? errors
 
     for source in sources
       source.tasks[@taskName].work finished

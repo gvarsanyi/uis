@@ -16,6 +16,6 @@ class SassCompiler extends Compiler
       error: (err) =>
         @error err
         @status 1
-        callback?()
+        callback? err
 
 module.exports = SassCompiler

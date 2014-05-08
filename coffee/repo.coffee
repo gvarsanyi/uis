@@ -1,10 +1,25 @@
+path = require 'path'
+
 gaze = require 'gaze'
 
+Multi     = require './task/multi'
 config    = require './config'
 messenger = require './messenger'
 
 
 class Repo
+  minilog = (args...) ->
+    msg = args.join ' '
+    out = ''
+    cols = process.stdout.columns or 120
+    for char in msg
+      unless (code = char.charCodeAt(0)) < 32 or code is 127
+        out += char
+    while out.length < cols
+      out += ' '
+    out = out.substr 0, cols
+    process.stdout.write out + '\r'
+
   constructor: ->
     @pathes  = []
     @sources = {}
@@ -12,30 +27,63 @@ class Repo
     @dirs = config.repo?[@constructor.name.replace('Repo', '').toLowerCase()]
     @dirs = [@dirs] unless typeof @dirs is 'object'
 
+    @tasks = loader: new Multi @, 'loader'
+    for name, task of @getTasks?() or {}
+      @tasks[name] = task
+
     @watch()
+
+  fileUpdate: (event, file, force_reload) =>
+    if node = @sources[file] # changed/deleted
+      repo_name = @constructor.name.replace('Repo', '').toLowerCase()
+      file = repo_name + ':' + file
+      node.tasks.loader.work (err, changed) =>
+        if changed or force_reload
+          unless node.tasks.loader.result()
+            minilog 'deleted:', file
+          else
+            minilog 'updating:', file
+            @work node, ->
+              minilog 'updated:', file
+    else # new file
+      minilog 'deleted:', file
 
   stats: =>
     inf = {}
     for type, worker of @tasks
       inf[type] ?= {}
-      for stat in ['count', 'error', 'warning', 'size', 'status']
+      for stat in ['count', 'error', 'warning', 'size', 'status', 'updatedAt']
         inf[type][stat] = val if val = worker[stat]()
     inf
 
-  work: (callback) =>
+  work: (node, callback) =>
+    unless callback?
+      callback = node
+      node = undefined
+
     round = (err) ->
       if tasks.length
         unit = tasks.shift()
-        unit.task.work ->
-          if err = unit.task.error()
+        if node and unit.task.constructor.name is 'Multi'
+          task = node.tasks[unit.name]
+        else
+          task = unit.task
+        task.work ->
+          if err = task.error()
             messenger.sendStats()
-            return callback?()
+            return callback? err
           messenger.sendStats()
           round()
       else
         callback?()
 
-    tasks = ({name, task} for name, task of @tasks)
+    tasks = for name, task of @tasks when name isnt 'loader' or not node
+      if node and task.constructor.name is 'Multi'
+        node.tasks[name].clear()
+      else
+        task.clear()
+      {name, task}
+    messenger.sendStats()
     round()
     return
 
@@ -48,13 +96,9 @@ class Repo
     update = (event, file) =>
       @fileUpdate event, file
 
-    watched = (err, tree) =>
-      basedir = null
-      return console.error(err) if err
-
+    watched = (tree, basedir) =>
       add_nodes = (tree) =>
-        for path, node of tree
-          basedir ?= if typeof node is 'string' then path else node[0]
+        for full_path, node of tree
           if typeof node is 'object'
             add_nodes node
           else if '/' isnt node.substr node.length - 1
@@ -74,15 +118,15 @@ class Repo
         return @work()
 
       dir = dir_pool.shift()
+      do (dir) ->
+        basedir = path.resolve dir
 
-      gaze dir, mode: 'watch', (err, watcher) ->
-        return console.error('watching failed: ' + dir) if err
-
-        @on 'all', update
-
-        @watched watched
+        watch = new gaze
+        watch.on 'ready', (watcher) ->
+          watched watcher.watched(), basedir
+        watch.on 'all', update
+        watch.add dir
 
     watch_dir()
-
 
 module.exports = Repo

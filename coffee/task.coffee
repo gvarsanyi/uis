@@ -31,11 +31,16 @@ class Task
     null
 
   status: (value) ->
-    @_status = value if value?
+    if value?
+      @_status = value
+      @_updatedAt = new Date().getTime()
     @_status
 
+  updatedAt: ->
+    @_updatedAt ?= new Date().getTime()
+
   work: (callback) ->  # should be overridden by all classes inherited from Task
-    callback?()
+    throw new Error 'Task.work() is not implemented for ' + @constructor.name
 
 
 module.exports = Task

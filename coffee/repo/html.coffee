@@ -9,22 +9,17 @@ messenger = require '../messenger'
 class HtmlRepo extends Repo
   extensions: {html: HtmlFile, jade: JadeFile}
 
-  constructor: ->
-    @tasks =
-      loader:   new Multi @, 'loader'
-      compiler: new Multi @, 'compiler'
+  getTasks: ->
+    tasks = compiler: new Multi @, 'compiler'
 
     if config.deploy?.html
-      @tasks.deployer = new Multi @, 'deployer'
+      tasks.deployer = new Multi @, 'deployer'
 
     if config.minifiedDeploy?.html
-      @tasks.minifier         = new Multi @, 'minifier'
-      @tasks.minifiedDeployer = new Multi @, 'minifiedDeployer'
+      tasks.minifier         = new Multi @, 'minifier'
+      tasks.minifiedDeployer = new Multi @, 'minifiedDeployer'
 
-    super
-
-  fileUpdate: (event, file) =>
-    console.log event, file
+    tasks
 
 module.exports = new HtmlRepo
 

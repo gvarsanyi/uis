@@ -13,7 +13,7 @@ class HtmlDeployer extends Deployer
     finish = (err) =>
       @error(err) if err
       @status 1
-      callback?()
+      callback? err
 
     try
       target = @deployTarget + @source.path.substr @source.basedir.length
@@ -25,6 +25,5 @@ class HtmlDeployer extends Deployer
         fs.writeFile target, @getSrc(), finish
     catch err
       finish err
-
 
 module.exports = HtmlDeployer
