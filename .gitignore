@@ -1,6 +1,4 @@
 *.kdev4
 *.log*
 *.kate-swp
-node_modules/*
-!node_modules/jade
-
+node_modules

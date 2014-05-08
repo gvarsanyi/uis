@@ -3,6 +3,9 @@ jade = require 'jade'
 Compiler = require '../compiler'
 
 
+require '../../jade-includes-patch.coffee'
+
+
 class JadeCompiler extends Compiler
   work: (callback) => @clear =>
     @status 0
@@ -11,13 +14,14 @@ class JadeCompiler extends Compiler
       unless (src = @source.tasks.loader.result())?
         throw new Error '[JadeCompiler] Missing source'
 
-      delete jade.Parser.__includes
       @result jade.render src,
         filename: @source.path
         pretty:   true
-      @watch (path for path of jade.Parser?.__includes?[@source.path] or {})
-      delete jade.Parser.__includes
+        includes: (includes = [])
+      @watch includes
     catch err
+      console.error err
+      process.exit 1
       @error err
 
     @status 1
