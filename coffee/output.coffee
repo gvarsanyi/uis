@@ -69,6 +69,11 @@ print_block = (push_x, push_y, title, inf, prev_inf) ->
   if has_n
     plural = if inf.status > 1 then 's' else ''
     outblock.color([63, 63, 63]).write(' file' + plural)
+  if inf.watched
+    outblock
+      .color([63, 63, 63]).write(' + ')
+      .reset().write(n_grouped inf.watched)
+      .color([63, 63, 63]).write(' inc')
 
   if inf.size
     outblock

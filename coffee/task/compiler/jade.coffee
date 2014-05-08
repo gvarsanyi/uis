@@ -8,6 +8,11 @@ require '../../jade-includes-patch.coffee'
 
 class JadeCompiler extends Compiler
   work: (callback) => @clear =>
+    finish = (err) =>
+      @error(err) if err
+      @status 1
+      callback? err
+
     @status 0
 
     try
@@ -18,13 +23,9 @@ class JadeCompiler extends Compiler
         filename: @source.path
         pretty:   true
         includes: (includes = [])
-      @watch includes
-    catch err
-      console.error err
-      process.exit 1
-      @error err
 
-    @status 1
-    callback? err
+      @watch includes, finish
+    catch err
+      finish err
 
 module.exports = JadeCompiler

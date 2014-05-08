@@ -56,6 +56,14 @@ class Multi extends Task
         latest = t
     latest
 
+  watched: ->
+    i = null
+    for path, source of @source.sources
+      if (n = source.tasks[@taskName]?.watched())?
+        i ?= 0
+        i += n
+    i
+
   work: (callback) ->
     sources = for path, source of @source.sources when source.tasks[@taskName]
       source

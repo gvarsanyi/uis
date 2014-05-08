@@ -52,7 +52,8 @@ class Repo
     inf = {}
     for type, worker of @tasks
       inf[type] ?= {}
-      for stat in ['count', 'error', 'warning', 'size', 'status', 'updatedAt']
+      for stat in ['count', 'error', 'warning', 'size', 'status', 'updatedAt',
+                   'watched']
         inf[type][stat] = val if val = worker[stat]()
     inf
 

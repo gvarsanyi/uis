@@ -39,6 +39,13 @@ class Task
   updatedAt: ->
     @_updatedAt ?= new Date().getTime()
 
+  watched: ->
+    i = null
+    for k of @_watched or {}
+      i ?= 0
+      i += 1
+    i
+
   work: (callback) ->  # should be overridden by all classes inherited from Task
     throw new Error 'Task.work() is not implemented for ' + @constructor.name
 
