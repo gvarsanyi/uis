@@ -12,13 +12,13 @@ class Task
   error: (add) ->
     if add?
       @_error ?= []
-      @_error.push add
+      @_error.push @wrapError add
     @_error
 
   warning: (add) ->
     if add?
       @_warning ?= []
-      @_warning.push add
+      @_warning.push @wrapError add
     @_warning
 
   result: (value) ->
@@ -48,6 +48,10 @@ class Task
 
   work: (callback) ->  # should be overridden by all classes inherited from Task
     throw new Error 'Task.work() is not implemented for ' + @constructor.name
+
+  wrapError: (inf) =>
+    file:        @source.shortPath?() or (@source.name + ' repo')
+    description: String inf
 
 
 module.exports = Task

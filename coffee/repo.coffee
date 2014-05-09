@@ -9,6 +9,9 @@ messenger = require './messenger'
 
 class Repo
   minilog = (args...) ->
+    unless config.output is 'fancy'
+      return console.log args...
+
     msg = args.join ' '
     out = ''
     cols = process.stdout.columns or 120
@@ -60,9 +63,6 @@ class Repo
       for stat in ['count', 'error', 'warning', 'size', 'status', 'updatedAt',
                    'watched']
         inf[type][stat] = val if val = worker[stat]()
-        if stat is 'error' and val
-          console.log val
-          process.exit 1
     inf
 
   work: (node, callback) =>
@@ -70,21 +70,25 @@ class Repo
       callback = node
       node = undefined
 
-    round = (err) ->
+    round = (err) =>
       if tasks.length
         unit = tasks.shift()
+#         console.log '[' + @name + ':' + unit.name + '] start'
         if node and unit.task.constructor.name is 'Multi'
           task = node.tasks[unit.name]
         else
           task = unit.task
-        task.work ->
+        task.work =>
           if err = task.error()
+#             console.log '[' + @name + ':' + unit.name + '] done with error (halting ' + @name + ' progress)'
             messenger.sendStats()
-            return callback? err
+            return  setTimeout (callback or ->), 1
+#           console.log '[' + @name + ':' + unit.name + '] done; tasks left: ' + (item.name for item in tasks).join(', ')
           messenger.sendStats()
-          round()
+          setTimeout round, 1
       else
-        callback?()
+        if callback?
+          setTimeout callback, 1
 
     tasks = for name, task of @tasks when name isnt 'loader' or not node
       if node and task.constructor.name is 'Multi'
@@ -94,7 +98,6 @@ class Repo
       {name, task}
     messenger.sendStats()
     round()
-    return
 
   watch: =>
     instanciate_file = (file, options) =>

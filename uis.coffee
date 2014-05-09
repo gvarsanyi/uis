@@ -1,7 +1,11 @@
 child_process = require 'child_process'
 
 config = require './coffee/config'
-output = require './coffee/output'
+
+
+unless config.output in ['fancy', 'plain']
+  config.output = 'plain'
+output = require './coffee/output/plugin/' + config.output
 
 
 stats = {}

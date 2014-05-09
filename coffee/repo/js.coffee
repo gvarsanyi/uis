@@ -13,7 +13,9 @@ class JsRepo extends Repo
   extensions: {js: JsFile, coffee: CoffeeFile}
 
   getTasks: ->
-    tasks = concatenator: new JsConcatenator @
+    tasks =
+      compiler:     new Multi @, 'compiler'
+      concatenator: new JsConcatenator @
 
     if val = config[@name].deploy
       tasks.deployer = new Deployer @, val
@@ -22,7 +24,6 @@ class JsRepo extends Repo
       tasks.minifier         = new JsMinifier @
       tasks.minifiedDeployer = new Deployer @, val, true
 
-    tasks.compiler = new Multi @, 'compiler'
     tasks.linter   = new Multi @, 'linter'
 
     tasks

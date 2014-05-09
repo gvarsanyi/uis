@@ -1,4 +1,6 @@
-Outblock = require './outblock'
+Outblock = require '../outblock'
+ngroup   = require '../ngroup'
+types    = require '../stat-types'
 
 
 outblock = null
@@ -13,23 +15,6 @@ heads =
   js:   ['         ╦╔═╗  ', '         ║╚═╗', '       ╚═╝╚═╝']
   test: [' ╔╦╗╔═╗╔═╗╔╦╗  ', '  ║ ╠╣ ╚═╗ ║', '  ╩ ╚═╝╚═╝ ╩']
 head_shown = {}
-
-types =
-  compiler:         'compile'
-  concatenator:     'concat'
-  deployer:         'deploy'
-  minifiedDeployer: 'deploy-minified'
-  loader:           'load'
-  linter:           'lint'
-  minifier:         'minify'
-
-n_grouped = (n) ->
-  _n = String(n).split('').reverse()
-  n = ''
-  for char, i in _n
-    n = ',' + n if i % 3 is 0 and i
-    n = char + n
-  n
 
 print_block = (push_x, push_y, title, inf, prev_inf) ->
   working = (inf.status? and inf.status < inf.count) or
@@ -54,16 +39,16 @@ print_block = (push_x, push_y, title, inf, prev_inf) ->
 
   has_n = ''
   if inf.status
-    n = n_grouped(inf.status - (inf.warning?.length or 0) -
+    n = ngroup(inf.status - (inf.warning?.length or 0) -
                   (inf.error?.length or 0))
     outblock.color([220, 220, 220]).write(n)
     has_n = '+'
   if inf.warning?.length
-    n = n_grouped inf.warning.length
+    n = ngroup inf.warning.length
     outblock.write(has_n).color([255, 159, 63]).write(n)
     has_n = '+'
   if inf.error?.length
-    n = n_grouped inf.error.length
+    n = ngroup inf.error.length
     outblock.write(has_n).color([255, 20, 20]).write(n)
     has_n = '+'
   if has_n
@@ -72,12 +57,12 @@ print_block = (push_x, push_y, title, inf, prev_inf) ->
   if inf.watched
     outblock
       .color([63, 63, 63]).write(' + ')
-      .reset().write(n_grouped inf.watched)
+      .reset().write(ngroup inf.watched)
       .color([63, 63, 63]).write(' inc')
 
   if inf.size
     outblock
-      .pos(push_x, push_y + 2).color([160, 160, 160]).write(n_grouped inf.size)
+      .pos(push_x, push_y + 2).color([160, 160, 160]).write(ngroup inf.size)
       .color([63, 63, 63]).write(' b').reset()
   else if inf.status is inf.count and not inf.error?.length and
           title.indexOf('deploy') > -1 and inf.updatedAt

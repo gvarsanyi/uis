@@ -1,6 +1,8 @@
 {
   "uis": {
     "default": {
+      "output": "plain",
+      "watch": false,
       "css": {
         "deploy": ".deploy/site.css",
         "deployMinified": ".deploy/site.min.css",
