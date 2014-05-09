@@ -24,8 +24,14 @@ class Repo
     @pathes  = []
     @sources = {}
 
-    @dirs = config.repo?[@constructor.name.replace('Repo', '').toLowerCase()]
-    @dirs = [@dirs] unless typeof @dirs is 'object'
+    @name = @constructor.name.replace('Repo', '').toLowerCase()
+
+    @dirs = config[@name]?.repos
+    unless @dirs instanceof Array
+      @dirs = [@dirs]
+    for item, i in @dirs
+      unless typeof item is 'object'
+        @dirs[i] = repo: item
 
     @tasks = loader: new Multi @, 'loader'
     for name, task of @getTasks?() or {}
@@ -35,8 +41,7 @@ class Repo
 
   fileUpdate: (event, file, force_reload) =>
     if node = @sources[file] # changed/deleted
-      repo_name = @constructor.name.replace('Repo', '').toLowerCase()
-      file = repo_name + ':' + file
+      file = @name + ':' + file
       node.tasks.loader.work (err, changed) =>
         if changed or force_reload
           unless node.tasks.loader.result()
@@ -55,6 +60,9 @@ class Repo
       for stat in ['count', 'error', 'warning', 'size', 'status', 'updatedAt',
                    'watched']
         inf[type][stat] = val if val = worker[stat]()
+        if stat is 'error' and val
+          console.log val
+          process.exit 1
     inf
 
   work: (node, callback) =>
@@ -89,21 +97,21 @@ class Repo
     return
 
   watch: =>
-    instanciate_file = (file, basedir) =>
+    instanciate_file = (file, options) =>
       ext = file.substr file.lastIndexOf('.') + 1
       if class_ref = @extensions[ext]
-        return new class_ref @, file, basedir
+        return new class_ref @, file, options
 
     update = (event, file) =>
       @fileUpdate event, file
 
-    watched = (tree, basedir) =>
+    watched = (tree, options) =>
       add_nodes = (tree) =>
         for full_path, node of tree
           if typeof node is 'object'
             add_nodes node
           else if '/' isnt node.substr node.length - 1
-            if not @sources[node] and inst = instanciate_file node, basedir
+            if not @sources[node] and inst = instanciate_file node, options
               @sources[node] = inst
               @pathes.push node
 
@@ -119,14 +127,21 @@ class Repo
         return @work()
 
       dir = dir_pool.shift()
-      do (dir) ->
-        basedir = path.resolve dir
+      do (dir) =>
+        options = {}
+        for opt in ['testOnly', 'thirdParty'] when dir[opt]
+          options[opt] = dir[opt]
+        for opt in ['basedir', 'deploy', 'deployMinified']
+          if dir[opt]
+            options[opt] = path.resolve dir[opt]
+          else if config[@name][opt]
+            options[opt] = path.resolve config[@name][opt]
 
         watch = new gaze
         watch.on 'ready', (watcher) ->
-          watched watcher.watched(), basedir
+          watched watcher.watched(), options
         watch.on 'all', update
-        watch.add dir
+        watch.add dir.repo
 
     watch_dir()
 

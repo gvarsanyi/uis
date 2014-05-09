@@ -15,10 +15,10 @@ class JsRepo extends Repo
   getTasks: ->
     tasks = concatenator: new JsConcatenator @
 
-    if val = config.deploy?.js
+    if val = config[@name].deploy
       tasks.deployer = new Deployer @, val
 
-    if val = config.minifiedDeploy?.js
+    if val = config[@name].deployMinified
       tasks.minifier         = new JsMinifier @
       tasks.minifiedDeployer = new Deployer @, val, true
 

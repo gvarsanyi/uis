@@ -5,10 +5,12 @@ Loader         = require '../task/loader'
 
 
 class CoffeeFile extends JsFile
-  constructor: (@repo, @path, @basedir) ->
+  constructor: (@repo, @path, @options) ->
     @tasks =
       loader:   new Loader @
-      linter:   new CoffeeLinter @
       compiler: new CoffeeCompiler @
+
+    unless @options.thirdParty or @options.testOnly
+      @tasks.linter = new CoffeeLinter @
 
 module.exports = CoffeeFile

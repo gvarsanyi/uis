@@ -17,10 +17,10 @@ class CssRepo extends Repo
       compiler:     new Multi @, 'compiler'
       concatenator: new Concatenator @
 
-    if val = config.deploy?.css
+    if val = config[@name].deploy
       tasks.deployer = new Deployer @, val
 
-    if val = config.minifiedDeploy?.css
+    if val = config[@name].deployMinified
       tasks.minifier         = new CssMinifier @
       tasks.minifiedDeployer = new Deployer @, val, true
 

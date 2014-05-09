@@ -4,7 +4,7 @@ SassCompiler = require '../task/compiler/sass'
 
 
 class SassFile extends CssFile
-  constructor: (@repo, @path, @basedir) ->
+  constructor: (@repo, @path, @options) ->
     @tasks =
       loader:   new Loader @
       compiler: new SassCompiler @

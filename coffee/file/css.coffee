@@ -3,7 +3,7 @@ Loader = require '../task/loader'
 
 
 class CssFile extends File
-  constructor: (@repo, @path, @basedir) ->
+  constructor: (@repo, @path, @options) ->
     @tasks =
       loader: new Loader @
 

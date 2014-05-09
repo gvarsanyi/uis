@@ -7,16 +7,16 @@ config       = require '../config'
 
 
 class JadeFile extends HtmlFile
-  constructor: (@repo, @path, @basedir) ->
+  constructor: (@repo, @path, @options) ->
     @tasks =
       loader:   new Loader @
       compiler: new JadeCompiler @
-      minifier: new HtmlMinifier @
 
-    if val = config.deploy?.html
+    if val = @options.deploy
       @tasks.deployer = new HtmlDeployer @, val
 
-    if val = config.minifiedDeploy?.html
+    if val = @options.deployMinified
+      @tasks.minifier         = new HtmlMinifier @
       @tasks.minifiedDeployer = new HtmlDeployer @, val, true
 
 module.exports = JadeFile

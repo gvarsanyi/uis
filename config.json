@@ -1,0 +1,47 @@
+{
+  "uis": {
+    "default": {
+      "css": {
+        "deploy": ".deploy/site.css",
+        "deployMinified": ".deploy/site.min.css",
+        "repos": [
+          {
+            "repo": "sass/**/core.scss"
+          }
+        ]
+      },
+      "html": {
+        "repos": [
+          {
+            "repo": ["jade/*.jade", "jade/partials/**/*.jade"],
+            "basedir":   "jade/",
+            "deploy": ".deploy/"
+          }
+        ]
+      },
+      "js": {
+        "deploy": ".deploy/site.js",
+        "deployMinified": ".deploy/site.min.js",
+        "repos": [
+          {
+            "repo": [
+              "third-party/js/moment.js",
+              "third-party/js/moment-timezone.js",
+              "third-party/js/moment-timezone-data.js",
+              "third-party/js/angular.js",
+              "third-party/js/**/*.js"
+            ],
+            "thirdParty": true
+          },
+          {
+            "repo": "third-party/js/test/**/*.js",
+            "testOnly": true
+          },
+          {
+            "repo": "coffee/**/*.coffee"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -10,12 +10,18 @@ class HtmlRepo extends Repo
   extensions: {html: HtmlFile, jade: JadeFile}
 
   getTasks: ->
+    for inf in @dirs
+      if inf.deploy
+        deploy = true
+      if inf.deployMinified
+        deploy_minified = true
+
     tasks = compiler: new Multi @, 'compiler'
 
-    if config.deploy?.html
+    if deploy
       tasks.deployer = new Multi @, 'deployer'
 
-    if config.minifiedDeploy?.html
+    if deploy_minified
       tasks.minifier         = new Multi @, 'minifier'
       tasks.minifiedDeployer = new Multi @, 'minifiedDeployer'
 
