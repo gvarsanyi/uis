@@ -2,6 +2,7 @@ Outblock = require '../outblock'
 ngroup   = require '../ngroup'
 types    = require '../stat-types'
 
+console.log ''
 
 outblock = null
 
@@ -14,7 +15,6 @@ heads =
   html: [' ╦ ╦╔╦╗╔╦╗╦    ', ' ╠═╣ ║ ║║║║', ' ╩ ╩ ╩ ╩ ╩╩═╝']
   js:   ['         ╦╔═╗  ', '         ║╚═╗', '       ╚═╝╚═╝']
   test: [' ╔╦╗╔═╗╔═╗╔╦╗  ', '  ║ ╠╣ ╚═╗ ║', '  ╩ ╚═╝╚═╝ ╩']
-head_shown = {}
 
 print_block = (push_x, push_y, title, inf, prev_inf) ->
   working = (inf.status? and inf.status < inf.count) or
@@ -79,22 +79,26 @@ print_block = (push_x, push_y, title, inf, prev_inf) ->
 
   outblock.reset()
 
-shown_types = []
+shown      = {}
+head_shown = {}
 
-output = (stats) ->
+
+module.exports.stats = (stats) ->
 #   if stats.html?.minifiedDeployer?.error
 #     console.log stats.html.minifiedDeployer?.error
 #     process.exit 1
 
-  if (received_types = (name for name of stats)).length isnt shown_types.length
+  new_sum = orig_sum = (name for name of shown).length
+  for name of stats
+    new_sum += 1 unless shown[name]
+  if orig_sum isnt new_sum
+    shown[name] = true
     if outblock?
-#       outblock.setHeight received_types.length * 4
-      outblock.clear()
+      outblock.setHeight new_sum * 4
       head_shown = {}
     else
-      outblock = new Outblock process.stdout.rows - 1 # received_types.length * 4
-      outblock.reset()
-    shown_types = received_types
+#       outblock = new Outblock process.stdout.rows - 1
+      outblock = new Outblock new_sum * 4
 
   push_y = 0
   for name, repo of {css: stats.css, html: stats.html, js: stats.js, test: stats.test}
@@ -112,6 +116,12 @@ output = (stats) ->
         print_block push_x, push_y, types[type], inf, prev_inf
         push_x += 20
         prev_inf = inf
-      push_y += 4
+    push_y += 4
 
-module.exports = output
+module.exports.state = (state) ->
+
+module.exports.note = (note) ->
+  for name in ['css', 'html', 'js', 'test']
+    if note[name]
+      for msg in note[name] or []
+        process.stdout.write ('[' + name + '] ' + msg).split(esc).join('\\0').substr(0, process.stdout.columns - 1) + '\r'

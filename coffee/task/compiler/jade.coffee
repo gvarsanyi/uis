@@ -3,7 +3,7 @@ jade = require 'jade'
 Compiler = require '../compiler'
 
 
-require '../../jade-includes-patch.coffee'
+require '../../jade-includes-patch'
 
 
 class JadeCompiler extends Compiler

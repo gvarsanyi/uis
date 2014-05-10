@@ -1,18 +1,21 @@
+#!/usr/bin/env coffee
+
 child_process = require 'child_process'
 
-config = require './coffee/config'
+config = require './config'
 
 
 unless config.output in ['fancy', 'plain']
   config.output = 'plain'
-output = require './coffee/output/plugin/' + config.output
+output = require './output/plugin/' + config.output
 
 
 stats = {}
 
 for name in ['js', 'css', 'html']
   do (name) ->
-    path = __dirname + '/coffee/repo/' + name + '.coffee'
+    path = __dirname + '/repo/' + name +
+           (if __dirname.indexOf('/coffee/') then '.coffee' else '.js')
     repo = child_process.fork path, {cwd: process.cwd(), silent: true}
 
     repo.stdout.on 'data', (data) ->
@@ -23,5 +26,8 @@ for name in ['js', 'css', 'html']
 
     repo.on 'message', (msg) ->
       if msg?.stats
-        stats[k] = v for k, v of msg.stats
-        output stats
+        output.stats msg.stats
+      if msg?.state
+        output.state msg.state
+      if msg?.note
+        output.note msg.note

@@ -2,76 +2,10 @@ ngroup = require '../ngroup'
 types  = require '../stat-types'
 
 
-###
-print_block = (push_x, push_y, title, inf, prev_inf) ->
-  working = (inf.status? and inf.status < inf.count) or
-            not prev_inf? or
-            (prev_inf.status and
-             prev_inf.status is prev_inf.count and
-             not prev_inf.error)
-
-  if inf.status? or working
-    outblock.bgcolor([36, 36, 36])
-  else
-    outblock.color([50, 50, 50]).bgcolor([12, 12, 12])
-
-  outblock
-    .pos(push_x, push_y).write(title, 20).reset()
-    .pos(push_x, push_y + 1).write('', 20)
-    .pos(push_x, push_y + 2).write('', 20)
-    .pos(push_x, push_y + 1)
-
-  if working
-    outblock.color([86, 86, 86]).write(hourglass, prev_inf).x(push_x).reset()
-
-  has_n = ''
-  if inf.status
-    n = n_grouped(inf.status - (inf.warning?.length or 0) -
-                  (inf.error?.length or 0))
-    outblock.color([220, 220, 220]).write(n)
-    has_n = '+'
-  if inf.warning?.length
-    n = n_grouped inf.warning.length
-    outblock.write(has_n).color([255, 159, 63]).write(n)
-    has_n = '+'
-  if inf.error?.length
-    n = n_grouped inf.error.length
-    outblock.write(has_n).color([255, 20, 20]).write(n)
-    has_n = '+'
-  if has_n
-    plural = if inf.status > 1 then 's' else ''
-    outblock.color([63, 63, 63]).write(' file' + plural)
-  if inf.watched
-    outblock
-      .color([63, 63, 63]).write(' + ')
-      .reset().write(n_grouped inf.watched)
-      .color([63, 63, 63]).write(' inc')
-
-  if inf.size
-    outblock
-      .pos(push_x, push_y + 2).color([160, 160, 160]).write(n_grouped inf.size)
-      .color([63, 63, 63]).write(' b').reset()
-  else if inf.status is inf.count and not inf.error?.length and
-          title.indexOf('deploy') > -1 and inf.updatedAt
-    try
-      if inf.updatedAt > 1000000 and (t = new Date inf.updatedAt)
-        hm   = t.getHours() + ':' + (if (m = t.getMinutes()) > 9 then m else '0' + m)
-        sec  = ':' + if (s = t.getSeconds()) > 9 then s else '0' + s
-        tsec = '.' + Math.floor t.getMilliseconds() / 100
-        outblock
-          .pos(push_x, push_y + 2).color([63, 63, 63]).write('@ ')
-          .color([160, 160, 160]).write(hm)
-          .color([79, 79, 79]).write(sec)
-          .color([47, 47, 47]).write(tsec)
-
-  outblock.reset()###
-
-last_state = {}
-
 timestamp = ->
   fix = (n, digits=2) ->
     while String(n).length < digits
-      n = '0' + digits
+      n = '0' + n
     n
 
   (t = new Date()).getHours() + ':' +
@@ -80,6 +14,7 @@ timestamp = ->
   fix(t.getMilliseconds(), 3)
 
 icons =
+  start:   '⚐'
   check:   '✔'
   error:   '✗'
   warning: '⚠'
@@ -87,7 +22,7 @@ icons =
 
 subitem = '↳'
 
-print = (status, repo, msg...) ->
+print = (status, repo, task, msg...) ->
   icon   = ' ' + (icons[status] or ' ')
   output = if status is 'error' then 'error' else 'log'
 
@@ -95,7 +30,7 @@ print = (status, repo, msg...) ->
   while repo.length < 7
     repo = ' ' + repo
 
-  console[output] timestamp() + repo + icon, msg...
+  console[output] timestamp() + repo + icon + ' ' + task, msg...
 
 obj_to_str = (status, inf) ->
   unless inf.file
@@ -135,28 +70,39 @@ info_out = (status, inf) ->
     else
       console[output] obj_to_str status, block
 
-output = (stats) ->
+module.exports.stats = (stats) ->
+
+module.exports.state = (state) ->
   push_y = 0
-  for name, repo of {css: stats.css, html: stats.html, js: stats.js, test: stats.test}
-    if repo
-      last_state[name] ?= {}
+  for name in ['css', 'html', 'js', 'test']
+    if state[name]
+      for type, inf of state[name]
+        {state, error, warning, remainingTasks} = inf
 
-      for type, inf of repo
-        state = null
-        if inf.count
-          if inf.status and inf.status is inf.count and last_state[name][type] isnt 'done'
-            if inf.error?.length
-              print 'error', name, types[type]
-              info_out 'error', inf.error
-              info_out('warning', inf.warning) if inf.warning?.length
-            else if inf.warning?.length
-              print 'warning', name, types[type]
-              info_out 'warning', inf.warning
-            else
-              print 'check', name, types[type]
+        error_state = if inf.error? then 'error' else if inf.warning? then 'warning' else if state then 'check' else 'start'
 
-            last_state[name][type] = 'done'
-          else if inf.status and inf.status isnt inf.count and last_state[name][type] isnt 'working'
-            last_state[name][type] = 'working'
+        msg = ''
+        if state
+          if error?
+            msg += ': ' + error.length + ' error' + if error.length > 1 then 's' else ''
+          if warning?
+            msg += if msg then ', ' else ': '
+            msg += error.length + ' warning' + if error.length > 1 then 's' else ''
+        print error_state, name, types[type], msg
 
-module.exports = output
+        if error?
+          info_out 'error', error
+
+        if warning?
+          info_out 'warning', warning
+
+#         if remainingTasks?.length
+#           msg += ', ' if msg
+#           msg += 'remaining tasks: ' + (types[item] for item in remainingTasks).join ', '
+
+
+module.exports.note = (note) ->
+  for name in ['css', 'html', 'js', 'test']
+    if note[name]
+      for msg in note[name] or []
+        console.log '[' + name + ']', msg

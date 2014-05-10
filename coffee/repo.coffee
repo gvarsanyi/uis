@@ -8,21 +8,6 @@ messenger = require './messenger'
 
 
 class Repo
-  minilog = (args...) ->
-    unless config.output is 'fancy'
-      return console.log args...
-
-    msg = args.join ' '
-    out = ''
-    cols = process.stdout.columns or 120
-    for char in msg
-      unless (code = char.charCodeAt(0)) < 32 or code is 127
-        out += char
-    while out.length < cols
-      out += ' '
-    out = out.substr 0, cols
-    process.stdout.write out + '\r'
-
   constructor: ->
     @pathes  = []
     @sources = {}
@@ -48,13 +33,13 @@ class Repo
       node.tasks.loader.work (err, changed) =>
         if changed or force_reload
           unless node.tasks.loader.result()
-            minilog 'deleted:', file
+            messenger.note 'emptied: ' + file
           else
-            minilog 'updating:', file
+            messenger.note 'updating: ' + file
             @work node, ->
-              minilog 'updated:', file
+              messenger.note 'updated: ' + file
     else # new file
-      minilog 'deleted:', file
+      messenger.note 'deleted: ' + file
 
   stats: =>
     inf = {}
@@ -73,18 +58,31 @@ class Repo
     round = (err) =>
       if tasks.length
         unit = tasks.shift()
-#         console.log '[' + @name + ':' + unit.name + '] start'
+
+        if config.output is 'fancy'
+          messenger.sendStats()
+        else
+          messenger.sendState unit.name, 0
+
         if node and unit.task.constructor.name is 'Multi'
           task = node.tasks[unit.name]
         else
           task = unit.task
         task.work =>
           if err = task.error()
-#             console.log '[' + @name + ':' + unit.name + '] done with error (halting ' + @name + ' progress)'
+            if config.output is 'fancy'
+              messenger.sendStats()
+            else
+              messenger.sendState unit.name, 1, err, task.warning()
+
+            return setTimeout (callback or ->), 1
+
+          if config.output is 'fancy'
             messenger.sendStats()
-            return  setTimeout (callback or ->), 1
-#           console.log '[' + @name + ':' + unit.name + '] done; tasks left: ' + (item.name for item in tasks).join(', ')
-          messenger.sendStats()
+          else
+            messenger.sendState unit.name, 1, null, task.warning(),
+                                (item.name for item in tasks)
+
           setTimeout round, 1
       else
         if callback?
@@ -96,7 +94,6 @@ class Repo
       else
         task.clear()
       {name, task}
-    messenger.sendStats()
     round()
 
   watch: =>

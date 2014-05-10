@@ -1,7 +1,7 @@
 {
   "uis": {
     "default": {
-      "output": "plain",
+      "output": "fancy",
       "watch": false,
       "css": {
         "deploy": ".deploy/site.css",
