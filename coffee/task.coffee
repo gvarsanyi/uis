@@ -1,3 +1,5 @@
+path = require 'path'
+
 
 class Task
   clear: (callback) ->
@@ -51,7 +53,7 @@ class Task
 
   wrapError: (inf) =>
     file:        @source.shortPath?() or (@source.name + ' repo')
-    description: String inf
+    description: String(inf).split(path.resolve(process.cwd()) + '/').join('').trim()
 
 
 module.exports = Task

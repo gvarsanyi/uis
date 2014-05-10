@@ -1,4 +1,6 @@
-path = require 'path'
+child_process = require 'child_process'
+fs            = require 'fs'
+path          = require 'path'
 
 sass = require 'node-sass'
 
@@ -11,20 +13,49 @@ class SassCompiler extends Compiler
 
     stats = {}
 
+    compilers = 0
+
     finish = (err) =>
+      compilers += 1
       @error(err) if err
-      @watch stats.includedFiles, (err2) =>
-        @status 1
-        callback? err or err2
+      if compilers is 2 or not @source.options.rubysass
+        if stats.includedFiles?.length
+          @watch stats.includedFiles, (err) =>
+            @error(err) if err
+            @status 1
+            callback? @error()
+        else
+          callback? @error()
 
     try
+      if @source.options.rubysass
+        cmd = 'sass -C -q ' + @source.path
+        child_process.exec cmd, maxBuffer: 128 * 1024 * 1024, (err, stdout, stderr) =>
+          @result(stdout) unless err
+          finish err
+
       sass.render
         data:         @source.tasks.loader.result()
-        error:        finish
+        error:        (err) =>
+          unless stats.includedFiles?.length
+            file = String(err).split(':')[0]
+            fs.exists file + '.scss', (exists) =>
+              if exists
+                stats.includedFiles = [file + '.scss']
+                return finish()
+              fs.exists file + '.sass', (exists) =>
+                if exists
+                  stats.includedFiles = [file + '.sass']
+                  return finish()
+                fs.exists file, (exists) =>
+                  if exists
+                    stats.includedFiles = [file]
+                  finish()
         includePaths: [path.dirname(@source.path) + '/']
         stats:        stats
         success:      (data) =>
-          @result data
+          unless @source.options.rubysass
+            @result data
           finish()
     catch err
       finish err

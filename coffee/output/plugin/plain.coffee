@@ -82,19 +82,20 @@ module.exports.state = (state) ->
         error_state = if inf.error? then 'error' else if inf.warning? then 'warning' else if state then 'check' else 'start'
 
         msg = ''
-        if state
+        if state or error? or warning?
           if error?
             msg += ': ' + error.length + ' error' + if error.length > 1 then 's' else ''
           if warning?
             msg += if msg then ', ' else ': '
             msg += error.length + ' warning' + if error.length > 1 then 's' else ''
-        print error_state, name, types[type], msg
 
-        if error?
-          info_out 'error', error
+          print error_state, name, types[type], msg
 
-        if warning?
-          info_out 'warning', warning
+          if error?
+            info_out 'error', error
+
+          if warning?
+            info_out 'warning', warning
 
 #         if remainingTasks?.length
 #           msg += ', ' if msg

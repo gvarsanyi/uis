@@ -24,7 +24,10 @@ class JadeCompiler extends Compiler
         pretty:   true
         includes: (includes = [])
 
-      @watch includes, finish
+      if includes.length
+        @watch includes, finish
+      else
+        finish()
     catch err
       finish err
 

@@ -1,11 +1,12 @@
 {
   "uis": {
     "default": {
-      "output": "fancy",
+      "output": "plain",
       "watch": false,
       "css": {
         "deploy": ".deploy/site.css",
         "deployMinified": ".deploy/site.min.css",
+        "rubysass": true,
         "repos": [
           {
             "repo": "sass/**/core.scss"
@@ -23,7 +24,7 @@
       },
       "js": {
         "deploy": ".deploy/site.js",
-        "deployMinified": ".deploy/site.min.js",
+        "deployMinified": "static/site.js",
         "repos": [
           {
             "repo": [

@@ -37,7 +37,7 @@ class Repo
           else
             messenger.note 'updating: ' + file
             @work node, ->
-              messenger.note 'updated: ' + file
+#               messenger.note 'updated: ' + file
     else # new file
       messenger.note 'deleted: ' + file
 
@@ -136,6 +136,11 @@ class Repo
             options[opt] = path.resolve dir[opt]
           else if config[@name][opt]
             options[opt] = path.resolve config[@name][opt]
+        for opt in ['rubysass']
+          if dir[opt]
+            options[opt] = dir[opt]
+          else if config[@name][opt]
+            options[opt] = config[@name][opt]
 
         watch = new gaze
         watch.on 'ready', (watcher) ->
