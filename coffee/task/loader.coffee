@@ -6,8 +6,6 @@ Task = require '../task'
 
 
 class Loader extends Task
-  constructor: (@source) ->
-
   work: (callback) => @clear =>
     @status 0
 

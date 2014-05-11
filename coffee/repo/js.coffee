@@ -5,6 +5,7 @@ JsFile         = require '../file/js'
 JsMinifier     = require '../task/minifier/js'
 Multi          = require '../task/multi'
 Repo           = require '../repo'
+Tester         = require '../task/tester'
 config         = require '../config'
 messenger      = require '../messenger'
 
@@ -24,7 +25,10 @@ class JsRepo extends Repo
       tasks.minifier         = new JsMinifier @
       tasks.minifiedDeployer = new Deployer @, val, true
 
-    tasks.linter   = new Multi @, 'linter'
+    tasks.linter = new Multi @, 'linter'
+
+    if config[@name].test?.files
+      tasks.tester = new Tester @
 
     tasks
 

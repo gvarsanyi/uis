@@ -7,3 +7,4 @@ module.exports =
   loader:           'load'
   linter:           'lint'
   minifier:         'minify'
+  tester:           'test'

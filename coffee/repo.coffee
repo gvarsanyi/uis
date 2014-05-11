@@ -25,21 +25,28 @@ class Repo
     for name, task of @getTasks?() or {}
       @tasks[name] = task
 
+    @projectPath = path.resolve process.cwd()
+
     @watch()
 
   fileUpdate: (event, file, force_reload) =>
+    short_file = =>
+      if file.substr(0, @projectPath.length) is @projectPath
+        return file.substr @projectPath.length + 1
+      file
+
     if node = @sources[file] # changed/deleted
       file = @name + ':' + file
       node.tasks.loader.work (err, changed) =>
         if changed or force_reload
           unless node.tasks.loader.result()
-            messenger.note 'emptied: ' + file
+            messenger.note 'emptied: ' + short_file file
           else
-            messenger.note 'updating: ' + file
+            messenger.note 'updating: ' + short_file file
             @work node, ->
-#               messenger.note 'updated: ' + file
+#               messenger.note 'updated: ' + short_file file
     else # new file
-      messenger.note 'deleted: ' + file
+      messenger.note 'deleted: ' + short_file file
 
   stats: =>
     inf = {}
@@ -141,6 +148,11 @@ class Repo
             options[opt] = dir[opt]
           else if config[@name][opt]
             options[opt] = config[@name][opt]
+
+        unless config[@name].test?.files
+          delete config[@name].test
+        else unless typeof config[@name].test.files is 'object'
+          config[@name].test.files = [config[@name].test.files]
 
         watch = new gaze
         watch.on 'ready', (watcher) ->

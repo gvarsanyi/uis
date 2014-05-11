@@ -7,7 +7,8 @@ Task = require '../task'
 
 
 class Deployer extends Task
-  constructor: (@source, @deployTarget, @minified) ->
+  constructor: (source, @deployTarget, @minified) ->
+    super source
     @_tasks = ['concatenator', 'compiler', 'loader']
     if @minified
       @_tasks.unshift 'minifier'

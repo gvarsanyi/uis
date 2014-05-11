@@ -25,6 +25,10 @@
       "js": {
         "deploy": ".deploy/site.js",
         "deployMinified": "static/site.js",
+        "test": {
+          "files": "test/**/*.coffee",
+          "coverage": true
+        },
         "repos": [
           {
             "repo": [

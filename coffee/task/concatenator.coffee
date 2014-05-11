@@ -2,8 +2,6 @@ Task = require '../task'
 
 
 class Concatenator extends Task
-  constructor: (@source) ->
-
   work: (callback) => @clear =>
     @status 0
 

@@ -74,7 +74,7 @@ module.exports.stats = (stats) ->
 
 module.exports.state = (state) ->
   push_y = 0
-  for name in ['css', 'html', 'js', 'test']
+  for name in ['css', 'html', 'js']
     if state[name]
       for type, inf of state[name]
         {state, error, warning, remainingTasks} = inf
@@ -87,7 +87,7 @@ module.exports.state = (state) ->
             msg += ': ' + error.length + ' error' + if error.length > 1 then 's' else ''
           if warning?
             msg += if msg then ', ' else ': '
-            msg += error.length + ' warning' + if error.length > 1 then 's' else ''
+            msg += warning.length + ' warning' + if warning.length > 1 then 's' else ''
 
           print error_state, name, types[type], msg
 
@@ -103,7 +103,7 @@ module.exports.state = (state) ->
 
 
 module.exports.note = (note) ->
-  for name in ['css', 'html', 'js', 'test']
+  for name in ['css', 'html', 'js']
     if note[name]
       for msg in note[name] or []
         console.log '[' + name + ']', msg
