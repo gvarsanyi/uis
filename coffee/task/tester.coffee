@@ -1,4 +1,4 @@
-karma = require 'karma'
+karma     = require 'karma'
 
 Task      = require '../task'
 config    = require '../config'
@@ -22,14 +22,18 @@ class Tester extends Task
   condition: =>
     !!config[@source.name].test?.files
 
+  size: =>
+    @_result or 0
+
   work: => @preWork arguments, (callback) =>
-    finish = (err) =>
+    finish = =>
       process.stdout.write = orig_stdout if orig_stdout
-      process.stderr.write = orig_stderr if orig_stdout
+      process.stderr.write = orig_stderr if orig_stderr
 
       for line, i in stdout
         if (index = line.indexOf 'PhantomJS 1.9.7 (Linux): Executed ') > -1
-          result = line.substr index + 24
+          if result = Number line.substr(index + 25).split(' ')[3]
+            @result result
         else if line.substr(0, 6) is '    ✗ '
           @warning(warning) if warning
           warning =
@@ -46,7 +50,7 @@ class Tester extends Task
             warning = null
 
       @warning(warning) if warning
-      callback err, result
+      callback()
 
     try
       options =
@@ -82,7 +86,8 @@ class Tester extends Task
         @watch config.js.test.files, (err) =>
           @error(err) if err
     catch err
-      finish err
+      @error err
+      finish()
 
   wrapError: (inf) ->
     unless inf and typeof inf is 'object' and inf.title? and inf.description?

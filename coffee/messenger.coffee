@@ -15,7 +15,7 @@ send = (inf) ->
 
 module.exports.sendStat = (task) ->
   stat = {}
-  for part in ['count', 'error', 'warning', 'size', 'status', 'startedAt', 'finishedAt', 'watched']
+  for part in ['count', 'done', 'error', 'warning', 'size', 'status', 'startedAt', 'finishedAt', 'watched']
     stat[part] = val if val = repo?.tasks[task]?[part]?()
 
   send

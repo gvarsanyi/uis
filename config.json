@@ -25,7 +25,7 @@
       },
       "js": {
         "deploy": ".deploy/site.js",
-        "deployMinified": "static/site.js",
+        "deployMinified": ".deploy/site.min.js",
         "test": {
           "files": "test/**/*.coffee",
           "coverage": true

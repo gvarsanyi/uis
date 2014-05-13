@@ -71,9 +71,8 @@ info_out = (status, inf) ->
       console[output] obj_to_str status, block
 
 module.exports.update = (update) ->
-  {error, warning} = update.stat
+  {done, count, error, warning, size, status} = update.stat
 
-  done = update.stat.status and update.stat.status is update.stat.count
   error_state = 'start'
   error_state = 'check' if done
   error_state = 'warning' if warning
@@ -82,13 +81,22 @@ module.exports.update = (update) ->
   if done or error or warning # or true
     msg = ''
     if error
-      msg += ': ' + error.length + ' error' + if error.length > 1 then 's' else ''
+      msg = ': ' + ngroup error.length, 'error'
     if warning?
       msg += if msg then ', ' else ': '
-      msg += warning.length + ' warning' + if warning.length > 1 then 's' else ''
-#     msg += ' ' + JSON.stringify update
+      msg += ngroup warning.length, 'warning'
+    if update.task is 'tester' and size
+      msg += if msg then ' of ' else ': '
+      msg += ngroup size, 'test'
+    else if size
+      msg += if msg then ', ' else ': '
+      msg += ngroup size, 'byte'
+    if update.task.substr(0, 5) is 'files' and status
+      msg += if msg then ', ' else ': '
+      msg += ngroup status, 'file'
+#     msg += ' ::: ' + JSON.stringify update
 
-    print error_state, update.repo, types[update.task] or update.task, msg
+    print error_state, update.repo, (types[update.task] or update.task) + msg
 
     if error?
       info_out 'error', error
