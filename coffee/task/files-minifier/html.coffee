@@ -19,7 +19,7 @@ class HtmlFilesMinifier extends FilesMinifier
         useShortDoctype:              true
         removeEmptyAttributes:        true
     catch err
-      @error err
+      @error err, source
 
     callback()
 

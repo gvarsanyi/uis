@@ -6,20 +6,20 @@ FilesCompiledLinter = require '../files-compiled-linter'
 class CoffeeFilesLinter extends FilesCompiledLinter
   workFile: => @preWorkFile arguments, (source, callback) =>
     try
-      unless (src = source.data)?
+      unless source.data?
         throw new Error '[CoffeeFilesLinter] Missing source: ' + source.path
 
-      for msg in coffeelint.lint src
+      for msg in coffeelint.lint source.data
         if msg.level is 'error'
-          @error msg
+          @error msg, source
         else
-          @warning msg
+          @warning msg, source
     catch err
-      @error err
+      @error err, source
 
     callback()
 
-  wrapError: (inf) =>
+  wrapError: (inf, source) =>
     # Example for inf
     # { name: 'no_unnecessary_fat_arrows',
     #   level: 'warn',
@@ -40,9 +40,9 @@ class CoffeeFilesLinter extends FilesCompiledLinter
 
     data.description = inf.description if inf.description
 
-    if data.line and src = @source.tasks.loader.result()
+    if data.line and source.data
       line = inf.lineNumber - 1
-      if (lines = src.split('\n')).length and lines.length >= line
+      if (lines = source.data.split('\n')).length and lines.length >= line
         data.lines =
           from: Math.max 1, line - 2
           to:   Math.min lines.length - 1, line * 1 + 4

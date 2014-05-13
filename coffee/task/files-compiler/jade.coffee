@@ -21,12 +21,12 @@ class JadeFilesCompiler extends FilesCompiler
         # TODO: per-source watchers
         callback()
 #         @watch includes, (err) =>
-#           @error(err) if err
+#           @error(err, source) if err
 #           callback()
       else
         callback()
     catch err
-      @error err
+      @error err, source
       callback()
 
 module.exports = JadeFilesCompiler

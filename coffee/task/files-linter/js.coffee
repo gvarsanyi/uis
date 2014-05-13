@@ -12,9 +12,9 @@ class JsFilesLinter extends FilesLinter
       (worker = jslint.load 'latest') src
 
       for msg in worker.errors
-        @warning msg
+        @warning msg, source
     catch err
-      @error err
+      @error err, source
 
     callback()
 

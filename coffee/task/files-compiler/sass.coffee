@@ -15,13 +15,13 @@ class SassFilesCompiler extends FilesCompiler
 
     finish = (err) =>
       compilers += 1
-      @error(err) if err
+      @error(err, source) if err
       if compilers is 2 or not source.options.rubysass
         if stats.includedFiles?.length
           # TODO: per-source watchers
           callback()
 #           @watch stats.includedFiles, (err) =>
-#             @error(err) if err
+#             @error(err, source) if err
 #             callback()
         else
           callback()
@@ -36,7 +36,7 @@ class SassFilesCompiler extends FilesCompiler
           source[@sourceProperty] = stdout unless err
           finish err
     catch err
-      @error err
+      @error err, source
       callback()
 
     try

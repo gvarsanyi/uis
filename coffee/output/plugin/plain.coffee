@@ -79,7 +79,7 @@ module.exports.update = (update) ->
   error_state = 'warning' if warning
   error_state = 'error' if error
 
-  if done or error or warning
+  if done or error or warning # or true
     msg = ''
     if error
       msg += ': ' + error.length + ' error' + if error.length > 1 then 's' else ''
@@ -98,7 +98,4 @@ module.exports.update = (update) ->
 
 
 module.exports.note = (note) ->
-  for name in ['css', 'html', 'js']
-    if note[name]
-      for msg in note[name] or []
-        console.log '[' + name + ']', msg
+  console.log '[' + note.repo + ']', note.note

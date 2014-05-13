@@ -40,16 +40,16 @@ class Task
   done: =>
     (status = @status()) and status is @count()
 
-  error: (add) =>
+  error: (add, source) =>
     if add?
       @_error ?= []
-      @_error.push @wrapError add
+      @_error.push @wrapError add, source
     @_error
 
-  warning: (add) =>
+  warning: (add, source) =>
     if add?
       @_warning ?= []
-      @_warning.push @wrapError add
+      @_warning.push @wrapError add, source
     @_warning
 
   result: (value) =>
@@ -113,7 +113,7 @@ class Task
       i += 1
     i
 
-  work: (callback) =>  # should be overridden by all classes inherited from Task
+  work: =>  # should be overridden by all classes inherited from Task
     throw new Error 'Task.work() is not implemented for ' + @constructor.name
 
   wrapError: (inf, source) =>
@@ -122,14 +122,18 @@ class Task
     description: String(inf).split(path.resolve(process.cwd()) + '/').join('').trim()
 
   preWork: (work_args, work) =>
-    callback = fn if typeof (fn = work_args[0]) is 'function'
+    if typeof work_args[0] is 'object' and work_args[0].path
+      node = work_args[0]
+      callback = fn if typeof (fn = work_args[1]) is 'function'
+    else
+      callback = fn if typeof (fn = work_args[1]) is 'function'
     @clear()
     @status 0
 
     if @condition? and not @condition()
       @count 0
       messenger.sendStat @name
-      return @followUp?()
+      return @followUp? node
 
     messenger.sendStat @name
 
@@ -147,7 +151,7 @@ class Task
 
       messenger.sendStat @name
 
-      @followUp?()
+      @followUp?(node) unless @error()
 
     work post_work
 

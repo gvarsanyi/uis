@@ -5,10 +5,12 @@ class FilesCompiler extends FilesTask
   name:           'filesCompiler'
   sourceProperty: 'compiled'
 
-  followUp: =>
-    @source.tasks.concatenator?.work() unless @source.name is 'js'
-    @source.tasks.filesDeployer?.work()
-    @source.tasks.filesMinifier?.work()
+  followUp: (node) =>
+    @source.tasks.concatenator?.work node
+    @source.tasks.filesDeployer?.work node
+    @source.tasks.filesMinifier?.work node
+    @source.tasks.filesLinter?.work node
+    @source.tasks.filesCompiledLinter?.work node
 
   fileCondition: (source) ->
     !!source.compilable

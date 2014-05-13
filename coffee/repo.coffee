@@ -30,23 +30,23 @@ class Repo
     @watch()
 
   fileUpdate: (event, file, force_reload) =>
-    # TODO fix per file wevents
-#     short_file = =>
-#       if file.substr(0, @projectPath.length) is @projectPath
-#         return file.substr @projectPath.length + 1
-#       file
-#
-#     if node = @sources[file] # changed/deleted
-#       file = @name + ':' + file
-#       node.tasks.filesLoader.work (err, changed) =>
-#         if changed or force_reload
-#           unless node.tasks.filesLoader.result()
-#             messenger.note 'emptied: ' + short_file file
-#           else
-#             messenger.note 'updating: ' + short_file file
-#             @work node
-#     else # new file
-#       messenger.note 'deleted: ' + short_file file
+    short_file = =>
+      if file.substr(0, @projectPath.length) is @projectPath
+        return file.substr @projectPath.length + 1
+      file
+
+    if node = @sources[file] # changed/deleted
+      messenger.note 'xx ' + short_file file
+      file = @name + ':' + file
+      @tasks.filesLoader.workFile node, (changed) =>
+        if changed or force_reload
+          unless node.data
+            messenger.note 'emptied: ' + short_file file
+          else
+            messenger.note 'updating: ' + short_file file
+            @tasks.filesLoader.followUp node
+    else # new file
+      messenger.note 'deleted: ' + short_file file
 
   work: (callback) =>
     @tasks.filesLoader.work()

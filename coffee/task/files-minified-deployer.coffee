@@ -28,14 +28,14 @@ class FilesMinifiedDeployer extends FilesTask
 
       mkdirp path.dirname(target), null, (err) =>
         if err
-          @error err
+          @error err, source
           callback()
 
         fs.writeFile target, source.minified, (err) =>
-          @error(err) if err
+          @error(err, source) if err
           callback()
     catch err
-      @error err
+      @error err, source
 
     callback()
 

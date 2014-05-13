@@ -9,21 +9,17 @@ class FilesLoader extends FilesTask
   name:           'filesLoader'
   sourceProperty: 'data'
 
-  followUp: =>
-    @source.tasks.filesCompiler.work()
-    @source.tasks.concatenator.work() if @source.name is 'js'
-    @source.tasks.filesLinter?.work()
-    @source.tasks.filesCompiledLinter?.work()
+  followUp: (node) =>
+    @source.tasks.filesCompiler.work node
 
   workFile: => @preWorkFile arguments, (source, callback) =>
     finish = (err, data) =>
-      @error(err) if err
+      @error(err, source) if err
 
       source[@sourceProperty] = data
 
       hash = md5 data or ''
-      if hash isnt source.hash or ''
-        changed = true
+      changed = hash isnt (source.hash or '')
       source.hash = hash
 
       callback changed

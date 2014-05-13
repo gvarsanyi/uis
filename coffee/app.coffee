@@ -30,4 +30,4 @@ for name in ['js', 'css', 'html']
           stats[msg.repo][msg.task] = msg.stat
           output.update msg
         when 'note'
-          output.note msg.note
+          output.note msg

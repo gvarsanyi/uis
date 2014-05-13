@@ -11,11 +11,11 @@ class FilesCoffeeCompiler extends FilesCompiler
 
       source[@sourceProperty] = coffee.compile source.data, bare: true
     catch err
-      @error err
+      @error err, source
 
     callback()
 
-  wrapError: (inf) =>
+  wrapError: (inf, source) =>
     # Example for inf
     # { location: {
     #     first_line: 4264,
@@ -32,8 +32,8 @@ class FilesCoffeeCompiler extends FilesCompiler
     (to = Number inf.location.last_line) and
     not isNaN(from) and not isNaN(to) and
     from >= to and from >= 0 and
-    (src = @source.tasks.loader.result()) and
-    (lines = src.split('\n')).length and
+    source.data and
+    (lines = source.data.split('\n')).length and
     lines.length > to
       data.line = (n for n in [from + 1 .. to + 1])
       data.line = data.line[0] if data.line.length is 1

@@ -28,14 +28,14 @@ class FilesDeployer extends FilesTask
 
       mkdirp path.dirname(target), null, (err) =>
         if err
-          @error err
+          @error err, source
           return callback()
 
         fs.writeFile target, source.data, (err) =>
-          @error(err) if err
+          @error(err, source) if err
           callback()
     catch err
-      @error err
+      @error err, source
       callback()
 
 module.exports = FilesDeployer

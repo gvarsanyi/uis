@@ -4,9 +4,9 @@ Task = require '../task'
 class Concatenator extends Task
   name: 'concatenator'
 
-  followUp: =>
-    @source.tasks.deployer.work()
-    @source.tasks.minifier.work()
+  followUp: (node) =>
+    @source.tasks.deployer.work node
+    @source.tasks.minifier.work node
 
   work: => @preWork arguments, (callback) =>
     try
