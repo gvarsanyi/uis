@@ -1,5 +1,6 @@
 Outblock = require '../outblock'
 ngroup   = require '../ngroup'
+stats    = require '../../stats'
 types    = require '../stat-types'
 
 console.log ''
@@ -60,22 +61,26 @@ print_block = (push_x, push_y, title, inf, prev_inf) ->
       .reset().write(ngroup inf.watched)
       .color([63, 63, 63]).write(' inc')
 
-  if inf.size
+  if title is 'test'
+    if inf.result?
+      outblock.pos(push_x, push_y + 2).color([160, 160, 160]).write(inf.result, 20).reset()
+  else if inf.size
     outblock
       .pos(push_x, push_y + 2).color([160, 160, 160]).write(ngroup inf.size)
       .color([63, 63, 63]).write(' b').reset()
-  else if inf.status is inf.count and not inf.error?.length and
-          title.indexOf('deploy') > -1 and inf.updatedAt
-    try
-      if inf.updatedAt > 1000000 and (t = new Date inf.updatedAt)
-        hm   = t.getHours() + ':' + (if (m = t.getMinutes()) > 9 then m else '0' + m)
-        sec  = ':' + if (s = t.getSeconds()) > 9 then s else '0' + s
-        tsec = '.' + Math.floor t.getMilliseconds() / 100
-        outblock
-          .pos(push_x, push_y + 2).color([63, 63, 63]).write('@ ')
-          .color([160, 160, 160]).write(hm)
-          .color([79, 79, 79]).write(sec)
-          .color([47, 47, 47]).write(tsec)
+# TODO: startedAt, finishedAt
+#   else if inf.status is inf.count and not inf.error?.length and
+#           title.indexOf('deploy') > -1 and inf.updatedAt
+#     try
+#       if inf.updatedAt > 1000000 and (t = new Date inf.updatedAt)
+#         hm   = t.getHours() + ':' + (if (m = t.getMinutes()) > 9 then m else '0' + m)
+#         sec  = ':' + if (s = t.getSeconds()) > 9 then s else '0' + s
+#         tsec = '.' + Math.floor t.getMilliseconds() / 100
+#         outblock
+#           .pos(push_x, push_y + 2).color([63, 63, 63]).write('@ ')
+#           .color([160, 160, 160]).write(hm)
+#           .color([79, 79, 79]).write(sec)
+#           .color([47, 47, 47]).write(tsec)
 
   outblock.reset()
 
@@ -83,11 +88,7 @@ shown      = {}
 head_shown = {}
 
 
-module.exports.stats = (stats) ->
-#   if stats.html?.minifiedDeployer?.error
-#     console.log stats.html.minifiedDeployer?.error
-#     process.exit 1
-
+module.exports.update = (update) ->
   new_sum = orig_sum = (name for name of shown).length
   for name of stats
     new_sum += 1 unless shown[name]
@@ -113,12 +114,11 @@ module.exports.stats = (stats) ->
 
       push_x = 15
       for type, inf of repo
-        print_block push_x, push_y, types[type], inf, prev_inf
+        print_block push_x, push_y, types[type] or type, inf, prev_inf
         push_x += 20
         prev_inf = inf
     push_y += 4
 
-module.exports.state = (state) ->
 
 module.exports.note = (note) ->
   for name in ['css', 'html', 'js', 'test']

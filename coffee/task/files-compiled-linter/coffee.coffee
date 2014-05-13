@@ -1,15 +1,13 @@
 coffeelint = require 'coffeelint'
 
-Linter = require '../linter'
+FilesCompiledLinter = require '../files-compiled-linter'
 
 
-class CoffeeLinter extends Linter
-  work: (callback) => @clear =>
-    @status 0
-
+class CoffeeFilesLinter extends FilesCompiledLinter
+  workFile: => @preWorkFile arguments, (source, callback) =>
     try
-      unless (src = @source.tasks.loader.result())?
-        throw new Error '[CoffeeLinter] Missing source'
+      unless (src = source.data)?
+        throw new Error '[CoffeeFilesLinter] Missing source: ' + source.path
 
       for msg in coffeelint.lint src
         if msg.level is 'error'
@@ -19,8 +17,7 @@ class CoffeeLinter extends Linter
     catch err
       @error err
 
-    @status 1
-    callback? err
+    callback()
 
   wrapError: (inf) =>
     # Example for inf
@@ -54,4 +51,4 @@ class CoffeeLinter extends Linter
 
     data
 
-module.exports = CoffeeLinter
+module.exports = CoffeeFilesLinter

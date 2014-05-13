@@ -1,36 +1,30 @@
-CoffeeFile     = require '../file/coffee'
-Deployer       = require '../task/deployer'
-JsConcatenator = require '../task/concatenator/js'
-JsFile         = require '../file/js'
-JsMinifier     = require '../task/minifier/js'
-Multi          = require '../task/multi'
-Repo           = require '../repo'
-Tester         = require '../task/tester'
-config         = require '../config'
-messenger      = require '../messenger'
+Concatenator        = require '../task/concatenator/js'
+CoffeeFile          = require '../file/coffee'
+CoffeeFilesCompiler = require '../task/files-compiler/coffee'
+CoffeeFilesLinter   = require '../task/files-compiled-linter/coffee'
+Deployer            = require '../task/deployer'
+JsFile              = require '../file/js'
+JsFilesLinter       = require '../task/files-linter/js'
+JsMinifier          = require '../task/minifier/js'
+MinifiedDeployer    = require '../task/minified-deployer'
+Repo                = require '../repo'
+Tester              = require '../task/tester'
+config              = require '../config'
+messenger           = require '../messenger'
 
 
 class JsRepo extends Repo
   extensions: {js: JsFile, coffee: CoffeeFile}
 
   getTasks: ->
-    tasks =
-      compiler:     new Multi @, 'compiler'
-      concatenator: new JsConcatenator @
-
-    if val = config[@name].deploy
-      tasks.deployer = new Deployer @, val
-
-    if val = config[@name].deployMinified
-      tasks.minifier         = new JsMinifier @
-      tasks.minifiedDeployer = new Deployer @, val, true
-
-    tasks.linter = new Multi @, 'linter'
-
-    if config[@name].test?.files
-      tasks.tester = new Tester @
-
-    tasks
+    filesCompiler:       new CoffeeFilesCompiler @
+    concatenator:        new Concatenator @
+    deployer:            new Deployer @
+    minifier:            new JsMinifier @
+    minifiedDeployer:    new MinifiedDeployer @
+    filesLinter:         new JsFilesLinter @
+    filesCompiledLinter: new CoffeeFilesLinter @
+    tester:              new Tester @
 
 module.exports = new JsRepo
 

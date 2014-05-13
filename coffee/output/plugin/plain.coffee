@@ -70,36 +70,31 @@ info_out = (status, inf) ->
     else
       console[output] obj_to_str status, block
 
-module.exports.stats = (stats) ->
+module.exports.update = (update) ->
+  {error, warning} = update.stat
 
-module.exports.state = (state) ->
-  push_y = 0
-  for name in ['css', 'html', 'js']
-    if state[name]
-      for type, inf of state[name]
-        {state, error, warning, remainingTasks} = inf
+  done = update.stat.status and update.stat.status is update.stat.count
+  error_state = 'start'
+  error_state = 'check' if done
+  error_state = 'warning' if warning
+  error_state = 'error' if error
 
-        error_state = if inf.error? then 'error' else if inf.warning? then 'warning' else if state then 'check' else 'start'
+  if done or error or warning
+    msg = ''
+    if error
+      msg += ': ' + error.length + ' error' + if error.length > 1 then 's' else ''
+    if warning?
+      msg += if msg then ', ' else ': '
+      msg += warning.length + ' warning' + if warning.length > 1 then 's' else ''
+#     msg += ' ' + JSON.stringify update
 
-        msg = ''
-        if state or error? or warning?
-          if error?
-            msg += ': ' + error.length + ' error' + if error.length > 1 then 's' else ''
-          if warning?
-            msg += if msg then ', ' else ': '
-            msg += warning.length + ' warning' + if warning.length > 1 then 's' else ''
+    print error_state, update.repo, types[update.task] or update.task, msg
 
-          print error_state, name, types[type], msg
+    if error?
+      info_out 'error', error
 
-          if error?
-            info_out 'error', error
-
-          if warning?
-            info_out 'warning', warning
-
-#         if remainingTasks?.length
-#           msg += ', ' if msg
-#           msg += 'remaining tasks: ' + (types[item] for item in remainingTasks).join ', '
+    if warning?
+      info_out 'warning', warning
 
 
 module.exports.note = (note) ->

@@ -6,27 +6,30 @@ messenger = require '../messenger'
 
 
 class Tester extends Task
-  watchedFileChanged: (event, file) =>
-    if file.substr(0, @source.projectPath.length) is @source.projectPath
-      file = file.substr @source.projectPath.length + 1
+  name: 'tester'
 
-    messenger.note 'updated: ' + file
-    @work =>
-      if config.output is 'fancy'
-        messenger.sendStats()
-      else
-        messenger.sendState 'tester', 1, @error(), @warning(), []
+  listeners: @
 
-  work: (callback) => @clear =>
-    @status 0
+    # TODO: per-file test
+#   watchedFileChanged: (event, file) =>
+#     if file.substr(0, @source.projectPath.length) is @source.projectPath
+#       file = file.substr @source.projectPath.length + 1
+#
+#     messenger.note 'updated: ' + file
+#     @work =>
+#       messenger.sendStat 'tester'
 
+  condition: =>
+    !!config[@source.name].test?.files
+
+  work: => @preWork arguments, (callback) =>
     finish = (err) =>
       process.stdout.write = orig_stdout if orig_stdout
       process.stderr.write = orig_stderr if orig_stdout
 
       for line, i in stdout
         if (index = line.indexOf 'PhantomJS 1.9.7 (Linux): Executed ') > -1
-          @result line.substr index + 24
+          result = line.substr index + 24
         else if line.substr(0, 6) is '    ✗ '
           @warning(warning) if warning
           warning =
@@ -43,9 +46,7 @@ class Tester extends Task
             warning = null
 
       @warning(warning) if warning
-      @error(err) if err
-      @status 1
-      callback? err
+      callback err, result
 
     try
       options =

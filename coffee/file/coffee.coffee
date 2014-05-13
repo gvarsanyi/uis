@@ -1,16 +1,7 @@
-CoffeeCompiler = require '../task/compiler/coffee'
-CoffeeLinter   = require '../task/linter/coffee'
-JsFile         = require './js'
-Loader         = require '../task/loader'
+JsFile = require './js'
 
 
 class CoffeeFile extends JsFile
-  constructor: (@repo, @path, @options) ->
-    @tasks =
-      loader:   new Loader @
-      compiler: new CoffeeCompiler @
-
-    unless @options.thirdParty or @options.testOnly
-      @tasks.linter = new CoffeeLinter @
+  compilable: true
 
 module.exports = CoffeeFile

@@ -1,18 +1,15 @@
 htmlminify = require 'html-minifier'
 
-Minifier = require '../minifier'
+FilesMinifier = require '../files-minifier'
 
 
-class HtmlMinifier extends Minifier
-  work: (callback) => @clear =>
-    @status 0
-
+class HtmlFilesMinifier extends FilesMinifier
+  workFile: => @preWorkFile arguments, (source, callback) =>
     try
-      unless (src = @source.tasks.compiler?.result())?
-        unless (src = @source.tasks.loader.result())?
-          throw new Error '[CssMinifier] Missing source: ' + @source.path
+      unless src = source[if @source.tasks.filesCompiler? then 'compiled' else 'data']
+        throw new Error '[HtmlFilesMinifier] Missing source: ' + source.path
 
-      @result htmlminify.minify src,
+      source[@sourceProperty] = htmlminify.minify src,
         removeComments:               true
         removeCommentsFromCDATA:      true
         removeCDATASectionsFromCDATA: true
@@ -24,7 +21,6 @@ class HtmlMinifier extends Minifier
     catch err
       @error err
 
-    @status 1
-    callback? err
+    callback()
 
-module.exports = HtmlMinifier
+module.exports = HtmlFilesMinifier

@@ -3,14 +3,13 @@
 child_process = require 'child_process'
 
 config = require './config'
+stats  = require './stats'
 
 
 unless config.output in ['fancy', 'plain']
   config.output = 'plain'
 output = require './output/plugin/' + config.output
 
-
-stats = {}
 
 for name in ['js', 'css', 'html']
   do (name) ->
@@ -25,9 +24,10 @@ for name in ['js', 'css', 'html']
       process.stderr.write data
 
     repo.on 'message', (msg) ->
-      if msg?.stats
-        output.stats msg.stats
-      if msg?.state
-        output.state msg.state
-      if msg?.note
-        output.note msg.note
+      switch msg?.type
+        when 'stat'
+          stats[msg.repo] ?= {}
+          stats[msg.repo][msg.task] = msg.stat
+          output.update msg
+        when 'note'
+          output.note msg.note

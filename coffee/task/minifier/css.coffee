@@ -4,19 +4,14 @@ Minifier = require '../minifier'
 
 
 class CssMinifier extends Minifier
-  work: (callback) => @clear =>
-    @status 0
-
+  work: => @preWork arguments, (callback) =>
     try
       unless (src = @source.tasks.concatenator.result())?
-        throw new Error '[CssMinifier] Missing source: ' + @source.path
+        throw new Error '[CssMinifier] Missing source'
 
       minifier = new cssminify keepSpecialComments: 0
-      @result minifier.minify src or ''
+      callback null, minifier.minify src or ''
     catch err
-      @error err
-
-    @status 1
-    callback? err
+      callback err
 
 module.exports = CssMinifier

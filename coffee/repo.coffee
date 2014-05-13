@@ -2,9 +2,9 @@ path = require 'path'
 
 gaze = require 'gaze'
 
-Multi     = require './task/multi'
-config    = require './config'
-messenger = require './messenger'
+FilesLoader = require './task/files-loader'
+config      = require './config'
+messenger   = require './messenger'
 
 
 class Repo
@@ -21,7 +21,7 @@ class Repo
       unless typeof item is 'object'
         @dirs[i] = repo: item
 
-    @tasks = loader: new Multi @, 'loader'
+    @tasks = filesLoader: new FilesLoader @
     for name, task of @getTasks?() or {}
       @tasks[name] = task
 
@@ -30,78 +30,38 @@ class Repo
     @watch()
 
   fileUpdate: (event, file, force_reload) =>
-    short_file = =>
-      if file.substr(0, @projectPath.length) is @projectPath
-        return file.substr @projectPath.length + 1
-      file
+    # TODO fix per file wevents
+#     short_file = =>
+#       if file.substr(0, @projectPath.length) is @projectPath
+#         return file.substr @projectPath.length + 1
+#       file
+#
+#     if node = @sources[file] # changed/deleted
+#       file = @name + ':' + file
+#       node.tasks.filesLoader.work (err, changed) =>
+#         if changed or force_reload
+#           unless node.tasks.filesLoader.result()
+#             messenger.note 'emptied: ' + short_file file
+#           else
+#             messenger.note 'updating: ' + short_file file
+#             @work node
+#     else # new file
+#       messenger.note 'deleted: ' + short_file file
 
-    if node = @sources[file] # changed/deleted
-      file = @name + ':' + file
-      node.tasks.loader.work (err, changed) =>
-        if changed or force_reload
-          unless node.tasks.loader.result()
-            messenger.note 'emptied: ' + short_file file
-          else
-            messenger.note 'updating: ' + short_file file
-            @work node, ->
-#               messenger.note 'updated: ' + short_file file
-    else # new file
-      messenger.note 'deleted: ' + short_file file
-
-  stats: =>
-    inf = {}
-    for type, worker of @tasks
-      inf[type] ?= {}
-      for stat in ['count', 'error', 'warning', 'size', 'status', 'updatedAt',
-                   'watched']
-        inf[type][stat] = val if val = worker[stat]()
-    inf
-
-  work: (node, callback) =>
-    unless callback?
-      callback = node
-      node = undefined
-
-    round = (err) =>
-      if tasks.length
-        unit = tasks.shift()
-
-        if config.output is 'fancy'
-          messenger.sendStats()
-        else
-          messenger.sendState unit.name, 0
-
-        if node and unit.task.constructor.name is 'Multi'
-          task = node.tasks[unit.name]
-        else
-          task = unit.task
-        task.work =>
-          if err = task.error()
-            if config.output is 'fancy'
-              messenger.sendStats()
-            else
-              messenger.sendState unit.name, 1, err, task.warning()
-
-            return setTimeout (callback or ->), 1
-
-          if config.output is 'fancy'
-            messenger.sendStats()
-          else
-            messenger.sendState unit.name, 1, null, task.warning(),
-                                (item.name for item in tasks)
-
-          setTimeout round, 1
-      else
-        if callback?
-          setTimeout callback, 1
-
-    tasks = for name, task of @tasks when name isnt 'loader' or not node
-      if node and task.constructor.name is 'Multi'
-        node.tasks[name].clear()
-      else
-        task.clear()
-      {name, task}
-    round()
+  work: (callback) =>
+    @tasks.filesLoader.work()
+#   work: (node, callback) =>
+#     if typeof node is 'function'
+#       callback = node
+#       node = undefined
+#
+#     for name, task of @tasks when name isnt 'filesLoader' or not node
+#       # TODO per-file todo
+# #       if node and task.constructor.name is 'Multi'
+# #         node.tasks[name].work()
+# #       else
+# #         task.work()
+#       task.work()
 
   watch: =>
     instanciate_file = (file, options) =>

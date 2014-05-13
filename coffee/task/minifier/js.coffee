@@ -4,18 +4,13 @@ Minifier = require '../minifier'
 
 
 class JsMinifier extends Minifier
-  work: (callback) => @clear =>
-    @status 0
-
+  work: => @preWork arguments, (callback) =>
     try
       unless (src = @source.tasks.concatenator.result())?
-        throw new Error '[CssMinifier] Missing source: ' + @source.path
+        throw new Error '[JsMinifier] Missing source'
 
-      @result jsminify.minify(src, fromString: true).code
+      callback null, jsminify.minify(src, fromString: true).code
     catch err
-      @error err
-
-    @status 1
-    callback? err
+      callback err
 
 module.exports = JsMinifier

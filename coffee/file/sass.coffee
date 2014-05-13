@@ -1,12 +1,7 @@
-CssFile      = require './css'
-Loader       = require '../task/loader'
-SassCompiler = require '../task/compiler/sass'
+CssFile = require './css'
 
 
 class SassFile extends CssFile
-  constructor: (@repo, @path, @options) ->
-    @tasks =
-      loader:   new Loader @
-      compiler: new SassCompiler @
+  compilable: true
 
 module.exports = SassFile

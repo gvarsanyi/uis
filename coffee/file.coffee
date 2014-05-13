@@ -2,6 +2,8 @@ path = require 'path'
 
 
 class File
+  constructor: (@repo, @path, @options) ->
+
   shortPath: ->
     unless @_shortPath
       @_shortPath = @path

@@ -2,26 +2,28 @@ Task = require '../task'
 
 
 class Concatenator extends Task
-  work: (callback) => @clear =>
-    @status 0
+  name: 'concatenator'
 
+  followUp: =>
+    @source.tasks.deployer.work()
+    @source.tasks.minifier.work()
+
+  work: => @preWork arguments, (callback) =>
     try
       concatenated = ''
       for path, source of @source.sources
-        if source.tasks.compiler?
-          src = source.tasks.compiler.result()
+        if source.compilable
+          src = source.compiled
         else
-          src = source.tasks.loader.result()
+          src = source.data
 
         unless src?
           throw new Error '[Concatenator] Missing source: ' + source.path
 
         concatenated += src + '\n\n'
-      @result concatenated
-    catch err
-      @error err
 
-    @status 1
-    callback? err
+      callback null, concatenated
+    catch err
+      callback err
 
 module.exports = Concatenator

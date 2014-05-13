@@ -1,25 +1,19 @@
 coffee = require 'coffee-script'
 
-Compiler = require '../compiler'
+FilesCompiler = require '../files-compiler'
 
 
-class CoffeeCompiler extends Compiler
-  compileSrc: (src) ->
-    coffee.compile src, bare: true
-
-  work: (callback) => @clear =>
-    @status 0
-
+class FilesCoffeeCompiler extends FilesCompiler
+  workFile: => @preWorkFile arguments, (source, callback) =>
     try
-      unless (src = @source.tasks.loader.result())?
-        throw new Error '[CoffeeCompiler] Missing source'
+      unless source.data?
+        throw new Error '[FilesCoffeeCompiler] Missing source: ' + source.path
 
-      @result coffee.compile src, bare: true
+      source[@sourceProperty] = coffee.compile source.data, bare: true
     catch err
       @error err
 
-    @status 1
-    callback? err
+    callback()
 
   wrapError: (inf) =>
     # Example for inf
@@ -51,4 +45,4 @@ class CoffeeCompiler extends Compiler
 
     data
 
-module.exports = CoffeeCompiler
+module.exports = FilesCoffeeCompiler

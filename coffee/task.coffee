@@ -4,6 +4,8 @@ path = require 'path'
 gaze = require 'gaze'
 md5  = require 'MD5'
 
+messenger = require './messenger'
+
 
 class WatchedFile
   constructor: (@compiler, @path) ->
@@ -21,14 +23,22 @@ class Task
   constructor: (@source) ->
     @_watched = {}
 
-  clear: (callback) ->
+  clear: (callback) =>
     delete @_error
     delete @_warning
     delete @_result
     delete @_status
+    delete @_startedAt
+    delete @_finishedAt
+    @_count = 1
     callback?()
 
-  count: -> 1 # for compatibility with MultifileTask
+  count: (n) =>
+    @_count = n if n?
+    @_count
+
+  done: =>
+    (status = @status()) and status is @count()
 
   error: (add) =>
     if add?
@@ -54,11 +64,17 @@ class Task
   status: (value) =>
     if value?
       @_status = value
-      @_updatedAt = new Date().getTime()
+      if value is 0
+        @_startedAt = Date.now()
+      else if value is @count()
+        @_finishedAt = Date.now()
     @_status
 
-  updatedAt: =>
-    @_updatedAt ?= new Date().getTime()
+  startedAt: =>
+    @_startedAt
+
+  finishedAt: =>
+    @_finishedAt
 
   watch: (watchables=[], callback) =>
     try
@@ -100,9 +116,39 @@ class Task
   work: (callback) =>  # should be overridden by all classes inherited from Task
     throw new Error 'Task.work() is not implemented for ' + @constructor.name
 
-  wrapError: (inf) =>
-    file:        @source?.shortPath?() or (@source?.name + ' repo')
+  wrapError: (inf, source) =>
+    file:        source?.shortPath?() or (@source?.name + ' repo')
+    title:       @name
     description: String(inf).split(path.resolve(process.cwd()) + '/').join('').trim()
 
+  preWork: (work_args, work) =>
+    callback = fn if typeof (fn = work_args[0]) is 'function'
+    @clear()
+    @status 0
+
+    if @condition? and not @condition()
+      @count 0
+      messenger.sendStat @name
+      return @followUp?()
+
+    messenger.sendStat @name
+
+    post_work = (err, result, pass_back...) =>
+      if err
+        @error err
+      if result
+        @result result
+      @status 1
+
+      if pass_back?.length
+        callback? @error, pass_back...
+      else
+        callback? @error
+
+      messenger.sendStat @name
+
+      @followUp?()
+
+    work post_work
 
 module.exports = Task
