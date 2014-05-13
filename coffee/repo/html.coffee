@@ -1,5 +1,5 @@
 FilesDeployer         = require '../task/files-deployer'
-FilesMinifiedDeployer = require '../task/files-deployer'
+FilesMinifiedDeployer = require '../task/files-minified-deployer'
 HtmlFile              = require '../file/html'
 HtmlFilesMinifier     = require '../task/files-minifier/html'
 JadeFilesCompiler     = require '../task/files-compiler/jade'

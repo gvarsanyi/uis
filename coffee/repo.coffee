@@ -1,6 +1,7 @@
 path = require 'path'
 
 gaze = require 'gaze'
+glob = require 'glob'
 
 FilesLoader = require './task/files-loader'
 config      = require './config'
@@ -29,39 +30,32 @@ class Repo
 
     @watch()
 
-  fileUpdate: (event, file, force_reload) =>
-    short_file = =>
-      if file.substr(0, @projectPath.length) is @projectPath
-        return file.substr @projectPath.length + 1
-      file
+  checkAllTasksFinished: =>
+    for name, task of @tasks
+      return if not task.done() or not task.status()?
+    unless config.singleRun
+      messenger.note 'done'
 
+  fileUpdate: (event, file, force_reload) =>
     if node = @sources[file] # changed/deleted
-      messenger.note 'xx ' + short_file file
-      file = @name + ':' + file
       @tasks.filesLoader.workFile node, (changed) =>
-        if changed or force_reload
+        if (changed or force_reload) and not @tasks.filesLoader.error()
           unless node.data
-            messenger.note 'emptied: ' + short_file file
+            messenger.note 'emptied: ' + @shortFile file
           else
-            messenger.note 'updating: ' + short_file file
-            @tasks.filesLoader.followUp node
+            messenger.note 'updating: ' + @shortFile file
+            @tasks.filesLoader.followUp? node
+            @checkAllTasksFinished()
     else # new file
-      messenger.note 'deleted: ' + short_file file
+      messenger.note 'deleted: ' + @shortFile file
+
+  shortFile: (file_path) =>
+    if file_path.substr(0, @projectPath.length) is @projectPath
+      return file_path.substr @projectPath.length + 1
+    file_path
 
   work: (callback) =>
     @tasks.filesLoader.work()
-#   work: (node, callback) =>
-#     if typeof node is 'function'
-#       callback = node
-#       node = undefined
-#
-#     for name, task of @tasks when name isnt 'filesLoader' or not node
-#       # TODO per-file todo
-# #       if node and task.constructor.name is 'Multi'
-# #         node.tasks[name].work()
-# #       else
-# #         task.work()
-#       task.work()
 
   watch: =>
     instanciate_file = (file, options) =>
@@ -72,15 +66,21 @@ class Repo
     update = (event, file) =>
       @fileUpdate event, file
 
+    upsert_file = (node, options) =>
+      if @sources[node]
+        for k, v of options
+          @sources[node].options[k] = v
+      else if not @sources[node] and inst = instanciate_file node, options
+        @sources[node] = inst
+        @pathes.push node
+
     watched = (tree, options) =>
       add_nodes = (tree) =>
         for full_path, node of tree
           if typeof node is 'object'
             add_nodes node
           else if '/' isnt node.substr node.length - 1
-            if not @sources[node] and inst = instanciate_file node, options
-              @sources[node] = inst
-              @pathes.push node
+            upsert_file node, options
 
         null
       add_nodes tree
@@ -114,11 +114,25 @@ class Repo
         else unless typeof config[@name].test.files is 'object'
           config[@name].test.files = [config[@name].test.files]
 
-        watch = new gaze
-        watch.on 'ready', (watcher) ->
-          watched watcher.watched(), options
-        watch.on 'all', update
-        watch.add dir.repo
+        if config.singleRun
+          dir.repo = [dir.repo] unless typeof dir.repo is 'object'
+          pattern_count = dir.repo.length
+          pattern_done = 0
+          for pattern in dir.repo
+            unless pattern[0] is '/'
+              pattern = process.cwd() + '/' + pattern
+            glob pattern, (err, files) =>
+              for file in files
+                upsert_file file, options
+              pattern_done += 1
+              if pattern_count is pattern_done
+                watch_dir()
+        else
+          watch = new gaze
+          watch.on 'ready', (watcher) ->
+            watched watcher.watched(), options
+          watch.on 'all', update
+          watch.add dir.repo
 
     watch_dir()
 

@@ -17,8 +17,9 @@ class FilesTask extends Task
       work_file_done = =>
         messenger.sendStat @name
         @followUp?(node) unless @error()
-      @workFile node, work_file_done, true
-      return
+        @source.checkAllTasksFinished()
+
+      return @workFile node, work_file_done, true
 
     sources = []
     for path, source of @source.sources
@@ -32,7 +33,8 @@ class FilesTask extends Task
     messenger.sendStat @name
     unless count
       callback?()
-      @followUp? node
+      @followUp?(node) unless @error()
+      return @source.checkAllTasksFinished()
 
     finished_file = =>
       done += 1
@@ -40,6 +42,7 @@ class FilesTask extends Task
         callback? @error()
         messenger.sendStat @name
         @followUp?(node) unless @error()
+        @source.checkAllTasksFinished()
 
     for source in sources
       delete source[@sourceProperty] if @sourceProperty?
@@ -49,6 +52,10 @@ class FilesTask extends Task
   preWorkFile: (args, work_file) =>
     source   = args[0]
     callback = args[1]
+
+    for underscored in ['_error', '_warning']
+      if source[underscored]?
+        delete source[underscored][@name]
 
     unless not @fileCondition? or @fileCondition source
       return callback()

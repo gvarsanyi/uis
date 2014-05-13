@@ -30,6 +30,12 @@ class Task
     delete @_status
     delete @_startedAt
     delete @_finishedAt
+
+    for file_path, source of @source.sources
+      for underscored in ['_error', '_warning']
+        if source[underscored]?
+          delete source[underscored][@name]
+
     @_count = 1
     callback?()
 
@@ -40,17 +46,31 @@ class Task
   done: =>
     (status = @status()) and status is @count()
 
-  error: (add, source) =>
+  _issue: (type, add, source) =>
+    underscored = '_' + type
+
     if add?
-      @_error ?= []
-      @_error.push @wrapError add, source
-    @_error
+      if source
+        source[underscored] ?= {}
+        source[underscored][@name] ?= []
+        source[underscored][@name].push @wrapError add, source
+      else
+        @[underscored] ?= []
+        @[underscored].push @wrapError add
+
+    list = (item for item in @[underscored] or [])
+    for file_path, source of @source.sources
+      if source[underscored]?[@name]?.length
+        list.push(item) for item in source[underscored][@name] or []
+
+    return null unless list.length
+    list
+
+  error: (add, source) =>
+    @_issue 'error', add, source
 
   warning: (add, source) =>
-    if add?
-      @_warning ?= []
-      @_warning.push @wrapError add, source
-    @_warning
+    @_issue 'warning', add, source
 
   result: (value) =>
     @_result = value if value?
@@ -76,7 +96,11 @@ class Task
   finishedAt: =>
     @_finishedAt
 
-  watch: (watchables=[], callback) =>
+  watch: (watchables=[], source, callback) =>
+    if typeof source is 'function'
+      callback = source
+      source = undefined
+
     try
       for k of @_watched
         delete @_watched[k]
@@ -85,7 +109,8 @@ class Task
       for watchable in watchables
         @_watched[watchable] = new WatchedFile @, watchable
 
-      updated = @watchedFileChanged
+      updated = (event, file) =>
+        @watchedFileChanged event, file, source
 
       gaze_error = null
       if watchables.length
@@ -100,11 +125,20 @@ class Task
         @_watching = true
       else
         delete @_gaze
+        callback?()
     catch err
       callback? err
 
-  watchedFileChanged: (event, file) =>
-    @source.repo.fileUpdate 'changed', @source.path, true
+  watchedFileChanged: (event, file, source) =>
+    if source and @source.sources[source.path]
+      messenger.note 'changed: ' + @source.shortFile(source.path) +
+                     ' (' + @source.shortFile(file) + ')'
+      @workFile source, =>
+        @followUp?(source) unless @error()
+        @checkAllTasksFinished()
+    else
+      messenger.note 'changed: ' + @source.shortFile file
+      @work()
 
   watched: =>
     i = null
@@ -133,7 +167,8 @@ class Task
     if @condition? and not @condition()
       @count 0
       messenger.sendStat @name
-      return @followUp? node
+      @followUp?(node) unless @error()
+      return @source.checkAllTasksFinished()
 
     messenger.sendStat @name
 
@@ -152,6 +187,7 @@ class Task
       messenger.sendStat @name
 
       @followUp?(node) unless @error()
+      @source.checkAllTasksFinished()
 
     work post_work
 

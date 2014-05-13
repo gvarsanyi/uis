@@ -78,8 +78,9 @@ class Tester extends Task
       karma.server.start options, (exit_code) =>
         finish()
 
-      @watch config.js.test.files, (err) =>
-        @error(err) if err
+      unless config.singleRun
+        @watch config.js.test.files, (err) =>
+          @error(err) if err
     catch err
       finish err
 

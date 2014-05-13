@@ -1,6 +1,7 @@
-jade = require 'jade'
+jade          = require 'jade'
 
 FilesCompiler = require '../files-compiler'
+config        = require '../../config'
 
 
 require '../../jade-includes-patch'
@@ -17,14 +18,12 @@ class JadeFilesCompiler extends FilesCompiler
         pretty:   true
         includes: (includes = [])
 
-      if includes.length
-        # TODO: per-source watchers
+      if config.singleRun
         callback()
-#         @watch includes, (err) =>
-#           @error(err, source) if err
-#           callback()
       else
-        callback()
+        @watch includes, source, (err) =>
+          @error(err, source) if err
+          callback()
     catch err
       @error err, source
       callback()

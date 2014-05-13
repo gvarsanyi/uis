@@ -2,9 +2,11 @@ child_process = require 'child_process'
 fs            = require 'fs'
 path          = require 'path'
 
-sass = require 'node-sass'
+sass          = require 'node-sass'
 
 FilesCompiler = require '../files-compiler'
+config        = require '../../config'
+messenger     = require '../../messenger'
 
 
 class SassFilesCompiler extends FilesCompiler
@@ -17,14 +19,12 @@ class SassFilesCompiler extends FilesCompiler
       compilers += 1
       @error(err, source) if err
       if compilers is 2 or not source.options.rubysass
-        if stats.includedFiles?.length
-          # TODO: per-source watchers
+        if config.singleRun
           callback()
-#           @watch stats.includedFiles, (err) =>
-#             @error(err, source) if err
-#             callback()
         else
-          callback()
+          @watch stats.includedFiles, source, (err) =>
+            @error(err, source) if err
+            callback()
 
     try
       unless source.data?
@@ -40,6 +40,9 @@ class SassFilesCompiler extends FilesCompiler
       callback()
 
     try
+      if config.singleRun and source.options.rubysass
+        return finish() # no watch required for single run
+
       node_sass_error = (err) =>
         unless stats.includedFiles?.length
           file = String(err).split(':')[0]

@@ -10,7 +10,7 @@ config = require '../config'
 class MinifiedDeployer extends Task
   name: 'minifiedDeployer'
 
-  followUp: =>
+  followUp: (node) =>
     @source.tasks.tester?.work()
 
   condition: =>
