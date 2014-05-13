@@ -3,7 +3,7 @@
     "default": {
       "output": "plain",
       "watch": false,
-      "singleRun": true,
+      "singleRun": false,
       "css": {
         "deploy": ".deploy/site.css",
         "deployMinified": ".deploy/site.min.css",
