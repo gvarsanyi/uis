@@ -5,7 +5,6 @@ class Concatenator extends Task
   name: 'concatenator'
 
   followUp: (node) =>
-    @source.tasks.deployer.work node
     @source.tasks.minifier.work node
 
   work: => @preWork arguments, (callback) =>

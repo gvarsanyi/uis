@@ -13,15 +13,11 @@
           "target": "http://localhost:9999",
           "pattern": "/dashboard-calendar-ui/api/*"
         },
-        "reload": {
-          "css": "deployMinified",
-          "html": "deploy",
-          "js": "deployMinified"
-        }
+        "reload": true
       },
       "css": {
         "deploy": "static/site.css",
-        "-deployMinified": "static/site.css",
+        "minify": true,
         "rubysass": true,
         "repos": [
           {
@@ -33,15 +29,15 @@
         "repos": [
           {
             "repo": ["jade/*.jade", "jade/partials/**/*.jade"],
-            "basedir":   "jade/",
+            "basedir": "jade/",
             "deploy": "static/",
-            "-deployMinified": "static/"
+            "minify": false
           }
         ]
       },
       "js": {
         "deploy": "static/site.js",
-        "-deployMinified": "static/site.js",
+        "minify": true,
         "test": {
           "files": "test/**/*.coffee",
           "coverage": true

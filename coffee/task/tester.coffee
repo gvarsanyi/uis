@@ -48,7 +48,7 @@ class Tester extends Task
         autoWatch:     false
         browsers:      ['PhantomJS']
         colors:        false
-        files:         [config.js.deploy or config.js.deployMinified].concat config.js.test.files
+        files:         [config.js.deploy].concat config.js.test.files
         frameworks:    ['jasmine']
         logLevel:      'WARN'
         preprocessors: {}

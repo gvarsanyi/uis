@@ -35,6 +35,7 @@ for name in ['js', 'css', 'html']
         process.exit 0
 
     repo.on 'message', (msg) ->
+      service?.send msg
       switch msg?.type
         when 'stat'
           stats[msg.repo] ?= {}

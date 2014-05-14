@@ -2,7 +2,6 @@ CssFile           = require '../file/css'
 CssMinifier       = require '../task/minifier/css'
 Concatenator      = require '../task/concatenator'
 Deployer          = require '../task/deployer'
-MinifiedDeployer  = require '../task/minified-deployer'
 Repo              = require '../repo'
 SassFilesCompiler = require '../task/files-compiler/sass'
 SassFile          = require '../file/sass'
@@ -16,9 +15,8 @@ class CssRepo extends Repo
   getTasks: ->
     filesCompiler:    new SassFilesCompiler @
     concatenator:     new Concatenator @
-    deployer:         new Deployer @
     minifier:         new CssMinifier @
-    minifiedDeployer: new MinifiedDeployer @
+    deployer:         new Deployer @
 
 module.exports = new CssRepo
 

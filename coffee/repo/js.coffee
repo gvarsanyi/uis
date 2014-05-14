@@ -6,7 +6,6 @@ Deployer            = require '../task/deployer'
 JsFile              = require '../file/js'
 JsFilesLinter       = require '../task/files-linter/js'
 JsMinifier          = require '../task/minifier/js'
-MinifiedDeployer    = require '../task/minified-deployer'
 Repo                = require '../repo'
 Tester              = require '../task/tester'
 config              = require '../config'
@@ -19,9 +18,8 @@ class JsRepo extends Repo
   getTasks: ->
     filesCompiler:       new CoffeeFilesCompiler @
     concatenator:        new Concatenator @
-    deployer:            new Deployer @
     minifier:            new JsMinifier @
-    minifiedDeployer:    new MinifiedDeployer @
+    deployer:            new Deployer @
     filesLinter:         new JsFilesLinter @
     filesCompiledLinter: new CoffeeFilesLinter @
     tester:              new Tester @

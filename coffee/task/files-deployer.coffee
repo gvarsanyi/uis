@@ -14,8 +14,11 @@ class FilesDeployer extends FilesTask
 
   workFile: => @preWorkFile arguments, (source, callback) =>
     try
-      unless (src = source.compiled)?
+      if source.options.minify
+        src = source.minified
+      else unless (src = source.compiled)?
         src = source.data
+
       unless src?
         throw new Error '[FilesDeployer] Missing source: ' + source.path
       unless basedir = source.options.basedir

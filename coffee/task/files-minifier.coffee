@@ -6,9 +6,9 @@ class FilesMinifier extends FilesTask
   sourceProperty: 'minified'
 
   followUp: (node) =>
-    @source.tasks.filesMinifiedDeployer.work node
+    @source.tasks.filesDeployer.work node
 
   fileCondition: (source) ->
-    source.options.deployMinified and not source.options.testOnly
+    source.options.minify and not source.options.testOnly
 
 module.exports = FilesMinifier

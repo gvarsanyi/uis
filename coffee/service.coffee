@@ -1,21 +1,25 @@
 fs        = require 'fs'
 path      = require 'path'
 
+coffee    = require 'coffee-script'
 express   = require 'express'
 faye      = require 'faye'
 restify   = require 'restify'
 
 config    = require './config'
 messenger = require './messenger'
+stats     = require './stats'
 
 
 app    = express()
 bayeux = null
 server = null
 
-plugin = fs.readFileSync(__dirname + '/../node_modules/faye/browser/' +
-                         'faye-browser-min.js', encoding: 'utf8') + '\n\n' +
-         fs.readFileSync __dirname + '/../service-plugin.js', encoding: 'utf8'
+patch = fs.readFileSync(__dirname + '/../node_modules/faye/browser/' +
+                        'faye-browser.js', encoding: 'utf8') + '\n'
+patch = patch.replace '//@ sourceMappingURL=faye-browser-min.js.map', ''
+src = fs.readFileSync __dirname + '/../service-plugin.coffee', encoding: 'utf8'
+patch += coffee.compile src
 
 class Service
   name: 'web-service'
@@ -62,7 +66,7 @@ class Service
               res.type 'json'
               res.json 500, error: 'Server Error: loading ' + deploy
             else
-              res.send plugin + '\n\n' + data
+              res.send patch + '\n\n' + data
     patch_js(deploy) if deploy = config.js?.deploy
     patch_js(deploy) if deploy = config.js?.deployMinified
 
@@ -100,20 +104,29 @@ class Service
                 client[method] url, handler
 
     server = app.listen config.service.port, config.service.interface, ->
-      bayeux = new faye.NodeAdapter mount: '/bayeux'
+      bayeux = new faye.NodeAdapter {mount: '/bayeux', timeout: 45}
       bayeux.attach server
 
       bayeux.on 'subscribe', (client_id, channel) ->
         messenger.note '[client subscription] ' + client_id + ': ' + channel
+        if channel is '/stat'
+          @publish '/stat', stats
 
       messenger.note 'listening @ ' + config.service.interface + ':' +
                      config.service.port
 
-  publish: (channel, message) ->
-    messenger.note '[bayeux] ' + channel + ': ' + JSON.stringify message
-    bayeux_server.getClient().publish channel, message
+  incoming: (msg) =>
+    stats[msg.repo] ?= {}
+    stats[msg.repo][msg.task] = msg.stat
+    @publish '/update', msg
+
+  publish: (channel, message) =>
+#     messenger.note '[bayeux] ' + channel + ': ' + JSON.stringify message
+    bayeux.getClient().publish channel, message
 
 
 module.exports = new Service
+
+process.on 'message', module.exports.incoming
 
 messenger module.exports
