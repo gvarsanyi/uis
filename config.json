@@ -4,9 +4,24 @@
       "output": "plain",
       "watch": false,
       "singleRun": false,
+      "service": {
+        "interface": "",
+        "port": 9081,
+        "mount": "service/custom_logic.coffee",
+        "contents": "static",
+        "proxy": {
+          "target": "http://localhost:9999",
+          "pattern": "/dashboard-calendar-ui/api/*"
+        },
+        "reload": {
+          "css": "deployMinified",
+          "html": "deploy",
+          "js": "deployMinified"
+        }
+      },
       "css": {
-        "deploy": ".deploy/site.css",
-        "deployMinified": ".deploy/site.min.css",
+        "deploy": "static/site.css",
+        "-deployMinified": "static/site.css",
         "rubysass": true,
         "repos": [
           {
@@ -19,13 +34,14 @@
           {
             "repo": ["jade/*.jade", "jade/partials/**/*.jade"],
             "basedir":   "jade/",
-            "deploy": ".deploy/"
+            "deploy": "static/",
+            "-deployMinified": "static/"
           }
         ]
       },
       "js": {
-        "deploy": ".deploy/site.js",
-        "deployMinified": ".deploy/site.min.js",
+        "deploy": "static/site.js",
+        "-deployMinified": "static/site.js",
         "test": {
           "files": "test/**/*.coffee",
           "coverage": true

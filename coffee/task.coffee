@@ -44,7 +44,9 @@ class Task
     @_count
 
   done: =>
-    (status = @status()) and status is @count()
+    return true if (count = @count()) is 0
+    return (status is count) if status = @status()
+    false
 
   _issue: (type, add, source) =>
     underscored = '_' + type

@@ -14,7 +14,9 @@ class FilesDeployer extends FilesTask
 
   workFile: => @preWorkFile arguments, (source, callback) =>
     try
-      unless source.data?
+      unless (src = source.compiled)?
+        src = source.data
+      unless src?
         throw new Error '[FilesDeployer] Missing source: ' + source.path
       unless basedir = source.options.basedir
         throw new Error '[FilesDeployer] Missing basedir'
@@ -31,7 +33,7 @@ class FilesDeployer extends FilesTask
           @error err, source
           return callback()
 
-        fs.writeFile target, source.data, (err) =>
+        fs.writeFile target, src, (err) =>
           @error(err, source) if err
           callback()
     catch err

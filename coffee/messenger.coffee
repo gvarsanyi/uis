@@ -8,14 +8,15 @@ send = (inf) ->
   if repo and process.send
     process.send inf
   else if repo
-    throw new Error 'no channel for sending stat, ' + JSON.stringify inf
+    console.log JSON.stringify inf
   else
     throw new Error 'repo is not available, ' + JSON.stringify inf
 
 
 module.exports.sendStat = (task) ->
   stat = {}
-  for part in ['count', 'done', 'error', 'warning', 'size', 'status', 'startedAt', 'finishedAt', 'watched']
+  for part in ['count', 'done', 'error', 'warning', 'size', 'status',
+               'startedAt', 'finishedAt', 'watched']
     stat[part] = val if val = repo?.tasks[task]?[part]?()
 
   send

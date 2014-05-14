@@ -10,15 +10,6 @@ class Tester extends Task
 
   listeners: @
 
-    # TODO: per-file test
-#   watchedFileChanged: (event, file) =>
-#     if file.substr(0, @source.projectPath.length) is @source.projectPath
-#       file = file.substr @source.projectPath.length + 1
-#
-#     messenger.note 'updated: ' + file
-#     @work =>
-#       messenger.sendStat 'tester'
-
   condition: =>
     !!config[@source.name].test?.files
 

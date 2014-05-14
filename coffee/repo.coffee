@@ -31,10 +31,13 @@ class Repo
     @watch()
 
   checkAllTasksFinished: =>
-    for name, task of @tasks
-      return if not task.done() or not task.status()?
-    unless config.singleRun
-      messenger.note 'done'
+    if config.singleRun
+      for name, task of @tasks
+        return unless task.done()
+
+      setTimeout ->
+        process.exit 0
+      , 10
 
   fileUpdate: (event, file, force_reload) =>
     if node = @sources[file] # changed/deleted
