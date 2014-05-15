@@ -65,7 +65,243 @@ class Stats
         @ids[msg.repo][msg.task] = msg.id
     msgs
 
+
+class HUD
+  div     = null
+  repos   = {}
+  pending = false
+  ready   = false
+
+  constructor: ->
+    sticky = =>
+      reattach div
+      show()
+      setTimeout sticky, 33
+
+    loaded = =>
+      ready = true
+      @render() if pending
+      pending = false
+      sticky()
+
+    document.addEventListener 'DOMContentLoaded', loaded, false
+    window.addEventListener 'load', loaded, false
+
+  render: =>
+    unless ready
+      return pending = true
+
+    unless reattach div
+      div = create document.body,
+        position: 'fixed'
+        left:     0
+        bottom:   0
+        width:    '80%'
+
+    for repo, tasks of stats.data
+      unless pt = repos[repo]
+        pt = repos[repo] = {}
+        pt.div = create div,
+          background:    'linear-gradient(#122, #233, #122)'
+          border:        '#011 solid 1px'
+          borderBottom:  'solid 0px transparent'
+          borderRadius:  '17px 3px 3px 3px'
+          bottom:        0
+          display:       'inline-block'
+          margin:        '0 1%'
+          maxWidth:      '60%'
+          paddingRight:  '2px'
+          verticalAlign: 'bottom'
+
+        pt.title = create pt.div,
+          background:   'linear-gradient(#374, #394, #374)'
+          border:       '#122 solid 1px'
+          borderBottom: 'transparent 0 solid'
+          borderRadius: '17px 3px 17px 3px'
+          color:        '#f8f8f8'
+          display:      'inline-block'
+          fontSize:     '11px'
+          fontWeight:   'bold'
+          height:       '20px'
+          left:         '-2px'
+          lineHeight:   '18px'
+          marginRight:   '2px'
+          padding:      '0 9px'
+          textAlign:    'center'
+          top:          '-1px'
+        pt.title.innerHTML = repo.toUpperCase()
+
+        pt.head = create pt.div,
+          display:    'inline-block'
+          lineHeight: '18px'
+
+        pt.info = create pt.div
+        pt.error = create pt.info
+        pt.warn  = create pt.info
+
+      for task, stat of tasks when symbols[task] and stat.count
+        unless pt[task]
+          for t of symbols when pt[t]
+            remove pt[t]
+            delete pt[t]
+          break
+
+      repo_status = 'done'
+      pt.error.innerHTML = ''
+      pt.warn.innerHTML = ''
+      touched = {}
+      shown_issues = 0
+      hidden_issues = 0
+
+      add_info = (msg, status='warn') ->
+        if shown_issues > 2
+          hidden_issues += 1
+          return
+        shown_issues += 1
+        if touched[status]
+          create pt[status], null, 'br'
+        touched[status] = true
+        panel = create pt[status],
+          background:   '#233'
+          borderLeft:   colors[status][0] + ' groove 2px'
+          borderRadius: '3px'
+          display:      'inline-block'
+          margin:       '3px'
+          padding:      '3px'
+          width:        '100%'
+        if msg.title
+          node = create panel,
+            background: '#455'
+            fontWeight: 'bold'
+            padding:    '2px'
+            whiteSpace: 'normal'
+          node.innerHTML = msg.title
+        if msg.description
+          node = create panel,
+            padding:    '4px 2px'
+            whiteSpace: 'normal'
+          node.innerHTML = msg.description
+        if msg.file
+          node = create panel,
+            background:   '#344'
+            borderRadius: '3px'
+            color:        '#ddd'
+            fontWeight:   'bold'
+            padding:      '3px'
+          if msg.lines
+            style node,
+              border:       'solid 1px #455'
+              borderBottom: 'solid 1px #233'
+              borderRadius: '3px 3px 0 0'
+          node.innerHTML = msg.file
+          if msg.line and not msg.lines
+            if typeof msg.line is 'object'
+              node.innerHTML += ' @ lines ' + msg.line.join '-'
+            else
+              node.innerHTML += ' @ line ' + msg.line
+        if msg.lines
+          lines = create node,
+            background: '#455'
+            color:      '#eee'
+            left:       '-2px'
+            margin:     '5px 0 0 0'
+            position:   'absolute'
+          for n in [msg.lines.from .. msg.lines.to]
+            if msg.lines[n]?
+              line = create lines,
+                color:       '#eee'
+                fontFamily:  '"Lucida Console", Monaco, monospace'
+                padding:     '0 4px 0 2px'
+                textAlign:   'right'
+                whiteSpace:  'pre'
+              if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
+                style line, background: '#633'
+              line.innerHTML += n
+          line_chars = 0
+          for n in [msg.lines.from .. msg.lines.to]
+            if msg.lines[n]?
+              line_chars = Math.max line_chars, String(n).length
+          push = line_chars * 10 + 10
+          node = create panel,
+            background: '#455'
+            padding:    '2px 2px 2px ' + push + 'px'
+            overflow:   'auto'
+            zIndex:     2147483646
+          for n in [msg.lines.from .. msg.lines.to]
+            if (code = msg.lines[n])?
+              line = create node,
+                color:       '#eee'
+                fontFamily:  '"Lucida Console", Monaco, monospace'
+                whiteSpace:  'pre'
+              if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
+                style line, {fontWeight: 'bold', color: '#e66'}
+              code = code.split('\t').join '    '
+              cut = 0
+              for i in [code.length - 1 .. 0]
+                if code[i] is ' '
+                  cut += 1
+                else
+                  break
+              if cut
+                spc = '<span style="background: #766;">' + code.substr(code.length - cut) + '</span>'
+                code = code.substr(0, code.length - cut) + spc
+              line.innerHTML = code or ' '
+
+      issue_cue = []
+      for task of symbols
+        if (stat = tasks[task])?.count
+          unless pt[task]
+            pt[task] = create pt.head,
+              display:    'inline-block'
+              fontWeight: 'bold'
+              fontSize:   '11px'
+              lineHeight: '18px'
+              margin:     '0 4px'
+
+          out = symbols[task]
+
+          status = 'load'
+          status = 'done'  if stat.done
+
+          if n = stat.error?.length
+            status = 'error'
+            out += ':' + n
+            for info in stat.error
+              issue_cue.push {level: 'error', info}
+            if n = stat.warning?.length
+              out += '<span style="color: ' + colors['warn'][0] + ';">+' + n + '</span>'
+              for info in stat.warning
+                issue_cue.push {level: 'warn', info}
+          else if n = stat.warning?.length
+            status = 'warn'
+            out += ':' + n
+            for info in stat.warning
+              issue_cue.push {level: 'warn', info}
+          style pt[task], color: colors[status][0]
+
+          pt[task].innerHTML = out
+
+          repo_status = 'check' if repo_status is 'done'
+          unless stat.done or repo_status in ['warn', 'error']
+            repo_status = 'load'
+          if stat.warning?.length and repo_status isnt 'error'
+            repo_status = 'warn'
+          if stat.error?.length
+            repo_status = 'error'
+
+      issue_cue.reverse()
+      issue_cue.sort (a, b) ->
+        return 1 if a.level is 'warn'
+        -1
+
+#       for issue, i in issue_cue when i < 3
+#         add_info issue.info, issue.level
+      add_info(issue.info, issue.level) if issue = issue_cue[0]
+
+      style pt.title, background: 'linear-gradient(' + colors[repo_status].join(', ') + ')'
+
 bayeux     = new Faye.Client '/bayeux', retry: .5
+hud        = new HUD
 init       = true
 msg_div    = null
 msgs       = []
@@ -75,6 +311,12 @@ service_up = false
 show_id    = 0
 stats      = new Stats
 
+
+reattach = (node, parent=document.body) ->
+  if node and node.parentNode isnt parent
+    parent.appendChild node
+  node
+
 show = ->
   unless msgs.length
     if msg_div
@@ -82,13 +324,13 @@ show = ->
       msg_div = null
     return
 
-  unless msg_div
+  unless reattach msg_div
     msg_div = create document.body,
       position: 'fixed'
       right:    '5px'
       bottom:   '5px'
       overflow: 'hidden'
-      maxWidth: '19%'
+      maxWidth: '20%'
       zIndex:   2147483647
   return
 
@@ -190,8 +432,8 @@ create = (parent, styles, tag='DIV') ->
       border:        '0 solid transparent'
       borderRadius:  0
       color:         '#eee'
-      font:          '11px normal Arial,sans-serif'
-      lineHeight:    '11px'
+      font:          '13px normal Arial,sans-serif'
+      lineHeight:    '13px'
       margin:        0
       opacity:       1
       padding:       0
@@ -208,181 +450,6 @@ remove = (node) ->
 
 style = (node, styles) ->
   try node.style[k] = v for k, v of styles
-
-class HUD
-  div   = null
-  repos = {}
-
-  render: =>
-    unless div
-      div = create document.body,
-        position: 'fixed'
-        left:     0
-        bottom:   0
-        width:    '80%'
-
-    for repo, tasks of stats.data
-      unless pt = repos[repo]
-        pt = repos[repo] = {}
-        pt.div = create div,
-          background:    'linear-gradient(#122, #233, #122)'
-          border:        '#011 solid 1px'
-          borderBottom:  'solid 0px transparent'
-          borderRadius:  '17px 3px 3px 3px'
-          bottom:        0
-          display:       'inline-block'
-          margin:        '0 1%'
-          paddingRight:  '2px'
-          maxWidth:      '25%'
-          verticalAlign: 'bottom'
-
-        pt.title = create pt.div,
-          background:   'linear-gradient(#374, #394, #374)'
-          border:       '#122 solid 1px'
-          borderBottom: 'transparent 0 solid'
-          borderRadius: '17px 3px 17px 3px'
-          color:        '#f8f8f8'
-          display:      'inline-block'
-          fontWeight:   'bold'
-          height:       '20px'
-          left:         '-2px'
-          lineHeight:   '18px'
-          marginRight:   '2px'
-          padding:      '0 9px'
-          textAlign:    'center'
-          top:          '-1px'
-        pt.title.innerHTML = repo.toUpperCase()
-
-        pt.head = create pt.div,
-          display:    'inline-block'
-          lineHeight: '18px'
-          fontSize:   '11px'
-
-        pt.info = create pt.div
-        pt.error = create pt.info
-        pt.warn  = create pt.info
-
-      for task, stat of tasks when symbols[task] and stat.count
-        unless pt[task]
-          for t of symbols when pt[t]
-            remove pt[t]
-            delete pt[t]
-          break
-
-      repo_status = 'done'
-      pt.error.innerHTML = ''
-      pt.warn.innerHTML = ''
-      touched = {}
-      shown_issues = 0
-      hidden_issues = 0
-
-      add_info = (msg, status='warn') ->
-        if shown_issues > 2
-          hidden_issues += 1
-          return
-        shown_issues += 1
-        if touched[status]
-          create pt[status], null, 'br'
-        touched[status] = true
-        panel = create pt[status],
-          background:   '#233'
-          borderLeft:   colors[status][0] + ' groove 2px'
-          borderRadius: '3px'
-          display:      'inline-block'
-          margin:       '3px'
-          padding:      '3px'
-          width:        '100%'
-        if msg.title
-          div = create panel,
-            background: '#455'
-            fontWeight: 'bold'
-            padding:    '2px'
-            whiteSpace: 'normal'
-          div.innerHTML = msg.title
-        if msg.description
-          div = create panel,
-            padding:    '4px 2px'
-            whiteSpace: 'normal'
-          div.innerHTML = msg.description
-        if msg.file
-          div = create panel,
-            color:      '#ddd'
-            fontWeight: 'bold'
-            textAlign:  'right'
-            padding:    '2px'
-          div.innerHTML = msg.file
-          if msg.line
-            if typeof msg.line is 'object'
-              div.innerHTML += ' : ' + msg.line.join '-'
-            else
-              div.innerHTML += ' : ' + msg.line
-        if msg.lines
-          div = create panel,
-            background: '#455'
-            padding:    '2px'
-          for n in [msg.lines.from .. msg.lines.to]
-            if msg.lines[n]?
-              line = create div,
-                color:      '#eee'
-                fontFamily: '"Lucida Console", Monaco, monospace'
-                whiteSpace: 'pre'
-              out = ''
-              if String(n).length < String(msg.lines.to).length
-                out += ' '
-              if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
-                style line, {fontWeight: 'bold', background: '#633'}
-              line.innerHTML = out + n + ' ' + msg.lines[n]
-
-      issue_cue = []
-      for task of symbols
-        if (stat = tasks[task])?.count
-          unless pt[task]
-            pt[task] = create pt.head,
-              display:    'inline-block'
-              fontSize:   '9px'
-              fontWeight: 'bold'
-              lineHeight: '18px'
-              margin:     '0 4px'
-
-          out = symbols[task]
-
-          status = 'load'
-          status = 'done'  if stat.done
-
-          if n = stat.error?.length
-            status = 'error'
-            out += ':' + n
-            for info in stat.error
-              issue_cue.push {level: 'error', info}
-            if n = stat.warning?.length
-              out += '<span style="color: ' + colors['warn'][0] + ';">+' + n + '</span>'
-              for info in stat.warning
-                issue_cue.push {level: 'warn', info}
-          else if n = stat.warning?.length
-            status = 'warn'
-            out += ':' + n
-            for info in stat.warning
-              issue_cue.push {level: 'warn', info}
-          style pt[task], color: colors[status][0]
-
-          pt[task].innerHTML = out
-
-          repo_status = 'check' if repo_status is 'done'
-          unless stat.done or repo_status in ['warn', 'error']
-            repo_status = 'load'
-          if stat.warning?.length and repo_status isnt 'error'
-            repo_status = 'warn'
-          if stat.error?.length
-            repo_status = 'error'
-
-      issue_cue.sort (a, b) ->
-        return 1 if a.level is 'warn'
-        -1
-
-      for issue, i in issue_cue when i < 3
-        add_info issue.info, issue.level
-
-      style pt.title, background: 'linear-gradient(' + colors[repo_status].join(', ') + ')'
 
 hud = new HUD
 
@@ -423,3 +490,4 @@ subscription.then ->
     stats_subscription.cancel()
     for msg in stats.init msg.data, msg.ids
       process_msg msg
+    hud.render()

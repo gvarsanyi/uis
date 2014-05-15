@@ -2,7 +2,8 @@
   "name": "uis",
   "version": "0.0.0",
   "description": "",
-  "main": "uis.coffee",
+  "main": "js/app.js",
+  "bin": {"uis": "js/app.js"},
   "scripts": {
     "test": "make test"
   },

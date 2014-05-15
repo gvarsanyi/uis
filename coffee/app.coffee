@@ -11,7 +11,7 @@ unless config.output in ['fancy', 'plain']
 output = require './output/plugin/' + config.output
 
 
-ext        = if __dirname.indexOf('/coffee/') then '.coffee' else '.js'
+ext        = if __dirname.indexOf('/coffee/') > -1 then '.coffee' else '.js'
 repo_count = 0
 service    = null
 

@@ -39,17 +39,17 @@
     };
 
     FilesCoffeeCompiler.prototype.wrapError = function(inf, source) {
-      var data, from, i, line_literal, lines, n, to, _i, _len, _ref, _ref1;
+      var data, from, i, line_literal, lines, n, to, _i, _len, _ref, _ref1, _ref2, _ref3;
       data = FilesCoffeeCompiler.__super__.wrapError.apply(this, arguments);
       if (inf.constructor.name) {
         data.title = inf.constructor.name;
       }
       data.description = data.description.split('\n')[0].split(':').slice(4).join(':');
-      if ((from = Number((_ref = inf.location) != null ? _ref.first_line : void 0)) && (to = Number(inf.location.last_line)) && !isNaN(from) && !isNaN(to) && from >= to && from >= 0 && source.data && (lines = source.data.split('\n')).length && lines.length > to) {
+      if ((from = Number((_ref = inf.location) != null ? _ref.first_line : void 0)) && (to = Number(((_ref1 = inf.location) != null ? _ref1.last_line : void 0) || ((_ref2 = inf.location) != null ? _ref2.first_line : void 0))) && !isNaN(from) && !isNaN(to) && from >= to && from >= 0 && source.data && (lines = source.data.split('\n')).length && lines.length > to) {
         data.line = (function() {
-          var _i, _ref1, _ref2, _results;
+          var _i, _ref3, _ref4, _results;
           _results = [];
-          for (n = _i = _ref1 = from + 1, _ref2 = to + 1; _ref1 <= _ref2 ? _i <= _ref2 : _i >= _ref2; n = _ref1 <= _ref2 ? ++_i : --_i) {
+          for (n = _i = _ref3 = from + 1, _ref4 = to + 1; _ref3 <= _ref4 ? _i <= _ref4 : _i >= _ref4; n = _ref3 <= _ref4 ? ++_i : --_i) {
             _results.push(n);
           }
           return _results;
@@ -61,9 +61,9 @@
           from: Math.max(1, from - 2),
           to: Math.min(lines.length - 1, to * 1 + 4)
         };
-        _ref1 = lines.slice(data.lines.from - 1, +(data.lines.to - 1) + 1 || 9e9);
-        for (i = _i = 0, _len = _ref1.length; _i < _len; i = ++_i) {
-          line_literal = _ref1[i];
+        _ref3 = lines.slice(data.lines.from - 1, +(data.lines.to - 1) + 1 || 9e9);
+        for (i = _i = 0, _len = _ref3.length; _i < _len; i = ++_i) {
+          line_literal = _ref3[i];
           data.lines[i + data.lines.from] = line_literal;
         }
       }

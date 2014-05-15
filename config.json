@@ -6,7 +6,7 @@
       "singleRun": false,
       "service": {
         "interface": "",
-        "port": 9081,
+        "port": 9080,
         "mount": "service/custom_logic.coffee",
         "contents": "static",
         "proxy": {

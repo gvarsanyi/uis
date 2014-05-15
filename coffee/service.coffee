@@ -1,7 +1,6 @@
 fs        = require 'fs'
 path      = require 'path'
 
-coffee    = require 'coffee-script'
 express   = require 'express'
 faye      = require 'faye'
 restify   = require 'restify'
@@ -18,35 +17,33 @@ server = null
 patch = fs.readFileSync(__dirname + '/../node_modules/faye/browser/' +
                         'faye-browser.js', encoding: 'utf8') + '\n'
 patch = patch.replace '//@ sourceMappingURL=faye-browser-min.js.map', ''
-src = fs.readFileSync __dirname + '/../service-plugin.coffee', encoding: 'utf8'
-patch += coffee.compile src
+patch += fs.readFileSync __dirname + '/../resource/service-plugin.js', encoding: 'utf8'
 
-
-deployed = 0
-deploy_promise_pending = []
-
-once_deployed = (callback) ->
-  if deployed >= 3
-    return callback()
-  deploy_promise_pending.push callback
-
-deploy_event = (msg) ->
-  if msg.stat?.done and msg.task in ['deployer', 'filesDeployer']
-    deployed += 1
-    deploy_release()
-
-deploy_release = ->
-  if deployed is 3
-    messenger.note 'ready'
-    deployed += 1
-    while deploy_promise_pending.length
-      deploy_promise_pending.shift()()
-
-for repo_name in ['css', 'html', 'js']
-  unless config[repo_name]
-    deployed += 1
-
-deploy_release()
+# deployed = 0
+# deploy_promise_pending = []
+#
+# once_deployed = (callback) ->
+#   if deployed >= 3
+#     return callback()
+#   deploy_promise_pending.push callback
+#
+# deploy_event = (msg) ->
+#   if msg.stat?.done and msg.task in ['deployer', 'filesDeployer']
+#     deployed += 1
+#     deploy_release()
+#
+# deploy_release = ->
+#   if deployed is 3
+#     messenger.note 'ready'
+#     deployed += 1
+#     while deploy_promise_pending.length
+#       deploy_promise_pending.shift()()
+#
+# for repo_name in ['css', 'html', 'js']
+#   unless config[repo_name]
+#     deployed += 1
+#
+# deploy_release()
 
 
 class Service
@@ -58,8 +55,8 @@ class Service
 #                      if req.body? then ' ' + JSON.stringify(req.body) else ''
 #       next()
 
-    app.use (req, res, next) ->
-      once_deployed next
+#     app.use (req, res, next) ->
+#       once_deployed next
 
     process.on 'uncaughtException', (err) ->
       switch err.code
@@ -153,7 +150,7 @@ class Service
       msgs = stats.incoming msg
     for msg in msgs
       @publish '/update', msg
-      deploy_event msg
+#       deploy_event msg
 
   publish: (channel, message) =>
 #     messenger.note '[bayeux] ' + channel + ' : ' + JSON.stringify message

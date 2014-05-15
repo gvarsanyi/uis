@@ -172,7 +172,7 @@
             bottom: 0,
             display: 'inline-block',
             margin: '0 1%',
-            maxWidth: '40%',
+            maxWidth: '60%',
             paddingRight: '2px',
             verticalAlign: 'bottom'
           });

@@ -29,7 +29,7 @@ class FilesCoffeeCompiler extends FilesCompiler
     data.description = data.description.split('\n')[0].split(':')[4 ..].join ':'
 
     if (from = Number inf.location?.first_line) and
-    (to = Number inf.location.last_line) and
+    (to = Number inf.location?.last_line or inf.location?.first_line) and
     not isNaN(from) and not isNaN(to) and
     from >= to and from >= 0 and
     source.data and
