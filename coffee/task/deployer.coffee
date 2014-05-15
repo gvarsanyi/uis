@@ -10,6 +10,9 @@ config = require '../config'
 class Deployer extends Task
   name: 'deployer'
 
+  followUp: (node) =>
+    @source.tasks.tester?.work node
+
   work: => @preWork arguments, (callback) =>
     try
       if config[@source.name].minify

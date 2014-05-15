@@ -11,7 +11,7 @@ class Tester extends Task
   listeners: @
 
   condition: =>
-    !!config[@source.name].test?.files
+    !!config[@source.name].test?.files and not @source.tasks.minifier?.count() # TODO: fix minified and report
 
   size: =>
     @_result or 0
@@ -26,7 +26,7 @@ class Tester extends Task
           if result = Number line.substr(index + 25).split(' ')[3]
             @result result
         else if line.substr(0, 6) is '    ✗ '
-          @warning(warning) if warning
+          @error(warning) if warning
           warning =
             file:  stdout[i - 1].trim()
             title: line.substr 6
@@ -37,18 +37,20 @@ class Tester extends Task
             warning.description = line.trim()
         else unless line
           if warning
-            @warning warning
+            @error warning
             warning = null
 
-      @warning(warning) if warning
+      @error(warning) if warning
       callback()
 
     try
+      deployment = config.js.deploy
+
       options =
         autoWatch:     false
         browsers:      ['PhantomJS']
         colors:        false
-        files:         [config.js.deploy].concat config.js.test.files
+        files:         [deployment].concat config.js.test.files
         frameworks:    ['jasmine']
         logLevel:      'WARN'
         preprocessors: {}

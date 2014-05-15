@@ -68,7 +68,6 @@ class Stats
 bayeux     = new Faye.Client '/bayeux', retry: .5
 init       = true
 msg_div    = null
-msg_id     = '___uis-msg'
 msgs       = []
 reconnect  = false
 reloading  = false
@@ -79,49 +78,54 @@ stats      = new Stats
 show = ->
   unless msgs.length
     if msg_div
-      msg_div.parentNode.removeChild msg_div
+      remove msg_div
+      msg_div = null
     return
 
   unless msg_div
-    msg_div = document.createElement 'DIV'
-    msg_div.style[k] = v for k, v of {
+    msg_div = create document.body,
       position: 'fixed'
-      right:    0
+      right:    '5px'
       bottom:   '5px'
       overflow: 'hidden'
-      width:    '255px'
-      widthMax: '10%'
       zIndex:   2147483647
-    }
-    document.body.appendChild msg_div
   return
 
 add = (msg) ->
+  if typeof msg is 'string'
+    msg = {repo: 'srv', note: msg}
   show_id += 1
   msgs.push msg
   show()
 
-  div = document.createElement 'DIV'
-  div.style[k] = v for k, v of {
-    background:   '#20404d'
-    borderLeft:   '3px solid #011'
-    borderRight:  '3px solid #011'
-    borderRadius: '3px'
-    color:        '#f8f8f8'
-    fontSize:     '16px'
-    fontWeight:   'bold'
-    margin:       '0 0 3px'
+  div = create msg_div,
+    background:   'linear-gradient(#122, #233, #122)'
+    borderBottom: '#000 solid 1px'
+    borderRadius: '10px'
+    lineHeight:   '18px'
+    color:        '#eee'
+    margin:       '3px 0 0'
     opacity:      .85
     overflow:     'hidden'
-    padding:      '4px'
+    paddingRight: '9px'
     whiteSpace:   'normal'
-    width:        '98%'
     zoom:         .01
-  }
 
-  div.innerHTML = msg
+  title = create div,
+    background:   'linear-gradient(#347, #349, #347)'
+    border:       '#122 solid 1px'
+    borderRadius: '10px'
+    color:        '#f8f8f8'
+    display:      'inline-block'
+    fontWeight:   'bold'
+    height:       '18px'
+    lineHeight:   '18px'
+    marginRight:   '6px'
+    padding:      '0 9px'
+    textAlign:    'center'
+  title.innerHTML = msg.repo.toUpperCase()
+  div.appendChild document.createTextNode msg.note
 
-  msg_div.appendChild div
   for i in [1 .. 10]
     do (i) ->
       setTimeout ->
@@ -131,10 +135,10 @@ add = (msg) ->
     do (i) ->
       setTimeout ->
         div.style.opacity = i / 100
-        div.style.marginLeft = ((85 - i) / 85 * 255) + 'px'
+        div.style.left = ((85 - i) / 85 * 255) + 'px'
       , 4825 + (85 - i) * 3
   setTimeout ->
-    msg_div.removeChild div
+    remove div
     msgs.shift()
     show()
   , 5000
@@ -161,47 +165,48 @@ reload = (msg='reloading') ->
   return if reloading
   reloading = true
 
-  div = document.createElement 'DIV'
-  div.style[k] = v for k, v of {
+  div = create document.body,
     background: '#122'
     bottom:     0
     color:      '#fff'
     left:       0
     position:   'fixed'
     fontSize:   '32px'
-    fontWeight: '32px'
+    fontWeight: 'bold'
     opacity:    .85
     overflow:   'hidden'
     right:      0
     textAlign:  'center'
     top:        0
     zIndex:     2147483647
-  }
-  div.innerHTML = msg + '...'
-  document.body.appendChild div
+  div.innerHTML = 'reconnecting...'
   location.reload true
 
 create = (parent, styles, tag='DIV') ->
-  parent.appendChild node = document.createElement tag.toUpperCase()
-  style node,
-    border:        '0 solid transparent'
-    borderRadius:  0
-    color:         '#eee'
-    font:          '11px normal Arial,sans-serif'
-    lineHeight:    '11px'
-    margin:        0
-    opacity:       1
-    padding:       0
-    position:      'relative'
-    verticalAlign: 'top'
-    whiteSpace:    'nowrap'
-    zIndex:        2147483647
-  if styles
-    style node, styles
+  try
+    parent.appendChild node = document.createElement tag.toUpperCase()
+    style node,
+      border:        '0 solid transparent'
+      borderRadius:  0
+      color:         '#eee'
+      font:          '11px normal Arial,sans-serif'
+      lineHeight:    '11px'
+      margin:        0
+      opacity:       1
+      padding:       0
+      position:      'relative'
+      verticalAlign: 'top'
+      whiteSpace:    'nowrap'
+      zIndex:        2147483647
+    if styles
+      style node, styles
   node
 
+remove = (node) ->
+  try node.parentNode.removeChild node
+
 style = (node, styles) ->
-  node.style[k] = v for k, v of styles
+  try node.style[k] = v for k, v of styles
 
 class HUD
   div   = null
@@ -221,27 +226,27 @@ class HUD
         pt.div = create div,
           background:    'linear-gradient(#122, #233, #122)'
           border:        '#011 solid 1px'
-          borderRadius:  '9px 9px 0 0'
+          borderBottom:  'solid 0px transparent'
+          borderRadius:  '17px 3px 3px 3px'
           bottom:        0
           display:       'inline-block'
           height:        '18px'
           lineHeight:    '18px'
           margin:        '0 8px'
-          opacity:       .5
-          paddingRight:  '6px'
+          paddingRight:  '2px'
 
         pt.title = create pt.div,
           background:   'linear-gradient(#374, #394, #374)'
           border:       '#122 solid 1px'
-          borderRadius: '9px 0 0 0'
+          borderRadius: '17px 3px 17px 3px'
           color:        '#f8f8f8'
           display:      'inline-block'
           fontWeight:   'bold'
           height:       '18px'
           left:         '-2px'
           lineHeight:   '18px'
-          marginRight:   '4px'
-          padding:      '0 5px 0 7px'
+          marginRight:   '2px'
+          padding:      '0 9px'
           textAlign:    'center'
           top:          '-1px'
         pt.title.innerHTML = repo.toUpperCase()
@@ -251,20 +256,81 @@ class HUD
           lineHeight: '18px'
           fontSize:   '11px'
 
-      pt.head.innerHTML = '12 files, 323,234 bytes'
+      for task, stat of tasks when symbols[task] and stat.count
+        unless pt[task]
+          for t of symbols when pt[t]
+            remove pt[t]
+            delete pt[t]
+          break
+
+      repo_status = 'done'
+      for task  of symbols
+        if (stat = tasks[task])?.count
+          unless pt[task]
+            pt[task] = create pt.head,
+              display:    'inline-block'
+              fontSize:   '9px'
+              fontWeight: 'bold'
+              lineHeight: '18px'
+              margin:     '0 4px'
+
+          out = symbols[task]
+
+          status = 'load'
+          status = 'done'  if stat.done
+          if n = stat.error?.length
+            status = 'error'
+            out += ':' + n
+            if n = stat.warning?.length
+              out += '<span style="color: ' + colors['warn'][0] + ';">+' + n + '</span>'
+          else if n = stat.warning?.length
+            status = 'warn'
+            out += ':' + n
+          style pt[task], color: colors[status][0]
+
+          pt[task].innerHTML = out
+
+          repo_status = 'check' if repo_status is 'done'
+          unless stat.done or repo_status in ['warn', 'error']
+            repo_status = 'load'
+          if stat.warning?.length and repo_status isnt 'error'
+            repo_status = 'warn'
+          if stat.error?.length
+            repo_status = 'error'
+
+      style pt.title, background: 'linear-gradient(' + colors[repo_status].join(', ') + ')'
+
+#       pt.head.innerHTML = '12 files, 323,234 bytes'
 
 hud = new HUD
+
+symbols =
+  filesLoader:      'load'
+  filesCompiler:    'compile'
+  concatenator:     'concat'
+  filesMinifier:    'minify'
+  minifier:         'minify'
+  filesDeployer:    'deploy'
+  deployer:         'deploy'
+  filesLinter:      'lint'
+  tester:           'test'
+  coverageReporter: 'cover'
+
+colors =
+  load:  ['#001', '#114', '#001']
+  done:  ['#eee', '#fff', '#eee']
+  check: ['#394', '#6c7', '#394']
+  warn:  ['#e81', '#fb4', '#e81']
+  error: ['#e33', '#f66', '#e33']
 
 process_msg = (msg) ->
   switch msg?.type
     when 'note'
-      add '[' + msg.repo + '] ' + msg.note
+      console.log 'ole', msg
+      add msg
     when 'stat'
-      if msg.stat.done
-        if msg.task in ['deployer', 'filesDeployer']
-          reload()
-        else
-          add '[' + msg.repo + '] ' + msg.task + ' done'
+      if msg.stat.done and msg.task in ['deployer', 'filesDeployer']
+        reload()
 
 subscription = bayeux.subscribe '/update', (msg) ->
   for msg in stats.incoming msg

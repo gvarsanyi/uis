@@ -7,10 +7,8 @@ class FilesCompiler extends FilesTask
 
   followUp: (node) =>
     @source.tasks.concatenator?.work node
-    @source.tasks.filesDeployer?.work node
     @source.tasks.filesMinifier?.work node
     @source.tasks.filesLinter?.work node
-    @source.tasks.filesCompiledLinter?.work node
 
   fileCondition: (source) ->
     !!source.compilable

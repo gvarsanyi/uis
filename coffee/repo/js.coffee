@@ -1,6 +1,5 @@
 CoffeeFile          = require '../file/coffee'
 CoffeeFilesCompiler = require '../task/files-compiler/coffee'
-CoffeeFilesLinter   = require '../task/files-compiled-linter/coffee'
 Deployer            = require '../task/deployer'
 JsConcatenator      = require '../task/concatenator/js'
 JsFile              = require '../file/js'
@@ -16,13 +15,12 @@ class JsRepo extends Repo
   extensions: {js: JsFile, coffee: CoffeeFile}
 
   getTasks: ->
-    filesCompiler:       new CoffeeFilesCompiler @
-    concatenator:        new JsConcatenator @
-    minifier:            new JsMinifier @
-    deployer:            new Deployer @
-    filesLinter:         new JsFilesLinter @
-    filesCompiledLinter: new CoffeeFilesLinter @
-    tester:              new Tester @
+    filesCompiler: new CoffeeFilesCompiler @
+    concatenator:  new JsConcatenator @
+    minifier:      new JsMinifier @
+    deployer:      new Deployer @
+    filesLinter:   new JsFilesLinter @
+    tester:        new Tester @
 
 module.exports = new JsRepo
 

@@ -27,20 +27,17 @@ deploy_promise_pending = []
 
 once_deployed = (callback) ->
   if deployed >= 3
-    console.log 'nopend', deployed
     return callback()
-  console.log 'pend', deployed
   deploy_promise_pending.push callback
 
 deploy_event = (msg) ->
   if msg.stat?.done and msg.task in ['deployer', 'filesDeployer']
     deployed += 1
-    console.log 'deployed', deployed
     deploy_release()
 
 deploy_release = ->
   if deployed is 3
-    console.log 'deploy release!'
+    messenger.note 'ready'
     deployed += 1
     while deploy_promise_pending.length
       deploy_promise_pending.shift()()
@@ -56,10 +53,10 @@ class Service
   name: 'web-service'
 
   constructor: ->
-    app.use (req, res, next) -> # log
-      messenger.note req.method + ' ' + req.url +
-                     if req.body? then ' ' + JSON.stringify(req.body) else ''
-      next()
+#     app.use (req, res, next) -> # log
+#       messenger.note req.method + ' ' + req.url +
+#                      if req.body? then ' ' + JSON.stringify(req.body) else ''
+#       next()
 
     app.use (req, res, next) ->
       once_deployed next
