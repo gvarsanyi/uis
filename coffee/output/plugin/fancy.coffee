@@ -90,7 +90,7 @@ head_shown = {}
 
 module.exports.update = (update) ->
   new_sum = orig_sum = (name for name of shown).length
-  for name of stats
+  for name of stats.data
     new_sum += 1 unless shown[name]
   if orig_sum isnt new_sum
     shown[name] = true
@@ -102,7 +102,7 @@ module.exports.update = (update) ->
       outblock = new Outblock new_sum * 4
 
   push_y = 0
-  for name, repo of {css: stats.css, html: stats.html, js: stats.js, test: stats.test}
+  for name, repo of {css: stats.data.css, html: stats.data.html, js: stats.data.js}
     if repo
       prev_inf = null
       unless head_shown[name]?

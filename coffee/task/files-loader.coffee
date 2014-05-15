@@ -18,8 +18,8 @@ class FilesLoader extends FilesTask
 
       source[@sourceProperty] = data
 
-      hash = md5 data or ''
-      changed = hash isnt (source.hash or '')
+      hash = md5(data or '')
+      changed = hash isnt source.hash
       source.hash = hash
 
       callback changed

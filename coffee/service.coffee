@@ -21,6 +21,37 @@ patch = patch.replace '//@ sourceMappingURL=faye-browser-min.js.map', ''
 src = fs.readFileSync __dirname + '/../service-plugin.coffee', encoding: 'utf8'
 patch += coffee.compile src
 
+
+deployed = 0
+deploy_promise_pending = []
+
+once_deployed = (callback) ->
+  if deployed >= 3
+    console.log 'nopend', deployed
+    return callback()
+  console.log 'pend', deployed
+  deploy_promise_pending.push callback
+
+deploy_event = (msg) ->
+  if msg.stat?.done and msg.task in ['deployer', 'filesDeployer']
+    deployed += 1
+    console.log 'deployed', deployed
+    deploy_release()
+
+deploy_release = ->
+  if deployed is 3
+    console.log 'deploy release!'
+    deployed += 1
+    while deploy_promise_pending.length
+      deploy_promise_pending.shift()()
+
+for repo_name in ['css', 'html', 'js']
+  unless config[repo_name]
+    deployed += 1
+
+deploy_release()
+
+
 class Service
   name: 'web-service'
 
@@ -29,6 +60,9 @@ class Service
       messenger.note req.method + ' ' + req.url +
                      if req.body? then ' ' + JSON.stringify(req.body) else ''
       next()
+
+    app.use (req, res, next) ->
+      once_deployed next
 
     process.on 'uncaughtException', (err) ->
       switch err.code
@@ -103,25 +137,29 @@ class Service
               else
                 client[method] url, handler
 
-    server = app.listen config.service.port, config.service.interface, ->
+    server = app.listen config.service.port, config.service.interface, =>
       bayeux = new faye.NodeAdapter {mount: '/bayeux', timeout: 45}
       bayeux.attach server
 
-      bayeux.on 'subscribe', (client_id, channel) ->
+      bayeux.on 'subscribe', (client_id, channel) =>
         messenger.note '[client subscription] ' + client_id + ': ' + channel
-        if channel is '/stat'
-          @publish '/stat', stats
+        if channel is '/init'
+          @publish '/init', {data: stats.data, ids: stats.ids}
 
       messenger.note 'listening @ ' + config.service.interface + ':' +
                      config.service.port
 
   incoming: (msg) =>
-    stats[msg.repo] ?= {}
-    stats[msg.repo][msg.task] = msg.stat
-    @publish '/update', msg
+    if msg.type is 'stat-init'
+      msgs = stats.init msg.data, msg.ids
+    else
+      msgs = stats.incoming msg
+    for msg in msgs
+      @publish '/update', msg
+      deploy_event msg
 
   publish: (channel, message) =>
-#     messenger.note '[bayeux] ' + channel + ': ' + JSON.stringify message
+#     messenger.note '[bayeux] ' + channel + ' : ' + JSON.stringify message
     bayeux.getClient().publish channel, message
 
 

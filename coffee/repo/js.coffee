@@ -1,8 +1,8 @@
-Concatenator        = require '../task/concatenator/js'
 CoffeeFile          = require '../file/coffee'
 CoffeeFilesCompiler = require '../task/files-compiler/coffee'
 CoffeeFilesLinter   = require '../task/files-compiled-linter/coffee'
 Deployer            = require '../task/deployer'
+JsConcatenator      = require '../task/concatenator/js'
 JsFile              = require '../file/js'
 JsFilesLinter       = require '../task/files-linter/js'
 JsMinifier          = require '../task/minifier/js'
@@ -17,7 +17,7 @@ class JsRepo extends Repo
 
   getTasks: ->
     filesCompiler:       new CoffeeFilesCompiler @
-    concatenator:        new Concatenator @
+    concatenator:        new JsConcatenator @
     minifier:            new JsMinifier @
     deployer:            new Deployer @
     filesLinter:         new JsFilesLinter @

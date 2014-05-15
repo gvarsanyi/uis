@@ -17,7 +17,7 @@
       },
       "css": {
         "deploy": "static/site.css",
-        "minify": true,
+        "minify": false,
         "rubysass": true,
         "repos": [
           {
@@ -37,7 +37,7 @@
       },
       "js": {
         "deploy": "static/site.js",
-        "minify": true,
+        "minify": false,
         "test": {
           "files": "test/**/*.coffee",
           "coverage": true

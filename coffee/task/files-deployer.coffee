@@ -16,7 +16,9 @@ class FilesDeployer extends FilesTask
     try
       if source.options.minify
         src = source.minified
-      else unless (src = source.compiled)?
+      else if source.compilable
+        src = source.compiled
+      else
         src = source.data
 
       unless src?

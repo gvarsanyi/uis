@@ -6,7 +6,12 @@ FilesMinifier = require '../files-minifier'
 class HtmlFilesMinifier extends FilesMinifier
   workFile: => @preWorkFile arguments, (source, callback) =>
     try
-      unless src = source[if @source.tasks.filesCompiler? then 'compiled' else 'data']
+      if source.compilable
+        src = source.compiled
+      else
+        src = source.data
+
+      unless src?
         throw new Error '[HtmlFilesMinifier] Missing source: ' + source.path
 
       source[@sourceProperty] = htmlminify.minify src,

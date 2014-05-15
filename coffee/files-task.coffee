@@ -66,7 +66,7 @@ class FilesTask extends Task
     post_work_file = (pass_back...) =>
       @status @status() + 1
       if pass_back?.length
-        callback pass_back
+        callback pass_back...
       else
         callback()
 
