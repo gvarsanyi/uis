@@ -88,6 +88,7 @@ show = ->
       right:    '5px'
       bottom:   '5px'
       overflow: 'hidden'
+      maxWidth: '19%'
       zIndex:   2147483647
   return
 
@@ -120,7 +121,7 @@ add = (msg) ->
     fontWeight:   'bold'
     height:       '18px'
     lineHeight:   '18px'
-    marginRight:   '6px'
+    marginRight:  '6px'
     padding:      '0 9px'
     textAlign:    'center'
   title.innerHTML = msg.repo.toUpperCase()
@@ -230,19 +231,20 @@ class HUD
           borderRadius:  '17px 3px 3px 3px'
           bottom:        0
           display:       'inline-block'
-          height:        '18px'
-          lineHeight:    '18px'
-          margin:        '0 8px'
+          margin:        '0 1%'
           paddingRight:  '2px'
+          maxWidth:      '25%'
+          verticalAlign: 'bottom'
 
         pt.title = create pt.div,
           background:   'linear-gradient(#374, #394, #374)'
           border:       '#122 solid 1px'
+          borderBottom: 'transparent 0 solid'
           borderRadius: '17px 3px 17px 3px'
           color:        '#f8f8f8'
           display:      'inline-block'
           fontWeight:   'bold'
-          height:       '18px'
+          height:       '20px'
           left:         '-2px'
           lineHeight:   '18px'
           marginRight:   '2px'
@@ -256,6 +258,10 @@ class HUD
           lineHeight: '18px'
           fontSize:   '11px'
 
+        pt.info = create pt.div
+        pt.error = create pt.info
+        pt.warn  = create pt.info
+
       for task, stat of tasks when symbols[task] and stat.count
         unless pt[task]
           for t of symbols when pt[t]
@@ -264,7 +270,71 @@ class HUD
           break
 
       repo_status = 'done'
-      for task  of symbols
+      pt.error.innerHTML = ''
+      pt.warn.innerHTML = ''
+      touched = {}
+      shown_issues = 0
+      hidden_issues = 0
+
+      add_info = (msg, status='warn') ->
+        if shown_issues > 2
+          hidden_issues += 1
+          return
+        shown_issues += 1
+        if touched[status]
+          create pt[status], null, 'br'
+        touched[status] = true
+        panel = create pt[status],
+          background:   '#233'
+          borderLeft:   colors[status][0] + ' groove 2px'
+          borderRadius: '3px'
+          display:      'inline-block'
+          margin:       '3px'
+          padding:      '3px'
+          width:        '100%'
+        if msg.title
+          div = create panel,
+            background: '#455'
+            fontWeight: 'bold'
+            padding:    '2px'
+            whiteSpace: 'normal'
+          div.innerHTML = msg.title
+        if msg.description
+          div = create panel,
+            padding:    '4px 2px'
+            whiteSpace: 'normal'
+          div.innerHTML = msg.description
+        if msg.file
+          div = create panel,
+            color:      '#ddd'
+            fontWeight: 'bold'
+            textAlign:  'right'
+            padding:    '2px'
+          div.innerHTML = msg.file
+          if msg.line
+            if typeof msg.line is 'object'
+              div.innerHTML += ' : ' + msg.line.join '-'
+            else
+              div.innerHTML += ' : ' + msg.line
+        if msg.lines
+          div = create panel,
+            background: '#455'
+            padding:    '2px'
+          for n in [msg.lines.from .. msg.lines.to]
+            if msg.lines[n]?
+              line = create div,
+                color:      '#eee'
+                fontFamily: '"Lucida Console", Monaco, monospace'
+                whiteSpace: 'pre'
+              out = ''
+              if String(n).length < String(msg.lines.to).length
+                out += ' '
+              if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
+                style line, {fontWeight: 'bold', background: '#633'}
+              line.innerHTML = out + n + ' ' + msg.lines[n]
+
+      issue_cue = []
+      for task of symbols
         if (stat = tasks[task])?.count
           unless pt[task]
             pt[task] = create pt.head,
@@ -278,14 +348,21 @@ class HUD
 
           status = 'load'
           status = 'done'  if stat.done
+
           if n = stat.error?.length
             status = 'error'
             out += ':' + n
+            for info in stat.error
+              issue_cue.push {level: 'error', info}
             if n = stat.warning?.length
               out += '<span style="color: ' + colors['warn'][0] + ';">+' + n + '</span>'
+              for info in stat.warning
+                issue_cue.push {level: 'warn', info}
           else if n = stat.warning?.length
             status = 'warn'
             out += ':' + n
+            for info in stat.warning
+              issue_cue.push {level: 'warn', info}
           style pt[task], color: colors[status][0]
 
           pt[task].innerHTML = out
@@ -298,9 +375,14 @@ class HUD
           if stat.error?.length
             repo_status = 'error'
 
-      style pt.title, background: 'linear-gradient(' + colors[repo_status].join(', ') + ')'
+      issue_cue.sort (a, b) ->
+        return 1 if a.level is 'warn'
+        -1
 
-#       pt.head.innerHTML = '12 files, 323,234 bytes'
+      for issue, i in issue_cue when i < 3
+        add_info issue.info, issue.level
+
+      style pt.title, background: 'linear-gradient(' + colors[repo_status].join(', ') + ')'
 
 hud = new HUD
 
@@ -326,20 +408,18 @@ colors =
 process_msg = (msg) ->
   switch msg?.type
     when 'note'
-      console.log 'ole', msg
       add msg
     when 'stat'
       if msg.stat.done and msg.task in ['deployer', 'filesDeployer']
         reload()
+      hud.render()
 
 subscription = bayeux.subscribe '/update', (msg) ->
   for msg in stats.incoming msg
     process_msg msg
-  hud.render()
 
 subscription.then ->
   stats_subscription = bayeux.subscribe '/init', (msg) ->
     stats_subscription.cancel()
     for msg in stats.init msg.data, msg.ids
       process_msg msg
-    hud.render()

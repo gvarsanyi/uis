@@ -46,7 +46,7 @@ obj_to_str = (status, inf) ->
       if inf.lines[n]?
         push = if String(n).length < String(inf.lines.to).length then ' ' else ''
         pre = indent
-        if n is inf.line or (typeof inf.line is 'object' and n in [inf.line])
+        if n is inf.line or (typeof inf.line is 'object' and n in inf.line)
           pre = pre.split(' ').join('>')
         out += pre + '(' + n + ') ' + inf.lines[n] + '\n'
 
