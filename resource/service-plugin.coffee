@@ -15,7 +15,7 @@ cue_processor = (msg) ->
 
   message_cue[repo] ?= {}
   message_cue[repo][task] ?= []
-  id = stats?.ids[repo]?[task]
+  id = stats?.ids?[repo]?[task]
   return reload('server restarting') if id? and id >= msg.id
   if stats?.data and (not id? or msg.id is id + 1)
     stats.ids[repo] ?= {}
@@ -31,7 +31,7 @@ cue_processor = (msg) ->
 ready_list = (repo, task) ->
   list = []
   cue = message_cue[repo]?[task] or []
-  while cue.length and (ids = stats?.ids[repo])?[task]? and cue[0].id is ids[task] + 1
+  while cue.length and (ids = stats?.ids?[repo])?[task]? and cue[0].id is ids[task] + 1
     ids[task] += 1
     list.push cue.shift()
   list
@@ -101,6 +101,7 @@ class HUD
     for repo, tasks of stats.data
       unless pt = repos[repo]
         pt = repos[repo] = {}
+
         pt.div = create div,
           background:    'linear-gradient(#122, #233, #122)'
           border:        '#011 solid 1px'
@@ -109,7 +110,8 @@ class HUD
           bottom:        0
           display:       'inline-block'
           margin:        '0 1%'
-          maxWidth:      '60%'
+          maxWidth:      '40%'
+          opacity:       .85
           paddingRight:  '2px'
           verticalAlign: 'bottom'
 
@@ -125,7 +127,7 @@ class HUD
           height:       '20px'
           left:         '-2px'
           lineHeight:   '18px'
-          marginRight:   '2px'
+          marginRight:  '2px'
           padding:      '0 9px'
           textAlign:    'center'
           top:          '-1px'
@@ -200,11 +202,11 @@ class HUD
             else
               node.innerHTML += ' @ line ' + msg.line
         if msg.lines
-          lines = create node,
+          lines = create panel,
             background: '#455'
             color:      '#eee'
-            left:       '-2px'
-            margin:     '5px 0 0 0'
+            left:       0
+            margin:     '2px 0 0 0'
             position:   'absolute'
           for n in [msg.lines.from .. msg.lines.to]
             if msg.lines[n]?
@@ -216,7 +218,7 @@ class HUD
                 whiteSpace:  'pre'
               if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
                 style line, background: '#633'
-              line.innerHTML += n
+              line.innerHTML = n
           line_chars = 0
           for n in [msg.lines.from .. msg.lines.to]
             if msg.lines[n]?
@@ -232,6 +234,7 @@ class HUD
               line = create node,
                 color:       '#eee'
                 fontFamily:  '"Lucida Console", Monaco, monospace'
+                overflow:    'visible'
                 whiteSpace:  'pre'
               if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
                 style line, {fontWeight: 'bold', color: '#e66'}
@@ -261,7 +264,7 @@ class HUD
           out = symbols[task]
 
           status = 'load'
-          status = 'done'  if stat.done
+          status = 'done' if stat.done
 
           if n = stat.error?.length
             status = 'error'
@@ -296,11 +299,14 @@ class HUD
 
 #       for issue, i in issue_cue when i < 3
 #         add_info issue.info, issue.level
-      add_info(issue.info, issue.level) if issue = issue_cue[0]
+      if issue = issue_cue[0]
+        add_info issue.info, issue.level
+        style pt.div, opacity: 1
 
       style pt.title, background: 'linear-gradient(' + colors[repo_status].join(', ') + ')'
 
 bayeux     = new Faye.Client '/bayeux', retry: .5
+reload_i   = 0
 hud        = new HUD
 init       = true
 msg_div    = null
@@ -338,6 +344,7 @@ add = (msg) ->
   if typeof msg is 'string'
     msg = {repo: 'srv', note: msg}
   show_id += 1
+  return if msgs.length > 20
   msgs.push msg
   show()
 
@@ -345,29 +352,38 @@ add = (msg) ->
     background:   'linear-gradient(#122, #233, #122)'
     borderBottom: '#000 solid 1px'
     borderRadius: '10px'
-    lineHeight:   '18px'
-    color:        '#eee'
     margin:       '3px 0 0'
     opacity:      .85
     overflow:     'hidden'
     paddingRight: '9px'
-    whiteSpace:   'normal'
     zoom:         .01
 
+  status = 'note'
+  status = 'error' if msg.repo is 'error'
+  status = 'warn'  if msg.repo is 'log'
+
   title = create div,
-    background:   'linear-gradient(#347, #349, #347)'
+    background:   'linear-gradient(' + colors[status].join(', ') + ')'
     border:       '#122 solid 1px'
     borderRadius: '10px'
     color:        '#f8f8f8'
     display:      'inline-block'
     fontWeight:   'bold'
+    fontSize:     '11px'
     height:       '18px'
     lineHeight:   '18px'
-    marginRight:  '6px'
     padding:      '0 9px'
     textAlign:    'center'
   title.innerHTML = msg.repo.toUpperCase()
-  div.appendChild document.createTextNode msg.note
+
+  content = create div,
+    color:      '#eee'
+    display:    'inline-block'
+    fontSize:   '11px'
+    lineHeight: '18px'
+    padding:    '8px'
+    whiteSpace: 'normal'
+  content.innerHTML = msg.note
 
   for i in [1 .. 10]
     do (i) ->
@@ -387,6 +403,24 @@ add = (msg) ->
   , 5000
 
 
+stringify = (obj) ->
+  if obj and typeof obj is 'object' and JSON?.stringify
+    return JSON.stringify obj
+  String obj
+
+if orig_log = console?.log
+  console._log = console.log
+  console.log = (args...) ->
+    add {repo: 'log', note: (stringify(item) for item in args).join ' '}
+    console._log args...
+
+if orig_error = console?.error
+  console._error = console.error
+  console.error = (args...) ->
+    add {repo: 'error', note: (stringify(item) for item in args).join ' '}
+    console._error args...
+
+
 bayeux.on 'transport:down', ->
   service_up = false
   setTimeout ->
@@ -399,7 +433,7 @@ bayeux.on 'transport:up', ->
   unless init
     setTimeout ->
       if reconnect
-        reload 'reconnecting'
+        reload()
     , 1
   init       = false
   service_up = true
@@ -415,14 +449,16 @@ reload = (msg='reloading') ->
     left:       0
     position:   'fixed'
     fontSize:   '32px'
+    lineHieght: '32px'
     fontWeight: 'bold'
     opacity:    .85
     overflow:   'hidden'
+    padding:    '10% 0 0 0'
     right:      0
     textAlign:  'center'
     top:        0
     zIndex:     2147483647
-  div.innerHTML = 'reconnecting...'
+  div.innerHTML = msg + '...'
   location.reload true
 
 create = (parent, styles, tag='DIV') ->
@@ -436,6 +472,7 @@ create = (parent, styles, tag='DIV') ->
       lineHeight:    '13px'
       margin:        0
       opacity:       1
+      overflow:      'hidden'
       padding:       0
       position:      'relative'
       verticalAlign: 'top'
@@ -471,6 +508,17 @@ colors =
   check: ['#394', '#6c7', '#394']
   warn:  ['#e81', '#fb4', '#e81']
   error: ['#e33', '#f66', '#e33']
+  note:  ['#347', '#349', '#347']
+
+
+reload_css = ->
+  reload_i += 1
+  for node in document.getElementsByTagName 'link'
+    if src = node?.getAttribute('href')
+      node.href = src + (if src.indexOf('?') > -1 then '&' else '?') +
+                  '___uis_refresh=' + reload_i
+
+  add {repo: 'css', note: 'refreshed styles'}
 
 process_msg = (msg) ->
   switch msg?.type
@@ -478,7 +526,10 @@ process_msg = (msg) ->
       add msg
     when 'stat'
       if msg.stat.done and msg.task in ['deployer', 'filesDeployer']
-        reload()
+        if msg.repo is 'css'
+          reload_css()
+        else
+          reload()
       hud.render()
 
 subscription = bayeux.subscribe '/update', (msg) ->

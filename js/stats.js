@@ -6,7 +6,7 @@
   message_cue = {};
 
   cue_processor = function(msg) {
-    var cue, repo, task, _base, _base1, _ref;
+    var cue, repo, task, _base, _base1, _ref, _ref1;
     if (!(typeof msg.id === 'number' && msg.id >= 0)) {
       throw new Error('invalid/missing msg id: ' + msg);
     }
@@ -24,7 +24,7 @@
     if ((_base = message_cue[repo])[task] == null) {
       _base[task] = [];
     }
-    if ((typeof stats !== "undefined" && stats !== null ? stats.data : void 0) && (((typeof stats !== "undefined" && stats !== null ? (_ref = stats.ids[repo]) != null ? _ref[task] : void 0 : void 0) == null) || msg.id === stats.ids[repo][task] + 1)) {
+    if ((typeof stats !== "undefined" && stats !== null ? stats.data : void 0) && (((typeof stats !== "undefined" && stats !== null ? (_ref = stats.ids) != null ? (_ref1 = _ref[repo]) != null ? _ref1[task] : void 0 : void 0 : void 0) == null) || msg.id === stats.ids[repo][task] + 1)) {
       if ((_base1 = stats.ids)[repo] == null) {
         _base1[repo] = {};
       }
@@ -39,10 +39,10 @@
   };
 
   ready_list = function(repo, task) {
-    var cue, ids, list, _ref, _ref1;
+    var cue, ids, list, _ref, _ref1, _ref2;
     list = [];
     cue = ((_ref = message_cue[repo]) != null ? _ref[task] : void 0) || [];
-    while (cue.length && (((_ref1 = (ids = typeof stats !== "undefined" && stats !== null ? stats.ids[repo] : void 0)) != null ? _ref1[task] : void 0) != null) && cue[0].id === ids[task] + 1) {
+    while (cue.length && (((_ref1 = (ids = typeof stats !== "undefined" && stats !== null ? (_ref2 = stats.ids) != null ? _ref2[repo] : void 0 : void 0)) != null ? _ref1[task] : void 0) != null) && cue[0].id === ids[task] + 1) {
       ids[task] += 1;
       list.push(cue.shift());
     }

@@ -137,7 +137,7 @@ class Task
                      ' (' + @source.shortFile(file) + ')'
       @workFile source, =>
         @followUp?(source) unless @error()
-        @checkAllTasksFinished()
+        @source.checkAllTasksFinished()
     else
       messenger.note 'changed: ' + @source.shortFile file
       @work()

@@ -15,7 +15,7 @@ cue_processor = (msg) ->
 
   message_cue[repo] ?= {}
   message_cue[repo][task] ?= []
-  if stats?.data and (not stats?.ids[repo]?[task]? or msg.id is stats.ids[repo][task] + 1)
+  if stats?.data and (not stats?.ids?[repo]?[task]? or msg.id is stats.ids[repo][task] + 1)
     stats.ids[repo] ?= {}
     stats.ids[repo][task] = msg.id
     return [msg]
@@ -29,7 +29,7 @@ cue_processor = (msg) ->
 ready_list = (repo, task) ->
   list = []
   cue = message_cue[repo]?[task] or []
-  while cue.length and (ids = stats?.ids[repo])?[task]? and cue[0].id is ids[task] + 1
+  while cue.length and (ids = stats?.ids?[repo])?[task]? and cue[0].id is ids[task] + 1
     ids[task] += 1
     list.push cue.shift()
   list

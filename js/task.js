@@ -262,7 +262,7 @@
                 _this.followUp(source);
               }
             }
-            return _this.checkAllTasksFinished();
+            return _this.source.checkAllTasksFinished();
           };
         })(this));
       } else {
