@@ -23,7 +23,7 @@ class JsFilesLinter extends FilesLinter
     callback()
 
   wrapError: (inf, source) =>
-    # Example for inf
+    # Example for inf (coffeelint)
     # { name: 'no_unnecessary_fat_arrows',
     #   level: 'warn',
     #   message: 'Unnecessary fat arrow',
@@ -32,7 +32,7 @@ class JsFilesLinter extends FilesLinter
     #   rule: 'no_unnecessary_fat_arrows' }
     data = super
 
-    if source?.compilable
+    if source?.compilable # coffeelint
       data.line = Number(inf.lineNumber) if inf.lineNumber
 
       if inf.message
@@ -52,6 +52,8 @@ class JsFilesLinter extends FilesLinter
             to:   Math.min lines.length - 1, line * 1 + 4
           for line_literal, i in lines[data.lines.from - 1 .. data.lines.to - 1]
             data.lines[i + data.lines.from] = line_literal
+
+    # TODO: add jslint handler
 
     data
 

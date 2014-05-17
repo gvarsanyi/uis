@@ -15,7 +15,7 @@
 
   output = require('./output/plugin/' + config.output);
 
-  ext = __dirname.indexOf('/coffee/') > -1 ? '.coffee' : '.js';
+  ext = __dirname.split('/').pop() === 'coffee' ? '.coffee' : '.js';
 
   repo_count = 0;
 
@@ -59,47 +59,49 @@
     });
   }
 
-  _ref1 = ['js', 'css', 'html'];
+  _ref1 = ['js', 'css', 'html', 'test'];
   _fn = function(name) {
     var repo;
-    repo = child_process.fork(__dirname + '/repo/' + name + ext, {
-      cwd: process.cwd(),
-      silent: true
-    });
-    repo_count += 1;
-    wrap(repo, function(code, signal) {
-      repo_count -= 1;
-      if (!(repo_count && !config.service)) {
-        console.log('bye');
-        return process.exit(0);
-      }
-    });
-    return repo.on('message', function(msg) {
-      var msgs, _j, _len1, _name, _results;
-      msgs = stats.incoming(msg);
-      if (service) {
-        _results = [];
-        for (_j = 0, _len1 = msgs.length; _j < _len1; _j++) {
-          msg = msgs[_j];
-          service.send(msg);
-          switch (msg != null ? msg.type : void 0) {
-            case 'stat':
-              if (stats[_name = msg.repo] == null) {
-                stats[_name] = {};
-              }
-              stats[msg.repo][msg.task] = msg.stat;
-              _results.push(output.update(msg));
-              break;
-            case 'note':
-              _results.push(output.note(msg));
-              break;
-            default:
-              _results.push(void 0);
-          }
+    if (config[name] && (name !== 'test' || config.js)) {
+      repo = child_process.fork(__dirname + '/repo/' + name + ext, {
+        cwd: process.cwd(),
+        silent: true
+      });
+      repo_count += 1;
+      wrap(repo, function(code, signal) {
+        repo_count -= 1;
+        if (!(repo_count && !config.service)) {
+          console.log('bye');
+          return process.exit(0);
         }
-        return _results;
-      }
-    });
+      });
+      return repo.on('message', function(msg) {
+        var msgs, _j, _len1, _name, _results;
+        msgs = stats.incoming(msg);
+        if (service) {
+          _results = [];
+          for (_j = 0, _len1 = msgs.length; _j < _len1; _j++) {
+            msg = msgs[_j];
+            service.send(msg);
+            switch (msg != null ? msg.type : void 0) {
+              case 'stat':
+                if (stats[_name = msg.repo] == null) {
+                  stats[_name] = {};
+                }
+                stats[msg.repo][msg.task] = msg.stat;
+                _results.push(output.update(msg));
+                break;
+              case 'note':
+                _results.push(output.note(msg));
+                break;
+              default:
+                _results.push(void 0);
+            }
+          }
+          return _results;
+        }
+      });
+    }
   };
   for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
     name = _ref1[_i];

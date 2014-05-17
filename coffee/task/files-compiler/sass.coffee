@@ -31,7 +31,7 @@ class SassFilesCompiler extends FilesCompiler
         throw new Error '[SassFilesCompiler] Missing source: ' + source.path
 
       if source.options.rubysass
-        cmd = 'sass -C -q ' + source.path
+        cmd = 'sass --cache-location=' + @source.repoTmp + 'sass-cache -q ' + source.path
         child_process.exec cmd, maxBuffer: 128 * 1024 * 1024, (err, stdout, stderr) =>
           source[@sourceProperty] = stdout unless err
           finish err
@@ -46,18 +46,19 @@ class SassFilesCompiler extends FilesCompiler
       node_sass_error = (err) =>
         unless stats.includedFiles?.length
           file = String(err).split(':')[0]
-          fs.exists file + '.scss', (exists) =>
-            if exists
-              stats.includedFiles = [file + '.scss']
+          name = file.split('/').pop()
+          dir  = file.substr 0, file.length - name.length
+          checks = [file + '.scss',  dir + '_' + name + '.scss', file + '.sass',
+                    dir + '_' + name + '.sass', file, dir + '_' + name]
+          check_variations = =>
+            unless checks.length
               return finish()
-            fs.exists file + '.sass', (exists) =>
+            fs.exists (file = checks.shift()), (exists) =>
               if exists
-                stats.includedFiles = [file + '.sass']
+                stats.includedFiles = [file]
                 return finish()
-              fs.exists file, (exists) =>
-                if exists
-                  stats.includedFiles = [file]
-                finish()
+              check_variations()
+          check_variations()
 
       node_sass_success = (data) =>
         source[@sourceProperty] = data unless source.options.rubysass
@@ -71,5 +72,35 @@ class SassFilesCompiler extends FilesCompiler
         success:      node_sass_success
     catch err
       finish err
+
+  wrapError: (inf, source) =>
+    data = super
+
+    inf = String inf
+    lines = (line.trim() for line in inf.split '\n')
+    if (parts = lines[0].split ': ')[0] is 'Error' and (desc = parts[3 ...].join ': ').length > 20
+      data.title = parts[1] + ': ' + parts[2]
+      data.description = desc
+
+      if (parts = lines[1]?.split ' ')[4] and parts[0] is 'on' and parts[1] is 'line' and parts[3] is 'of'
+        data.file = @source.shortFile parts[4 ...].join ' '
+
+        data.line = val if (val = Number parts[2]) > 1 or val is 0 or val is 1
+
+        if data.file and data.line
+          if source.path is data.file
+            src = source.data
+          else if @watched[data.file]?.data
+            src = @watched[data.file].data
+          else
+            try src = fs.readFileSync data.file, encoding: 'utf8'
+          if src and (lines = src.split('\n')).length and lines.length >= data.line
+            data.lines =
+              from: Math.max 1, data.line - 3
+              to:   Math.min lines.length - 1, data.line * 1 + 3
+            for line_literal, i in lines[data.lines.from - 1 .. data.lines.to - 1]
+              data.lines[i + data.lines.from] = line_literal
+
+    data
 
 module.exports = SassFilesCompiler

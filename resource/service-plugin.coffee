@@ -491,16 +491,15 @@ style = (node, styles) ->
 hud = new HUD
 
 symbols =
-  filesLoader:      'load'
-  filesCompiler:    'compile'
-  concatenator:     'concat'
-  filesMinifier:    'minify'
-  minifier:         'minify'
-  filesDeployer:    'deploy'
-  deployer:         'deploy'
-  filesLinter:      'lint'
-  tester:           'test'
-  coverageReporter: 'cover'
+  filesLoader:   'load'
+  filesCompiler: 'compile'
+  concatenator:  'concat'
+  filesMinifier: 'minify'
+  minifier:      'minify'
+  filesDeployer: 'deploy'
+  deployer:      'deploy'
+  filesLinter:   'lint'
+  tester:        'test'
 
 colors =
   load:  ['#001', '#114', '#001']

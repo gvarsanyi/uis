@@ -121,6 +121,9 @@
           var pass_back;
           pass_back = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
           _this.status(_this.status() + 1);
+          if (args[2]) {
+            messenger.sendStat(_this.name);
+          }
           if (pass_back != null ? pass_back.length : void 0) {
             return callback.apply(null, pass_back);
           } else {

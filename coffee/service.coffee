@@ -19,44 +19,34 @@ patch = fs.readFileSync(__dirname + '/../node_modules/faye/browser/' +
 patch = patch.replace '//@ sourceMappingURL=faye-browser-min.js.map', ''
 patch += fs.readFileSync __dirname + '/../resource/service-plugin.js', encoding: 'utf8'
 
-# deployed = 0
-# deploy_promise_pending = []
-#
-# once_deployed = (callback) ->
-#   if deployed >= 3
-#     return callback()
-#   deploy_promise_pending.push callback
-#
-# deploy_event = (msg) ->
-#   if msg.stat?.done and msg.task in ['deployer', 'filesDeployer']
-#     deployed += 1
-#     deploy_release()
-#
-# deploy_release = ->
-#   if deployed is 3
-#     messenger.note 'ready'
-#     deployed += 1
-#     while deploy_promise_pending.length
-#       deploy_promise_pending.shift()()
-#
-# for repo_name in ['css', 'html', 'js']
-#   unless config[repo_name]
-#     deployed += 1
-#
-# deploy_release()
-
 
 class Service
   name: 'web-service'
 
+  deployed: 0
+  pending:  []
+
+  deployFilter: (msg) =>
+    if msg.stat?.done and msg.task in ['deployer', 'filesDeployer']
+      @deployed += 1
+      if @deployed > 2
+        messenger.note 'deployments ready'
+        while @pending.length
+          @pending.shift()()
+
   constructor: ->
+    for repo_name in ['css', 'html', 'js']
+      unless config[repo_name]
+        @deployed += 1
+
 #     app.use (req, res, next) -> # log
 #       messenger.note req.method + ' ' + req.url +
 #                      if req.body? then ' ' + JSON.stringify(req.body) else ''
 #       next()
 
-#     app.use (req, res, next) ->
-#       once_deployed next
+    app.use (req, res, next) =>
+      return next() if @deployed > 2
+      @pending.push next
 
     process.on 'uncaughtException', (err) ->
       switch err.code
@@ -150,7 +140,7 @@ class Service
       msgs = stats.incoming msg
     for msg in msgs
       @publish '/update', msg
-#       deploy_event msg
+      @deployFilter msg
 
   publish: (channel, message) =>
 #     messenger.note '[bayeux] ' + channel + ' : ' + JSON.stringify message

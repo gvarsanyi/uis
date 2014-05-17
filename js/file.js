@@ -15,7 +15,7 @@
       var project_path;
       if (!this._shortPath) {
         this._shortPath = this.path;
-        project_path = path.resolve(process.cwd());
+        project_path = this.repo.projectPath;
         if (this._shortPath.substr(0, project_path.length) === project_path) {
           this._shortPath = this._shortPath.substr(project_path.length + 1);
         }

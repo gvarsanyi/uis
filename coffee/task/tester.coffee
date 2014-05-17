@@ -11,7 +11,7 @@ class Tester extends Task
   listeners: @
 
   condition: =>
-    !!config[@source.name].test?.files and not @source.tasks.minifier?.count() # TODO: fix minified and report
+    !!config[@source.name].files and @source.tasks.filesLoader?.count()
 
   size: =>
     @_result or 0
@@ -21,7 +21,7 @@ class Tester extends Task
       process.stdout.write = orig_stdout if orig_stdout
       process.stderr.write = orig_stderr if orig_stderr
 
-      for line, i in stdout
+      for line, i in stdout or []
         if (index = line.indexOf 'PhantomJS 1.9.7 (Linux): Executed ') > -1
           if result = Number line.substr(index + 25).split(' ')[3]
             @result result
@@ -44,13 +44,14 @@ class Tester extends Task
       callback()
 
     try
-      deployment = config.js.deploy
+      deployment = [@source.repoTmp + 'clone/**/*.coffee'
+                    @source.repoTmp + 'clone/**/*.js']
 
       options =
         autoWatch:     false
         browsers:      ['PhantomJS']
         colors:        false
-        files:         [deployment].concat config.js.test.files
+        files:         deployment.concat config.test.files
         frameworks:    ['jasmine']
         logLevel:      'WARN'
         preprocessors: {}
@@ -58,9 +59,9 @@ class Tester extends Task
         singleRun:     true
         specReporter: suppressPassed: true
 
-      options.preprocessors[config.js.test.files] = 'coffee'
+      options.preprocessors[config.test.files] = 'coffee'
 
-      options.reporters.push('teamcity') if config.js.test.teamcity
+      options.reporters.push('teamcity') if config.test.teamcity
 
       orig_stdout = process.stdout.write
       orig_stderr = process.stderr.write
@@ -76,7 +77,7 @@ class Tester extends Task
         finish()
 
       unless config.singleRun
-        @watch config.js.test.files, (err) =>
+        @watch config.test.files, (err) =>
           @error(err) if err
     catch err
       @error err

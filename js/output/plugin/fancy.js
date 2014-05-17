@@ -104,7 +104,8 @@
     _ref = {
       css: stats.data.css,
       html: stats.data.html,
-      js: stats.data.js
+      js: stats.data.js,
+      test: stats.data.test
     };
     _results = [];
     for (name in _ref) {

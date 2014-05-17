@@ -6,7 +6,6 @@ JsFile              = require '../file/js'
 JsFilesLinter       = require '../task/files-linter/js'
 JsMinifier          = require '../task/minifier/js'
 Repo                = require '../repo'
-Tester              = require '../task/tester'
 config              = require '../config'
 messenger           = require '../messenger'
 
@@ -20,7 +19,6 @@ class JsRepo extends Repo
     minifier:      new JsMinifier @
     deployer:      new Deployer @
     filesLinter:   new JsFilesLinter @
-    tester:        new Tester @
 
 module.exports = new JsRepo
 

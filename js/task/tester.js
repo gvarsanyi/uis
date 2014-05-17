@@ -28,8 +28,8 @@
     Tester.prototype.listeners = Tester;
 
     Tester.prototype.condition = function() {
-      var _ref, _ref1;
-      return !!((_ref = config[this.source.name].test) != null ? _ref.files : void 0) && !((_ref1 = this.source.tasks.minifier) != null ? _ref1.count() : void 0);
+      var _ref;
+      return !!config[this.source.name].files && ((_ref = this.source.tasks.filesLoader) != null ? _ref.count() : void 0);
     };
 
     Tester.prototype.size = function() {
@@ -41,15 +41,16 @@
         return function(callback) {
           var deployment, err, finish, options, orig_stderr, orig_stdout, stdout;
           finish = function() {
-            var i, index, line, result, warning, _i, _len;
+            var i, index, line, result, warning, _i, _len, _ref;
             if (orig_stdout) {
               process.stdout.write = orig_stdout;
             }
             if (orig_stderr) {
               process.stderr.write = orig_stderr;
             }
-            for (i = _i = 0, _len = stdout.length; _i < _len; i = ++_i) {
-              line = stdout[i];
+            _ref = stdout || [];
+            for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+              line = _ref[i];
               if ((index = line.indexOf('PhantomJS 1.9.7 (Linux): Executed ')) > -1) {
                 if (result = Number(line.substr(index + 25).split(' ')[3])) {
                   _this.result(result);
@@ -81,12 +82,12 @@
             return callback();
           };
           try {
-            deployment = config.js.deploy;
+            deployment = [_this.source.repoTmp + 'clone/**/*.coffee', _this.source.repoTmp + 'clone/**/*.js'];
             options = {
               autoWatch: false,
               browsers: ['PhantomJS'],
               colors: false,
-              files: [deployment].concat(config.js.test.files),
+              files: deployment.concat(config.test.files),
               frameworks: ['jasmine'],
               logLevel: 'WARN',
               preprocessors: {},
@@ -96,8 +97,8 @@
                 suppressPassed: true
               }
             };
-            options.preprocessors[config.js.test.files] = 'coffee';
-            if (config.js.test.teamcity) {
+            options.preprocessors[config.test.files] = 'coffee';
+            if (config.test.teamcity) {
               options.reporters.push('teamcity');
             }
             orig_stdout = process.stdout.write;
@@ -120,7 +121,7 @@
               return finish();
             });
             if (!config.singleRun) {
-              return _this.watch(config.js.test.files, function(err) {
+              return _this.watch(config.test.files, function(err) {
                 if (err) {
                   return _this.error(err);
                 }

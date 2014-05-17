@@ -26,6 +26,7 @@
           if (data == null) {
             data = '';
           }
+          _this.data = data;
           return _this.hash = md5(data);
         };
       })(this));
@@ -41,6 +42,7 @@
             data = '';
           }
           if (_this.hash !== (hash = md5(data))) {
+            _this.data = data;
             _this.hash = hash;
             return typeof callback === "function" ? callback() : void 0;
           }
@@ -227,7 +229,11 @@
         }
         updated = (function(_this) {
           return function(event, file) {
-            return _this.watchedFileChanged(event, file, source);
+            if (_this._watched[file]) {
+              return _this._watched[file].changed(function() {
+                return _this.watchedFileChanged(event, file, source);
+              });
+            }
           };
         })(this);
         gaze_error = null;
@@ -264,7 +270,7 @@
             }
             return _this.source.checkAllTasksFinished();
           };
-        })(this));
+        })(this), true);
       } else {
         messenger.note('changed: ' + this.source.shortFile(file));
         return this.work();
@@ -292,7 +298,7 @@
       return {
         file: (source != null ? typeof source.shortPath === "function" ? source.shortPath() : void 0 : void 0) || (((_ref = this.source) != null ? _ref.name : void 0) + ' repo'),
         title: this.name,
-        description: String(inf).split(path.resolve(process.cwd()) + '/').join('').trim()
+        description: String(inf).split(path.resolve(this.source.projectPath) + '/').join('').trim()
       };
     };
 

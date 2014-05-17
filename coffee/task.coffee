@@ -10,11 +10,13 @@ messenger = require './messenger'
 class WatchedFile
   constructor: (@compiler, @path) ->
     fs.readFile @path, encode: 'utf8', (err, data='') =>
+      @data = data
       @hash = md5 data
 
   changed: (callback) =>
     fs.readFile @path, encode: 'utf8', (err, data='') =>
       if @hash isnt hash = md5 data
+        @data = data
         @hash = hash
         callback?()
 
@@ -112,7 +114,9 @@ class Task
         @_watched[watchable] = new WatchedFile @, watchable
 
       updated = (event, file) =>
-        @watchedFileChanged event, file, source
+        if @_watched[file]
+          @_watched[file].changed =>
+            @watchedFileChanged event, file, source
 
       gaze_error = null
       if watchables.length
@@ -138,6 +142,7 @@ class Task
       @workFile source, =>
         @followUp?(source) unless @error()
         @source.checkAllTasksFinished()
+      , true # forces stat update pre- and post-workFile
     else
       messenger.note 'changed: ' + @source.shortFile file
       @work()
@@ -155,7 +160,7 @@ class Task
   wrapError: (inf, source) =>
     file:        source?.shortPath?() or (@source?.name + ' repo')
     title:       @name
-    description: String(inf).split(path.resolve(process.cwd()) + '/').join('').trim()
+    description: String(inf).split(path.resolve(@source.projectPath) + '/').join('').trim()
 
   preWork: (work_args, work) =>
     if typeof work_args[0] is 'object' and work_args[0].path

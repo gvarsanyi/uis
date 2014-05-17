@@ -38,10 +38,45 @@
   Service = (function() {
     Service.prototype.name = 'web-service';
 
+    Service.prototype.deployed = 0;
+
+    Service.prototype.pending = [];
+
+    Service.prototype.deployFilter = function(msg) {
+      var _ref, _ref1, _results;
+      if (((_ref = msg.stat) != null ? _ref.done : void 0) && ((_ref1 = msg.task) === 'deployer' || _ref1 === 'filesDeployer')) {
+        this.deployed += 1;
+        if (this.deployed > 2) {
+          messenger.note('deployments ready');
+          _results = [];
+          while (this.pending.length) {
+            _results.push(this.pending.shift()());
+          }
+          return _results;
+        }
+      }
+    };
+
     function Service() {
       this.publish = __bind(this.publish, this);
       this.incoming = __bind(this.incoming, this);
-      var contents, deploy, patch_js, proxy, _fn, _i, _len, _ref, _ref1, _ref2;
+      this.deployFilter = __bind(this.deployFilter, this);
+      var contents, deploy, patch_js, proxy, repo_name, _fn, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
+      _ref = ['css', 'html', 'js'];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        repo_name = _ref[_i];
+        if (!config[repo_name]) {
+          this.deployed += 1;
+        }
+      }
+      app.use((function(_this) {
+        return function(req, res, next) {
+          if (_this.deployed > 2) {
+            return next();
+          }
+          return _this.pending.push(next);
+        };
+      })(this));
       process.on('uncaughtException', function(err) {
         var msg;
         switch (err.code) {
@@ -96,10 +131,10 @@
           });
         }
       };
-      if (deploy = (_ref = config.js) != null ? _ref.deploy : void 0) {
+      if (deploy = (_ref1 = config.js) != null ? _ref1.deploy : void 0) {
         patch_js(deploy);
       }
-      if (deploy = (_ref1 = config.js) != null ? _ref1.deployMinified : void 0) {
+      if (deploy = (_ref2 = config.js) != null ? _ref2.deployMinified : void 0) {
         patch_js(deploy);
       }
       app.use(express["static"](config.service.contents));
@@ -107,7 +142,7 @@
         if (!(config.service.proxy instanceof Array)) {
           config.service.proxy = [config.service.proxy];
         }
-        _ref2 = config.service.proxy;
+        _ref3 = config.service.proxy;
         _fn = function(proxy) {
           return app.all(proxy.pattern, function(req, res) {
             var client, handler, method, url;
@@ -143,8 +178,8 @@
             }
           });
         };
-        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-          proxy = _ref2[_i];
+        for (_j = 0, _len1 = _ref3.length; _j < _len1; _j++) {
+          proxy = _ref3[_j];
           _fn(proxy);
         }
       }
@@ -179,7 +214,8 @@
       _results = [];
       for (_i = 0, _len = msgs.length; _i < _len; _i++) {
         msg = msgs[_i];
-        _results.push(this.publish('/update', msg));
+        this.publish('/update', msg);
+        _results.push(this.deployFilter(msg));
       }
       return _results;
     };

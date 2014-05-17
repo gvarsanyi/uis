@@ -747,8 +747,7 @@
     filesDeployer: 'deploy',
     deployer: 'deploy',
     filesLinter: 'lint',
-    tester: 'test',
-    coverageReporter: 'cover'
+    tester: 'test'
   };
 
   colors = {

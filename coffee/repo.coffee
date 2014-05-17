@@ -1,7 +1,10 @@
 path = require 'path'
 
-gaze = require 'gaze'
-glob = require 'glob'
+gaze   = require 'gaze'
+glob   = require 'glob'
+md5    = require 'MD5'
+mkdirp = require 'mkdirp'
+rimraf = require 'rimraf'
 
 FilesLoader = require './task/files-loader'
 config      = require './config'
@@ -14,6 +17,8 @@ class Repo
     @sources = {}
 
     @name = @constructor.name.replace('Repo', '').toLowerCase()
+
+    @setTmp()
 
     @dirs = config[@name]?.repos
     unless @dirs instanceof Array
@@ -29,6 +34,20 @@ class Repo
     @projectPath = path.resolve process.cwd()
 
     @watch()
+
+  setTmp: =>
+    tmp_dir = '/tmp'
+    for name in ['TMPDIR', 'TMP', 'TEMP']
+      tmp_dir = dir.replace /\/$/, '' if (dir = process.env[name])?
+    cwd = process.cwd()
+    @tmp     = tmp_dir + '/uis/' + path.basename(cwd) + '/' + md5(cwd) + '/'
+    @repoTmp = @tmp + @name + '/'
+    mkdirp @repoTmp
+    try
+      rimraf.sync @repoTmp + '*'
+    catch err
+      console.error '[ERROR] Could not clear' + @repoTmp
+      process.exit 1
 
   checkAllTasksFinished: =>
     if config.singleRun

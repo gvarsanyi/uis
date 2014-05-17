@@ -23,6 +23,7 @@
     __extends(SassFilesCompiler, _super);
 
     function SassFilesCompiler() {
+      this.wrapError = __bind(this.wrapError, this);
       this.workFile = __bind(this.workFile, this);
       return SassFilesCompiler.__super__.constructor.apply(this, arguments);
     }
@@ -56,7 +57,7 @@
               throw new Error('[SassFilesCompiler] Missing source: ' + source.path);
             }
             if (source.options.rubysass) {
-              cmd = 'sass -C -q ' + source.path;
+              cmd = 'sass --cache-location=' + _this.source.repoTmp + 'sass-cache -q ' + source.path;
               child_process.exec(cmd, {
                 maxBuffer: 128 * 1024 * 1024
               }, function(err, stdout, stderr) {
@@ -76,27 +77,25 @@
               return finish();
             }
             node_sass_error = function(err) {
-              var file, _ref;
+              var check_variations, checks, dir, file, name, _ref;
               if (!((_ref = stats.includedFiles) != null ? _ref.length : void 0)) {
                 file = String(err).split(':')[0];
-                return fs.exists(file + '.scss', function(exists) {
-                  if (exists) {
-                    stats.includedFiles = [file + '.scss'];
+                name = file.split('/').pop();
+                dir = file.substr(0, file.length - name.length);
+                checks = [file + '.scss', dir + '_' + name + '.scss', file + '.sass', dir + '_' + name + '.sass', file, dir + '_' + name];
+                check_variations = function() {
+                  if (!checks.length) {
                     return finish();
                   }
-                  return fs.exists(file + '.sass', function(exists) {
+                  return fs.exists((file = checks.shift()), function(exists) {
                     if (exists) {
-                      stats.includedFiles = [file + '.sass'];
+                      stats.includedFiles = [file];
                       return finish();
                     }
-                    return fs.exists(file, function(exists) {
-                      if (exists) {
-                        stats.includedFiles = [file];
-                      }
-                      return finish();
-                    });
+                    return check_variations();
                   });
-                });
+                };
+                return check_variations();
               }
             };
             node_sass_success = function(data) {
@@ -118,6 +117,57 @@
           }
         };
       })(this));
+    };
+
+    SassFilesCompiler.prototype.wrapError = function(inf, source) {
+      var data, desc, i, line, line_literal, lines, parts, src, val, _i, _len, _ref, _ref1, _ref2;
+      data = SassFilesCompiler.__super__.wrapError.apply(this, arguments);
+      inf = String(inf);
+      lines = (function() {
+        var _i, _len, _ref, _results;
+        _ref = inf.split('\n');
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          line = _ref[_i];
+          _results.push(line.trim());
+        }
+        return _results;
+      })();
+      if ((parts = lines[0].split(': '))[0] === 'Error' && (desc = parts.slice(3).join(': ')).length > 20) {
+        data.title = parts[1] + ': ' + parts[2];
+        data.description = desc;
+        if ((parts = (_ref = lines[1]) != null ? _ref.split(' ') : void 0)[4] && parts[0] === 'on' && parts[1] === 'line' && parts[3] === 'of') {
+          data.file = this.source.shortFile(parts.slice(4).join(' '));
+          if ((val = Number(parts[2])) > 1 || val === 0 || val === 1) {
+            data.line = val;
+          }
+          if (data.file && data.line) {
+            if (source.path === data.file) {
+              src = source.data;
+            } else if ((_ref1 = this.watched[data.file]) != null ? _ref1.data : void 0) {
+              src = this.watched[data.file].data;
+            } else {
+              try {
+                src = fs.readFileSync(data.file, {
+                  encoding: 'utf8'
+                });
+              } catch (_error) {}
+            }
+            if (src && (lines = src.split('\n')).length && lines.length >= data.line) {
+              data.lines = {
+                from: Math.max(1, data.line - 3),
+                to: Math.min(lines.length - 1, data.line * 1 + 3)
+              };
+              _ref2 = lines.slice(data.lines.from - 1, +(data.lines.to - 1) + 1 || 9e9);
+              for (i = _i = 0, _len = _ref2.length; _i < _len; i = ++_i) {
+                line_literal = _ref2[i];
+                data.lines[i + data.lines.from] = line_literal;
+              }
+            }
+          }
+        }
+      }
+      return data;
     };
 
     return SassFilesCompiler;

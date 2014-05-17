@@ -65,6 +65,7 @@ class FilesTask extends Task
 
     post_work_file = (pass_back...) =>
       @status @status() + 1
+      messenger.sendStat(@name) if args[2]
       if pass_back?.length
         callback pass_back...
       else

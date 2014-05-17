@@ -9,6 +9,7 @@ class FilesCompiler extends FilesTask
     @source.tasks.concatenator?.work node
     @source.tasks.filesMinifier?.work node
     @source.tasks.filesLinter?.work node
+    @source.tasks.filesDeployer?.work(node) if @source.name is 'test'
 
   fileCondition: (source) ->
     !!source.compilable

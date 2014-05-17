@@ -102,7 +102,7 @@ module.exports.update = (update) ->
       outblock = new Outblock new_sum * 4
 
   push_y = 0
-  for name, repo of {css: stats.data.css, html: stats.data.html, js: stats.data.js}
+  for name, repo of {css: stats.data.css, html: stats.data.html, js: stats.data.js, test: stats.data.test}
     if repo
       prev_inf = null
       unless head_shown[name]?

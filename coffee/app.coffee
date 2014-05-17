@@ -11,7 +11,7 @@ unless config.output in ['fancy', 'plain']
 output = require './output/plugin/' + config.output
 
 
-ext        = if __dirname.indexOf('/coffee/') > -1 then '.coffee' else '.js'
+ext        = if __dirname.split('/').pop() is 'coffee' then '.coffee' else '.js'
 repo_count = 0
 service    = null
 
@@ -46,28 +46,29 @@ if config.service
     data: stats.data
     ids:  stats.ids
 
-for name in ['js', 'css', 'html']
+for name in ['js', 'css', 'html', 'test']
   do (name) ->
-    repo = child_process.fork __dirname + '/repo/' + name + ext,
-      cwd:    process.cwd()
-      silent: true
-    repo_count += 1
+    if config[name] and (name isnt 'test' or config.js)
+      repo = child_process.fork __dirname + '/repo/' + name + ext,
+        cwd:    process.cwd()
+        silent: true
+      repo_count += 1
 
-    wrap repo, (code, signal) ->
-      repo_count -= 1
-      unless repo_count and not config.service
-        console.log 'bye'
-        process.exit 0
+      wrap repo, (code, signal) ->
+        repo_count -= 1
+        unless repo_count and not config.service
+          console.log 'bye'
+          process.exit 0
 
-    repo.on 'message', (msg) ->
-      msgs = stats.incoming msg
-      if service
-        for msg in msgs
-          service.send msg
-          switch msg?.type
-            when 'stat'
-              stats[msg.repo] ?= {}
-              stats[msg.repo][msg.task] = msg.stat
-              output.update msg
-            when 'note'
-              output.note msg
+      repo.on 'message', (msg) ->
+        msgs = stats.incoming msg
+        if service
+          for msg in msgs
+            service.send msg
+            switch msg?.type
+              when 'stat'
+                stats[msg.repo] ?= {}
+                stats[msg.repo][msg.task] = msg.stat
+                output.update msg
+              when 'note'
+                output.note msg

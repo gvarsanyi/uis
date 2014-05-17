@@ -20,16 +20,10 @@
 
     function Deployer() {
       this.work = __bind(this.work, this);
-      this.followUp = __bind(this.followUp, this);
       return Deployer.__super__.constructor.apply(this, arguments);
     }
 
     Deployer.prototype.name = 'deployer';
-
-    Deployer.prototype.followUp = function(node) {
-      var _ref;
-      return (_ref = this.source.tasks.tester) != null ? _ref.work(node) : void 0;
-    };
 
     Deployer.prototype.work = function() {
       return this.preWork(arguments, (function(_this) {

@@ -35,13 +35,13 @@
           }
         ]
       },
+      "test": {
+        "files": "test/**/*.coffee",
+        "coverage": true
+      },
       "js": {
         "deploy": "static/site.js",
         "minify": false,
-        "test": {
-          "files": "test/**/*.coffee",
-          "coverage": true
-        },
         "repos": [
           {
             "repo": [

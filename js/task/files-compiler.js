@@ -20,14 +20,19 @@
     FilesCompiler.prototype.sourceProperty = 'compiled';
 
     FilesCompiler.prototype.followUp = function(node) {
-      var _ref, _ref1, _ref2;
+      var _ref, _ref1, _ref2, _ref3;
       if ((_ref = this.source.tasks.concatenator) != null) {
         _ref.work(node);
       }
       if ((_ref1 = this.source.tasks.filesMinifier) != null) {
         _ref1.work(node);
       }
-      return (_ref2 = this.source.tasks.filesLinter) != null ? _ref2.work(node) : void 0;
+      if ((_ref2 = this.source.tasks.filesLinter) != null) {
+        _ref2.work(node);
+      }
+      if (this.source.name === 'test') {
+        return (_ref3 = this.source.tasks.filesDeployer) != null ? _ref3.work(node) : void 0;
+      }
     };
 
     FilesCompiler.prototype.fileCondition = function(source) {
