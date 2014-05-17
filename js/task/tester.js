@@ -37,11 +37,17 @@
     };
 
     Tester.prototype.work = function() {
-      return this.preWork(arguments, (function(_this) {
+      var x;
+      return this.preWork((x = arguments), (function(_this) {
         return function(callback) {
-          var deployment, err, finish, options, orig_stderr, orig_stdout, stdout;
+          var deployment, err, finish, finished, item, list, options, orig_stderr, orig_stdout, repo, stdout, test_file, test_files, _i, _j, _k, _len, _len1, _len2, _ref;
+          finished = false;
           finish = function() {
             var i, index, line, result, warning, _i, _len, _ref;
+            if (finished) {
+              return;
+            }
+            finished = true;
             if (orig_stdout) {
               process.stdout.write = orig_stdout;
             }
@@ -82,12 +88,28 @@
             return callback();
           };
           try {
-            deployment = [_this.source.repoTmp + 'clone/**/*.coffee', _this.source.repoTmp + 'clone/**/*.js'];
+            deployment = [];
+            _ref = config.test.repos;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              item = _ref[_i];
+              list = item.repo;
+              if (typeof list !== 'object') {
+                list = [list];
+              }
+              for (_j = 0, _len1 = list.length; _j < _len1; _j++) {
+                repo = list[_j];
+                deployment.push(_this.source.repoTmp + 'clone/' + repo);
+              }
+            }
+            test_files = config.test.files;
+            if (typeof test_files !== 'object') {
+              test_files = [test_files];
+            }
             options = {
               autoWatch: false,
               browsers: ['PhantomJS'],
               colors: false,
-              files: deployment.concat(config.test.files),
+              files: deployment.concat(test_files),
               frameworks: ['jasmine'],
               logLevel: 'WARN',
               preprocessors: {},
@@ -97,7 +119,12 @@
                 suppressPassed: true
               }
             };
-            options.preprocessors[config.test.files] = 'coffee';
+            for (_k = 0, _len2 = test_files.length; _k < _len2; _k++) {
+              test_file = test_files[_k];
+              if (test_file.indexOf('*.coffee') > -1) {
+                options.preprocessors[test_file] = 'coffee';
+              }
+            }
             if (config.test.teamcity) {
               options.reporters.push('teamcity');
             }
@@ -105,11 +132,11 @@
             orig_stderr = process.stderr.write;
             stdout = [];
             process.stdout.write = function(out) {
-              var line, _i, _len, _ref, _results;
-              _ref = out.replace(/\s+$/, '').split('\n');
+              var line, _l, _len3, _ref1, _results;
+              _ref1 = out.replace(/\s+$/, '').split('\n');
               _results = [];
-              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-                line = _ref[_i];
+              for (_l = 0, _len3 = _ref1.length; _l < _len3; _l++) {
+                line = _ref1[_l];
                 _results.push(stdout.push(line));
               }
               return _results;

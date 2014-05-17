@@ -31,7 +31,7 @@ class SassFilesCompiler extends FilesCompiler
         throw new Error '[SassFilesCompiler] Missing source: ' + source.path
 
       if source.options.rubysass
-        cmd = 'sass --cache-location=' + @source.repoTmp + 'sass-cache -q ' + source.path
+        cmd = 'sass --cache-location=' + @source.repoTmp + '../.sass-cache -q ' + source.path
         child_process.exec cmd, maxBuffer: 128 * 1024 * 1024, (err, stdout, stderr) =>
           source[@sourceProperty] = stdout unless err
           finish err
@@ -83,17 +83,18 @@ class SassFilesCompiler extends FilesCompiler
       data.description = desc
 
       if (parts = lines[1]?.split ' ')[4] and parts[0] is 'on' and parts[1] is 'line' and parts[3] is 'of'
-        data.file = @source.shortFile parts[4 ...].join ' '
+        long_file = parts[4 ...].join ' '
+        data.file = @source.shortFile long_file
 
         data.line = val if (val = Number parts[2]) > 1 or val is 0 or val is 1
 
         if data.file and data.line
-          if source.path is data.file
+          if source.path is long_file
             src = source.data
-          else if @watched[data.file]?.data
-            src = @watched[data.file].data
+          else if @watched[long_file]?.data
+            src = @watched[long_file].data
           else
-            try src = fs.readFileSync data.file, encoding: 'utf8'
+            try src = fs.readFileSync long_file, encoding: 'utf8'
           if src and (lines = src.split('\n')).length and lines.length >= data.line
             data.lines =
               from: Math.max 1, data.line - 3

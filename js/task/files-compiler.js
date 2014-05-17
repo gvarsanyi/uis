@@ -19,6 +19,10 @@
 
     FilesCompiler.prototype.sourceProperty = 'compiled';
 
+    FilesCompiler.prototype.fileCondition = function(source) {
+      return !!source.compilable && (!source.options.testOnly || this.source.name === 'test');
+    };
+
     FilesCompiler.prototype.followUp = function(node) {
       var _ref, _ref1, _ref2, _ref3;
       if ((_ref = this.source.tasks.concatenator) != null) {
@@ -33,10 +37,6 @@
       if (this.source.name === 'test') {
         return (_ref3 = this.source.tasks.filesDeployer) != null ? _ref3.work(node) : void 0;
       }
-    };
-
-    FilesCompiler.prototype.fileCondition = function(source) {
-      return !!source.compilable;
     };
 
     return FilesCompiler;

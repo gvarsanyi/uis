@@ -18,6 +18,7 @@
 
     function FilesDeployer() {
       this.workFile = __bind(this.workFile, this);
+      this.fileCondition = __bind(this.fileCondition, this);
       return FilesDeployer.__super__.constructor.apply(this, arguments);
     }
 
@@ -32,7 +33,7 @@
         return function(source, callback) {
           var basedir, err, src, target;
           try {
-            if (source.options.minify) {
+            if (_this.source.tasks.minifier && source.options.minify) {
               src = source.minified;
             } else if (source.compilable) {
               src = source.compiled;

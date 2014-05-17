@@ -23,12 +23,11 @@
 
   Repo = (function() {
     function Repo() {
-      this.watch = __bind(this.watch, this);
-      this.work = __bind(this.work, this);
+      this.setTmp = __bind(this.setTmp, this);
       this.shortFile = __bind(this.shortFile, this);
+      this.load = __bind(this.load, this);
       this.fileUpdate = __bind(this.fileUpdate, this);
       this.checkAllTasksFinished = __bind(this.checkAllTasksFinished, this);
-      this.setTmp = __bind(this.setTmp, this);
       var i, item, name, task, _i, _len, _ref, _ref1, _ref2;
       this.pathes = [];
       this.sources = {};
@@ -56,31 +55,8 @@
         this.tasks[name] = task;
       }
       this.projectPath = path.resolve(process.cwd());
-      this.watch();
+      this.load();
     }
-
-    Repo.prototype.setTmp = function() {
-      var cwd, dir, err, name, tmp_dir, _i, _len, _ref;
-      tmp_dir = '/tmp';
-      _ref = ['TMPDIR', 'TMP', 'TEMP'];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        name = _ref[_i];
-        if ((dir = process.env[name]) != null) {
-          tmp_dir = dir.replace(/\/$/, '');
-        }
-      }
-      cwd = process.cwd();
-      this.tmp = tmp_dir + '/uis/' + path.basename(cwd) + '/' + md5(cwd) + '/';
-      this.repoTmp = this.tmp + this.name + '/';
-      mkdirp(this.repoTmp);
-      try {
-        return rimraf.sync(this.repoTmp + '*');
-      } catch (_error) {
-        err = _error;
-        console.error('[ERROR] Could not clear' + this.repoTmp);
-        return process.exit(1);
-      }
-    };
 
     Repo.prototype.checkAllTasksFinished = function() {
       var name, task, _ref;
@@ -122,19 +98,8 @@
       }
     };
 
-    Repo.prototype.shortFile = function(file_path) {
-      if (file_path.substr(0, this.projectPath.length) === this.projectPath) {
-        return file_path.substr(this.projectPath.length + 1);
-      }
-      return file_path;
-    };
-
-    Repo.prototype.work = function(callback) {
-      return this.tasks.filesLoader.work();
-    };
-
-    Repo.prototype.watch = function() {
-      var dir, dir_pool, instanciate_file, update, upsert_file, watch_dir, watched;
+    Repo.prototype.load = function() {
+      var file, files, inst, instanciate_file, k, opt, options, pattern, repo, v, watch, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref, _ref1, _ref2, _ref3, _ref4;
       instanciate_file = (function(_this) {
         return function(file, options) {
           var class_ref, ext;
@@ -144,134 +109,95 @@
           }
         };
       })(this);
-      update = (function(_this) {
-        return function(event, file) {
-          return _this.fileUpdate(event, file);
-        };
-      })(this);
-      upsert_file = (function(_this) {
-        return function(node, options) {
-          var inst, k, v, _results;
-          if (_this.sources[node]) {
-            _results = [];
-            for (k in options) {
-              v = options[k];
-              _results.push(_this.sources[node].options[k] = v);
-            }
-            return _results;
-          } else if (!_this.sources[node] && (inst = instanciate_file(node, options))) {
-            _this.sources[node] = inst;
-            return _this.pathes.push(node);
+      _ref = config[this.name].repos;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        repo = _ref[_i];
+        options = {};
+        _ref1 = ['testOnly', 'thirdParty'];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          opt = _ref1[_j];
+          if (repo[opt] != null) {
+            options[opt] = repo[opt];
           }
-        };
-      })(this);
-      watched = (function(_this) {
-        return function(tree, options) {
-          var add_nodes;
-          add_nodes = function(tree) {
-            var full_path, node;
-            for (full_path in tree) {
-              node = tree[full_path];
-              if (typeof node === 'object') {
-                add_nodes(node);
-              } else if ('/' !== node.substr(node.length - 1)) {
-                upsert_file(node, options);
-              }
-            }
-            return null;
-          };
-          add_nodes(tree);
-          return watch_dir();
-        };
-      })(this);
-      dir_pool = (function() {
-        var _i, _len, _ref, _results;
-        _ref = this.dirs;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          dir = _ref[_i];
-          _results.push(dir);
         }
-        return _results;
-      }).call(this);
-      watch_dir = (function(_this) {
-        return function() {
-          if (!dir_pool.length) {
-            _this.watchingAll = true;
-            return _this.work();
+        _ref2 = ['basedir', 'deploy'];
+        for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+          opt = _ref2[_k];
+          if (repo[opt]) {
+            options[opt] = path.resolve(repo[opt]);
+          } else if (config[this.name][opt]) {
+            options[opt] = path.resolve(config[this.name][opt]);
           }
-          dir = dir_pool.shift();
-          return (function(dir) {
-            var opt, options, pattern, pattern_count, pattern_done, watch, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _ref1, _ref2, _ref3, _ref4, _results;
-            options = {};
-            _ref = ['testOnly', 'thirdParty'];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              opt = _ref[_i];
-              if (dir[opt]) {
-                options[opt] = dir[opt];
-              }
+        }
+        _ref3 = ['minify', 'rubysass'];
+        for (_l = 0, _len3 = _ref3.length; _l < _len3; _l++) {
+          opt = _ref3[_l];
+          if (repo[opt]) {
+            options[opt] = repo[opt];
+          } else if (config[this.name][opt]) {
+            options[opt] = config[this.name][opt];
+          }
+          if (typeof repo.repo !== 'object') {
+            repo.repo = [repo.repo];
+          }
+          _ref4 = repo.repo;
+          for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
+            pattern = _ref4[_m];
+            if (pattern[0] !== '/') {
+              pattern = this.projectPath + '/' + pattern;
             }
-            _ref1 = ['basedir', 'deploy'];
-            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-              opt = _ref1[_j];
-              if (dir[opt]) {
-                options[opt] = path.resolve(dir[opt]);
-              } else if (config[_this.name][opt]) {
-                options[opt] = path.resolve(config[_this.name][opt]);
-              }
-            }
-            _ref2 = ['minify', 'rubysass'];
-            for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
-              opt = _ref2[_k];
-              if (dir[opt]) {
-                options[opt] = dir[opt];
-              } else if (config[_this.name][opt]) {
-                options[opt] = config[_this.name][opt];
-              }
-            }
-            if (!((_ref3 = config[_this.name].test) != null ? _ref3.files : void 0)) {
-              delete config[_this.name].test;
-            } else if (typeof config[_this.name].test.files !== 'object') {
-              config[_this.name].test.files = [config[_this.name].test.files];
-            }
-            if (config.singleRun) {
-              if (typeof dir.repo !== 'object') {
-                dir.repo = [dir.repo];
-              }
-              pattern_count = dir.repo.length;
-              pattern_done = 0;
-              _ref4 = dir.repo;
-              _results = [];
-              for (_l = 0, _len3 = _ref4.length; _l < _len3; _l++) {
-                pattern = _ref4[_l];
-                if (pattern[0] !== '/') {
-                  pattern = process.cwd() + '/' + pattern;
+            files = glob.sync(pattern);
+            for (_n = 0, _len5 = files.length; _n < _len5; _n++) {
+              file = files[_n];
+              if (this.sources[file]) {
+                for (k in options) {
+                  v = options[k];
+                  this.sources[file].options[k] = v;
                 }
-                _results.push(glob(pattern, function(err, files) {
-                  var file, _len4, _m;
-                  for (_m = 0, _len4 = files.length; _m < _len4; _m++) {
-                    file = files[_m];
-                    upsert_file(file, options);
-                  }
-                  pattern_done += 1;
-                  if (pattern_count === pattern_done) {
-                    return watch_dir();
-                  }
-                }));
+              } else if (!this.sources[file] && (inst = instanciate_file(file, options))) {
+                this.sources[file] = inst;
+                this.pathes.push(file);
               }
-              return _results;
-            } else {
-              watch = new gaze;
-              watch.on('ready', function(watcher) {
-                return watched(watcher.watched(), options);
-              });
-              watch.on('all', update);
-              return watch.add(dir.repo);
             }
-          })(dir);
-        };
-      })(this);
-      return watch_dir();
+          }
+          if (!config.singleRun) {
+            watch = new gaze;
+            watch.on('all', this.fileUpdate);
+            watch.add(repo.repo);
+          }
+        }
+      }
+      return this.tasks.filesLoader.work();
+    };
+
+    Repo.prototype.shortFile = function(file_path) {
+      if (file_path.substr(0, this.projectPath.length) === this.projectPath) {
+        return file_path.substr(this.projectPath.length + 1);
+      }
+      return file_path;
+    };
+
+    Repo.prototype.setTmp = function() {
+      var cwd, dir, err, name, tmp_dir, _i, _len, _ref;
+      tmp_dir = '/tmp';
+      _ref = ['TMPDIR', 'TMP', 'TEMP'];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        name = _ref[_i];
+        if ((dir = process.env[name]) != null) {
+          tmp_dir = dir.replace(/\/$/, '');
+        }
+      }
+      cwd = process.cwd();
+      this.tmp = tmp_dir + '/uis/' + path.basename(cwd) + '/' + md5(cwd) + '/';
+      this.repoTmp = this.tmp + this.name + '/';
+      try {
+        rimraf.sync(this.repoTmp);
+      } catch (_error) {
+        err = _error;
+        console.error('[ERROR] Could not clear' + this.repoTmp);
+        process.exit(1);
+      }
+      return mkdirp(this.repoTmp);
     };
 
     return Repo;

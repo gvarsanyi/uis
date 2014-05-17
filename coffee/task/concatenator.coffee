@@ -5,12 +5,12 @@ class Concatenator extends Task
   name: 'concatenator'
 
   followUp: (node) =>
-    @source.tasks.minifier.work node
+    @source.tasks.minifier?.work node
 
   work: => @preWork arguments, (callback) =>
     try
       concatenated = ''
-      for path, source of @source.sources
+      for path, source of @source.sources when not source.options.testOnly
         if source.compilable
           src = source.compiled
         else

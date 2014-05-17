@@ -27,7 +27,7 @@ class Service
   pending:  []
 
   deployFilter: (msg) =>
-    if msg.stat?.done and msg.task in ['deployer', 'filesDeployer']
+    if msg.stat?.done and msg.task in ['deployer', 'filesDeployer'] and msg.repo isnt 'test'
       @deployed += 1
       if @deployed > 2
         messenger.note 'deployments ready'

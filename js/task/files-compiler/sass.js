@@ -57,7 +57,7 @@
               throw new Error('[SassFilesCompiler] Missing source: ' + source.path);
             }
             if (source.options.rubysass) {
-              cmd = 'sass --cache-location=' + _this.source.repoTmp + 'sass-cache -q ' + source.path;
+              cmd = 'sass --cache-location=' + _this.source.repoTmp + '../.sass-cache -q ' + source.path;
               child_process.exec(cmd, {
                 maxBuffer: 128 * 1024 * 1024
               }, function(err, stdout, stderr) {

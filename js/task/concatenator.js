@@ -19,7 +19,8 @@
     Concatenator.prototype.name = 'concatenator';
 
     Concatenator.prototype.followUp = function(node) {
-      return this.source.tasks.minifier.work(node);
+      var _ref;
+      return (_ref = this.source.tasks.minifier) != null ? _ref.work(node) : void 0;
     };
 
     Concatenator.prototype.work = function() {
@@ -37,6 +38,7 @@
                 src = source.data;
               }
               if (src == null) {
+                console.log(source);
                 throw new Error('[Concatenator] Missing source: ' + source.path);
               }
               concatenated += src + '\n\n';

@@ -9,6 +9,9 @@ class FilesLoader extends FilesTask
   name:           'filesLoader'
   sourceProperty: 'data'
 
+  fileCondition: (source) =>
+    not source.options.testOnly or @source.name is 'test'
+
   followUp: (node) =>
     @source.tasks.filesCompiler.work node
 

@@ -11,10 +11,10 @@ unless config.output in ['fancy', 'plain']
 output = require './output/plugin/' + config.output
 
 
+done       = false
 ext        = if __dirname.split('/').pop() is 'coffee' then '.coffee' else '.js'
 repo_count = 0
 service    = null
-
 
 wrap = (child, exit_callback) ->
   for iface in ['stderr', 'stdout']
@@ -72,3 +72,5 @@ for name in ['js', 'css', 'html', 'test']
                 output.update msg
               when 'note'
                 output.note msg
+
+done = true

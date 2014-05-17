@@ -9,12 +9,12 @@ FilesTask = require '../files-task'
 class FilesDeployer extends FilesTask
   name: 'filesDeployer'
 
-  fileCondition: (source) ->
+  fileCondition: (source) =>
     not source.options.testOnly
 
   workFile: => @preWorkFile arguments, (source, callback) =>
     try
-      if source.options.minify
+      if @source.tasks.minifier and source.options.minify
         src = source.minified
       else if source.compilable
         src = source.compiled

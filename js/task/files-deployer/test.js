@@ -17,7 +17,7 @@
     }
 
     TestFilesDeployer.prototype.fileCondition = function(source) {
-      return !source.options.thirdParty;
+      return true;
     };
 
     TestFilesDeployer.prototype.followUp = function(node) {
@@ -26,14 +26,8 @@
     };
 
     TestFilesDeployer.prototype.workFile = function(source) {
-      var path;
-      if (source.path.substr(0, this.source.projectPath.length) === this.source.projectPath) {
-        path = this.source.repoTmp + 'clone/' + source.path.substr(this.source.projectPath.length);
-      } else {
-        path = this.source.repoTmp + 'clone' + source.path;
-      }
       source.options.basedir = this.source.projectPath;
-      source.options.deploy = path;
+      source.options.deploy = this.source.repoTmp + 'clone';
       return TestFilesDeployer.__super__.workFile.apply(this, arguments);
     };
 

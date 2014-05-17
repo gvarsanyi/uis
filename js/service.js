@@ -44,7 +44,7 @@
 
     Service.prototype.deployFilter = function(msg) {
       var _ref, _ref1, _results;
-      if (((_ref = msg.stat) != null ? _ref.done : void 0) && ((_ref1 = msg.task) === 'deployer' || _ref1 === 'filesDeployer')) {
+      if (((_ref = msg.stat) != null ? _ref.done : void 0) && ((_ref1 = msg.task) === 'deployer' || _ref1 === 'filesDeployer') && msg.repo !== 'test') {
         this.deployed += 1;
         if (this.deployed > 2) {
           messenger.note('deployments ready');

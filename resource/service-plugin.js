@@ -781,7 +781,7 @@
       case 'note':
         return add(msg);
       case 'stat':
-        if (msg.stat.done && ((_ref = msg.task) === 'deployer' || _ref === 'filesDeployer')) {
+        if (msg.stat.done && ((_ref = msg.task) === 'deployer' || _ref === 'filesDeployer') && msg.repo !== 'test') {
           if (msg.repo === 'css') {
             reload_css();
           } else {

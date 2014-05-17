@@ -524,7 +524,7 @@ process_msg = (msg) ->
     when 'note'
       add msg
     when 'stat'
-      if msg.stat.done and msg.task in ['deployer', 'filesDeployer']
+      if msg.stat.done and msg.task in ['deployer', 'filesDeployer'] and msg.repo isnt 'test'
         if msg.repo is 'css'
           reload_css()
         else

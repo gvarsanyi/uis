@@ -17,12 +17,17 @@
     function FilesLoader() {
       this.workFile = __bind(this.workFile, this);
       this.followUp = __bind(this.followUp, this);
+      this.fileCondition = __bind(this.fileCondition, this);
       return FilesLoader.__super__.constructor.apply(this, arguments);
     }
 
     FilesLoader.prototype.name = 'filesLoader';
 
     FilesLoader.prototype.sourceProperty = 'data';
+
+    FilesLoader.prototype.fileCondition = function(source) {
+      return !source.options.testOnly || this.source.name === 'test';
+    };
 
     FilesLoader.prototype.followUp = function(node) {
       return this.source.tasks.filesCompiler.work(node);

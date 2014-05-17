@@ -2,19 +2,22 @@ fs   = require 'fs'
 path = require 'path'
 
 gaze = require 'gaze'
+glob = require 'glob'
 md5  = require 'MD5'
 
 messenger = require './messenger'
 
 
 class WatchedFile
-  constructor: (@compiler, @path) ->
+  constructor: (@path) ->
     fs.readFile @path, encode: 'utf8', (err, data='') =>
       @data = data
       @hash = md5 data
 
   changed: (callback) =>
     fs.readFile @path, encode: 'utf8', (err, data='') =>
+      if err
+        return callback?()
       if @hash isnt hash = md5 data
         @data = data
         @hash = hash
@@ -101,6 +104,7 @@ class Task
     @_finishedAt
 
   watch: (watchables=[], source, callback) =>
+    watchables = [watchables] unless typeof watchables is 'object'
     if typeof source is 'function'
       callback = source
       source = undefined
@@ -110,8 +114,15 @@ class Task
         delete @_watched[k]
       @_gaze.close() if @_gaze
       delete @_watching
+      append = []
       for watchable in watchables
-        @_watched[watchable] = new WatchedFile @, watchable
+        watchable = @source.projectPath + '/' + watchable unless watchable[0] is '/'
+        @_watched[watchable] = new WatchedFile watchable
+        if watchable.indexOf('*') > -1
+          for file in glob.sync watchable
+            append.push file
+            @_watched[file] = new WatchedFile file
+      watchables = watchables.concat append
 
       updated = (event, file) =>
         if @_watched[file]
@@ -119,14 +130,15 @@ class Task
             @watchedFileChanged event, file, source
 
       gaze_error = null
-      if watchables.length
+      if watchables.length and watchables[0]
         @_gaze = new gaze
         @_gaze.on 'all', updated
         @_gaze.on 'error', (err) ->
           gaze_error = err
-        @_gaze.on 'ready', ->
+        @_gaze.on 'ready', =>
           callback? gaze_error
-        @_gaze.add watchables
+        for watchable in watchables
+          @_gaze.add watchable
 
         @_watching = true
       else
@@ -145,7 +157,7 @@ class Task
       , true # forces stat update pre- and post-workFile
     else
       messenger.note 'changed: ' + @source.shortFile file
-      @work()
+      @work {file}
 
   watched: =>
     i = null
