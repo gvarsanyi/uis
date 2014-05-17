@@ -32,13 +32,15 @@
             _ref = _this.source.sources;
             for (path in _ref) {
               source = _ref[path];
+              if (!(!source.options.testOnly)) {
+                continue;
+              }
               if (source.compilable) {
                 src = source.compiled;
               } else {
                 src = source.data;
               }
               if (src == null) {
-                console.log(source);
                 throw new Error('[Concatenator] Missing source: ' + source.path);
               }
               concatenated += src + '\n\n';

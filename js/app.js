@@ -38,7 +38,12 @@
     return child.on('exit', exit_callback);
   };
 
-  stats.init({}, {});
+  stats.init({
+    css: {},
+    html: {},
+    js: {},
+    test: {}
+  }, {});
 
   if (config.service) {
     service = child_process.fork(__dirname + '/service' + ext, {

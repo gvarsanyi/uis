@@ -101,10 +101,16 @@
     Repo.prototype.load = function() {
       var file, files, inst, instanciate_file, k, opt, options, pattern, repo, v, watch, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _len5, _m, _n, _ref, _ref1, _ref2, _ref3, _ref4;
       instanciate_file = (function(_this) {
-        return function(file, options) {
-          var class_ref, ext;
+        return function(file, _options) {
+          var class_ref, ext, k, options, v, _ref;
           ext = file.substr(file.lastIndexOf('.') + 1);
           if (class_ref = _this.extensions[ext]) {
+            options = {};
+            _ref = _options || {};
+            for (k in _ref) {
+              v = _ref[k];
+              options[k] = v;
+            }
             return new class_ref(_this, file, options);
           }
         };
@@ -137,37 +143,41 @@
           } else if (config[this.name][opt]) {
             options[opt] = config[this.name][opt];
           }
-          if (typeof repo.repo !== 'object') {
-            repo.repo = [repo.repo];
+        }
+        if (typeof repo.repo !== 'object') {
+          repo.repo = [repo.repo];
+        }
+        _ref4 = repo.repo;
+        for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
+          pattern = _ref4[_m];
+          if (pattern[0] !== '/') {
+            pattern = this.projectPath + '/' + pattern;
           }
-          _ref4 = repo.repo;
-          for (_m = 0, _len4 = _ref4.length; _m < _len4; _m++) {
-            pattern = _ref4[_m];
-            if (pattern[0] !== '/') {
-              pattern = this.projectPath + '/' + pattern;
-            }
-            files = glob.sync(pattern);
-            for (_n = 0, _len5 = files.length; _n < _len5; _n++) {
-              file = files[_n];
-              if (this.sources[file]) {
-                for (k in options) {
-                  v = options[k];
-                  this.sources[file].options[k] = v;
-                }
-              } else if (!this.sources[file] && (inst = instanciate_file(file, options))) {
-                this.sources[file] = inst;
-                this.pathes.push(file);
+          files = glob.sync(pattern);
+          for (_n = 0, _len5 = files.length; _n < _len5; _n++) {
+            file = files[_n];
+            if (this.sources[file]) {
+              for (k in options) {
+                v = options[k];
+                this.sources[file].options[k] = v;
               }
+            } else if (!this.sources[file] && (inst = instanciate_file(file, options))) {
+              this.sources[file] = inst;
+              this.pathes.push(file);
             }
-          }
-          if (!config.singleRun) {
-            watch = new gaze;
-            watch.on('all', this.fileUpdate);
-            watch.add(repo.repo);
           }
         }
+        if (!config.singleRun) {
+          watch = new gaze;
+          watch.on('all', this.fileUpdate);
+          watch.add(repo.repo);
+        }
       }
-      return this.tasks.filesLoader.work();
+      return setTimeout((function(_this) {
+        return function() {
+          return _this.tasks.filesLoader.work();
+        };
+      })(this));
     };
 
     Repo.prototype.shortFile = function(file_path) {

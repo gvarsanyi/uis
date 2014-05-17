@@ -78,7 +78,7 @@ module.exports.update = (update) ->
   error_state = 'warning' if warning
   error_state = 'error' if error
 
-  if done or error or warning or true
+  if done or error or warning #or true
     msg = ''
     if error
       msg = ': ' + ngroup error.length, 'error'

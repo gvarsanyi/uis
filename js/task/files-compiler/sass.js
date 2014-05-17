@@ -120,7 +120,7 @@
     };
 
     SassFilesCompiler.prototype.wrapError = function(inf, source) {
-      var data, desc, i, line, line_literal, lines, parts, src, val, _i, _len, _ref, _ref1, _ref2;
+      var data, desc, i, line, line_literal, lines, long_file, parts, src, val, _i, _len, _ref, _ref1, _ref2;
       data = SassFilesCompiler.__super__.wrapError.apply(this, arguments);
       inf = String(inf);
       lines = (function() {
@@ -137,18 +137,19 @@
         data.title = parts[1] + ': ' + parts[2];
         data.description = desc;
         if ((parts = (_ref = lines[1]) != null ? _ref.split(' ') : void 0)[4] && parts[0] === 'on' && parts[1] === 'line' && parts[3] === 'of') {
-          data.file = this.source.shortFile(parts.slice(4).join(' '));
+          long_file = parts.slice(4).join(' ');
+          data.file = this.source.shortFile(long_file);
           if ((val = Number(parts[2])) > 1 || val === 0 || val === 1) {
             data.line = val;
           }
           if (data.file && data.line) {
-            if (source.path === data.file) {
+            if (source.path === long_file) {
               src = source.data;
-            } else if ((_ref1 = this.watched[data.file]) != null ? _ref1.data : void 0) {
-              src = this.watched[data.file].data;
+            } else if ((_ref1 = this.watched[long_file]) != null ? _ref1.data : void 0) {
+              src = this.watched[long_file].data;
             } else {
               try {
-                src = fs.readFileSync(data.file, {
+                src = fs.readFileSync(long_file, {
                   encoding: 'utf8'
                 });
               } catch (_error) {}
