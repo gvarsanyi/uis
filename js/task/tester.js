@@ -42,7 +42,7 @@
       var args;
       return this.preWork((args = arguments), (function(_this) {
         return function(callback) {
-          var deployment, err, finish, finished, item, list, options, orig_stderr, orig_stdout, repo, stdout, test_file, testables, updated_file, _i, _j, _k, _len, _len1, _len2, _ref;
+          var deployment, err, finish, finished, item, list, options, orig_stderr, orig_stdout, repo, stdout, test_file, testables, updated_file, _i, _j, _k, _l, _len, _len1, _len2, _len3, _len4, _m, _ref, _ref1;
           if (typeof args[0] === 'object' && args[0].file && _this._watched[args[0].file]) {
             updated_file = args[0].file;
           }
@@ -100,6 +100,10 @@
                   inf.file = parts.join(':');
                 }
                 _this.error(inf);
+              } else if (line.indexOf('##teamcity') > -1) {
+                console.log(line);
+              } else if (line) {
+                console.log('[' + i + ']', line);
               }
             }
             if (warning) {
@@ -118,7 +122,7 @@
               }
               for (_j = 0, _len1 = list.length; _j < _len1; _j++) {
                 repo = list[_j];
-                deployment.push(_this.source.repoTmp + 'clone/' + repo);
+                deployment.push(_this.source.repoTmp + 'clone' + _this.source.projectPath + '/' + repo);
               }
             }
             if (!(config.test.files && typeof config.test.files === 'object')) {
@@ -145,18 +149,52 @@
                 options.preprocessors[test_file] = 'coffee';
               }
             }
+            if (config.test.coverage) {
+              options.reporters.push('coverage');
+              _ref1 = config.test.repos;
+              for (_l = 0, _len3 = _ref1.length; _l < _len3; _l++) {
+                item = _ref1[_l];
+                if (!(!(item.thirdParty || item.testOnly))) {
+                  continue;
+                }
+                list = item.repo;
+                if (typeof list !== 'object') {
+                  list = [list];
+                }
+                for (_m = 0, _len4 = list.length; _m < _len4; _m++) {
+                  repo = list[_m];
+                  options.preprocessors[_this.source.repoTmp + 'clone' + _this.source.projectPath + '/' + repo] = 'coverage';
+                }
+              }
+              options.coverageReporter = {
+                reporters: [
+                  {
+                    type: 'html',
+                    dir: _this.source.repoTmp + 'coverage/'
+                  }, {
+                    type: 'text-summary'
+                  }
+                ]
+              };
+              if (config.test.teamcity) {
+                options.coverageReporter.reporters.push({
+                  type: 'teamcity'
+                });
+              }
+            }
             if (config.test.teamcity) {
               options.reporters.push('teamcity');
             }
+            console.log(JSON.stringify(options, null, 2));
             orig_stdout = process.stdout.write;
             orig_stderr = process.stderr.write;
             stdout = [];
             process.stdout.write = function(out) {
-              var line, _l, _len3, _ref1, _results;
-              _ref1 = out.replace(/\s+$/, '').split('\n');
+              var line, _len5, _n, _ref2, _results;
+              _ref2 = out.replace(/\s+$/, '').split('\n');
               _results = [];
-              for (_l = 0, _len3 = _ref1.length; _l < _len3; _l++) {
-                line = _ref1[_l];
+              for (_n = 0, _len5 = _ref2.length; _n < _len5; _n++) {
+                line = _ref2[_n];
                 _results.push(stdout.push(line));
               }
               return _results;

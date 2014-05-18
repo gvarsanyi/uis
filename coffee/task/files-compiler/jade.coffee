@@ -4,7 +4,7 @@ FilesCompiler = require '../files-compiler'
 config        = require '../../config'
 
 
-require '../../jade-includes-patch'
+require '../../../patch/jade-includes-patch'
 
 
 class JadeFilesCompiler extends FilesCompiler

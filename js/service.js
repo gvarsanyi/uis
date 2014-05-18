@@ -153,14 +153,16 @@
             url += req.url;
             handler = function(err, preq, pres, data) {
               res.type('json');
+              messenger.note('[proxy response] ' + ((pres != null ? pres.statusCode : void 0) || '?') + ' ' + req.method + ' ' + url);
               try {
-                messenger.note('[proxy response] ' + ((pres != null ? pres.statusCode : void 0) || '?') + ' ' + req.method + ' ' + url);
-                return res.json(pres != null ? pres.statusCode : void 0, data);
+                return res.json((pres != null ? pres.statusCode : void 0) || 500, data || {
+                  error: 'Server Error'
+                });
               } catch (_error) {
                 try {
                   return res.json(500, {
                     error: 'Server Error'
-                  }, data);
+                  });
                 } catch (_error) {}
               }
             };

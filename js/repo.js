@@ -32,6 +32,7 @@
       this.pathes = [];
       this.sources = {};
       this.name = this.constructor.name.replace('Repo', '').toLowerCase();
+      this.projectPath = path.resolve(process.cwd());
       this.setTmp();
       this.dirs = (_ref = config[this.name]) != null ? _ref.repos : void 0;
       if (!(this.dirs instanceof Array)) {
@@ -54,7 +55,6 @@
         task = _ref2[name];
         this.tasks[name] = task;
       }
-      this.projectPath = path.resolve(process.cwd());
       this.load();
     }
 
@@ -188,26 +188,16 @@
     };
 
     Repo.prototype.setTmp = function() {
-      var cwd, dir, err, name, tmp_dir, _i, _len, _ref;
-      tmp_dir = '/tmp';
-      _ref = ['TMPDIR', 'TMP', 'TEMP'];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        name = _ref[_i];
-        if ((dir = process.env[name]) != null) {
-          tmp_dir = dir.replace(/\/$/, '');
-        }
-      }
-      cwd = process.cwd();
-      this.tmp = tmp_dir + '/uis/' + path.basename(cwd) + '/' + md5(cwd) + '/';
+      var err;
+      this.tmp = this.projectPath + '/.uis/';
       this.repoTmp = this.tmp + this.name + '/';
       try {
-        rimraf.sync(this.repoTmp);
+        return rimraf.sync(this.repoTmp);
       } catch (_error) {
         err = _error;
         console.error('[ERROR] Could not clear' + this.repoTmp);
-        process.exit(1);
+        return process.exit(1);
       }
-      return mkdirp(this.repoTmp);
     };
 
     return Repo;

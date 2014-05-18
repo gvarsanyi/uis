@@ -10,7 +10,7 @@ class FilesDeployer extends FilesTask
   name: 'filesDeployer'
 
   fileCondition: (source) =>
-    not source.options.testOnly
+    not source.options.testOnly or @source.name is 'test'
 
   workFile: => @preWorkFile arguments, (source, callback) =>
     try
@@ -32,6 +32,8 @@ class FilesDeployer extends FilesTask
       target = source.options.deploy + source.path.substr basedir.length
       if target.toLowerCase().substr(target.length - 5) is '.jade'
         target = target.substr(0, target.length - 4) + 'html'
+#       if target.toLowerCase().substr(target.length - 7) is '.coffee'
+#         target += '.js'
 
       mkdirp path.dirname(target), null, (err) =>
         if err

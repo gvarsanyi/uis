@@ -104,12 +104,12 @@ class Service
 
             handler = (err, preq, pres, data) ->
               res.type 'json'
+              messenger.note '[proxy response] ' + (pres?.statusCode or '?') +
+                             ' ' + req.method + ' ' + url
               try
-                messenger.note '[proxy response] ' + (pres?.statusCode or '?') +
-                              ' ' + req.method + ' ' + url
-                res.json pres?.statusCode, data
+                res.json pres?.statusCode or 500, data or error: 'Server Error'
               catch
-                try res.json 500, error: 'Server Error', data
+                try res.json 500, error: 'Server Error'
 
             client = restify.createJsonClient {url}
             messenger.note '[proxy request] ' + req.method + ' ' + url

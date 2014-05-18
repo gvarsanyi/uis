@@ -6,4 +6,5 @@ compile:
 	echo '#!/usr/bin/env node' | cat - js/app.js > js/_app.js
 	mv js/_app.js js/app.js
 	chmod a+x js/app.js
+	coffee -c patch/*.coffee
 	coffee -c resource/*.coffee

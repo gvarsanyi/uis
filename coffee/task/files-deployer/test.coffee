@@ -10,7 +10,7 @@ class TestFilesDeployer extends FilesDeployer
 
   workFile: (source) =>
     source.options.basedir = @source.projectPath
-    source.options.deploy  = @source.repoTmp + 'clone'
+    source.options.deploy  = @source.repoTmp + 'clone' + @source.projectPath + '/'
     super
 
 module.exports = TestFilesDeployer

@@ -27,7 +27,7 @@
 
     TestFilesDeployer.prototype.workFile = function(source) {
       source.options.basedir = this.source.projectPath;
-      source.options.deploy = this.source.repoTmp + 'clone';
+      source.options.deploy = this.source.repoTmp + 'clone' + this.source.projectPath + '/';
       return TestFilesDeployer.__super__.workFile.apply(this, arguments);
     };
 

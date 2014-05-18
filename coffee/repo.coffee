@@ -18,6 +18,7 @@ class Repo
 
     @name = @constructor.name.replace('Repo', '').toLowerCase()
 
+    @projectPath = path.resolve process.cwd()
     @setTmp()
 
     @dirs = config[@name]?.repos
@@ -31,7 +32,6 @@ class Repo
     for name, task of @getTasks?() or {}
       @tasks[name] = task
 
-    @projectPath = path.resolve process.cwd()
 
     @load()
 
@@ -109,17 +109,18 @@ class Repo
     file_path
 
   setTmp: =>
-    tmp_dir = '/tmp'
-    for name in ['TMPDIR', 'TMP', 'TEMP']
-      tmp_dir = dir.replace /\/$/, '' if (dir = process.env[name])?
-    cwd = process.cwd()
-    @tmp     = tmp_dir + '/uis/' + path.basename(cwd) + '/' + md5(cwd) + '/'
+#     tmp_dir = '/tmp'
+#     for name in ['TMPDIR', 'TMP', 'TEMP']
+#       tmp_dir = dir.replace /\/$/, '' if (dir = process.env[name])?
+#     cwd = process.cwd()
+#     @tmp     = tmp_dir + '/uis/' + path.basename(cwd) + '/' + md5(cwd) + '/'
+    @tmp     = @projectPath + '/.uis/'
     @repoTmp = @tmp + @name + '/'
     try
       rimraf.sync @repoTmp
     catch err
       console.error '[ERROR] Could not clear' + @repoTmp
       process.exit 1
-    mkdirp @repoTmp
+#     mkdirp @repoTmp
 
 module.exports = Repo

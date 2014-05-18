@@ -37,7 +37,8 @@
       },
       "test": {
         "files": "test/**/*.coffee",
-        "coverage": true
+        "coverage": true,
+        "teamcity": false
       },
       "js": {
         "deploy": "static/site.js",

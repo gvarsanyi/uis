@@ -25,7 +25,7 @@
     FilesDeployer.prototype.name = 'filesDeployer';
 
     FilesDeployer.prototype.fileCondition = function(source) {
-      return !source.options.testOnly;
+      return !source.options.testOnly || this.source.name === 'test';
     };
 
     FilesDeployer.prototype.workFile = function() {

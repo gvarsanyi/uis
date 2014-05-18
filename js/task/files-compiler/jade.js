@@ -11,7 +11,7 @@
 
   config = require('../../config');
 
-  require('../../jade-includes-patch');
+  require('../../../patch/jade-includes-patch');
 
   JadeFilesCompiler = (function(_super) {
     __extends(JadeFilesCompiler, _super);

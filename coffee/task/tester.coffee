@@ -60,8 +60,10 @@ class Tester extends Task
               parts.pop()
             inf.file = parts.join ':'
           @error inf
-#         else if line
-#           console.log line
+        else if line.indexOf('##teamcity') > -1
+          console.log line
+        else if line
+          console.log '[' + i + ']', line
 
       @warning(warning) if warning
       callback()
@@ -72,7 +74,7 @@ class Tester extends Task
         list = item.repo
         list = [list] unless typeof list is 'object'
         for repo in list
-          deployment.push @source.repoTmp + 'clone/' + repo
+          deployment.push @source.repoTmp + 'clone' + @source.projectPath + '/' + repo
 
       unless config.test.files and typeof config.test.files is 'object'
         config.test.files = [config.test.files]
@@ -93,7 +95,22 @@ class Tester extends Task
       for test_file in testables when test_file.indexOf('.coffee') > -1
         options.preprocessors[test_file] = 'coffee'
 
+      if config.test.coverage
+        options.reporters.push 'coverage'
+        for item in config.test.repos when not (item.thirdParty or item.testOnly)
+          list = item.repo
+          list = [list] unless typeof list is 'object'
+          for repo in list
+            options.preprocessors[@source.repoTmp + 'clone' + @source.projectPath + '/' + repo] = 'coverage'
+        options.coverageReporter = reporters: [
+          {type: 'html', dir: @source.repoTmp + 'coverage/'}
+          {type: 'text-summary'}]
+        if config.test.teamcity
+          options.coverageReporter.reporters.push type: 'teamcity'
+
       options.reporters.push('teamcity') if config.test.teamcity
+
+      console.log JSON.stringify options, null, 2
 
       orig_stdout = process.stdout.write
       orig_stderr = process.stderr.write
