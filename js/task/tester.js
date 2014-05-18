@@ -152,14 +152,18 @@
               config.test.files = [config.test.files];
             }
             testables = updated_file ? [updated_file] : config.test.files;
-            options = _this.getDefaultOptions('spec', _this.getCloneDeployment(), config.test.files);
+            options = _this.getDefaultOptions('spec', _this.getCloneDeployment(), testables);
             options.specReporter = {
               suppressPassed: true
             };
-            for (_i = 0, _len = testables.length; _i < _len; _i++) {
-              test_file = testables[_i];
-              if (test_file.indexOf('.coffee') > -1) {
-                options.preprocessors[test_file] = 'coffee';
+            if (updated_file && updated_file.indexOf('.coffee') > -1) {
+              options.preprocessors[updated_file] = 'coffee';
+            } else {
+              for (_i = 0, _len = testables.length; _i < _len; _i++) {
+                test_file = testables[_i];
+                if (test_file.indexOf('.coffee') > -1) {
+                  options.preprocessors[test_file] = 'coffee';
+                }
               }
             }
             if (config.test.teamcity && !updated_file) {
@@ -201,7 +205,7 @@
     };
 
     Tester.prototype.wrapError = function(inf) {
-      var data, i, line_literal, lines, src, _i, _len, _ref, _ref1;
+      var data, i, line_literal, lines, src, _i, _len, _ref, _ref1, _ref2, _ref3;
       if (!(inf && typeof inf === 'object' && (inf.title != null) && (inf.description != null))) {
         return Tester.__super__.wrapError.apply(this, arguments);
       }
@@ -214,8 +218,8 @@
         data.line = inf.line + 1;
       }
       if (inf.file && data.line) {
-        if ((_ref = this.watched[inf.file]) != null ? _ref.data : void 0) {
-          src = this.watched[inf.file].data;
+        if ((_ref = this._watched) != null ? (_ref1 = _ref[inf.file]) != null ? _ref1.data : void 0 : void 0) {
+          src = (_ref2 = this._watched) != null ? _ref2[inf.file].data : void 0;
         } else {
           try {
             src = fs.readFileSync(inf.file, {
@@ -228,9 +232,9 @@
             from: Math.max(1, data.line - 3),
             to: Math.min(lines.length - 1, data.line * 1 + 3)
           };
-          _ref1 = lines.slice(data.lines.from - 1, +(data.lines.to - 1) + 1 || 9e9);
-          for (i = _i = 0, _len = _ref1.length; _i < _len; i = ++_i) {
-            line_literal = _ref1[i];
+          _ref3 = lines.slice(data.lines.from - 1, +(data.lines.to - 1) + 1 || 9e9);
+          for (i = _i = 0, _len = _ref3.length; _i < _len; i = ++_i) {
+            line_literal = _ref3[i];
             data.lines[i + data.lines.from] = line_literal;
           }
         }

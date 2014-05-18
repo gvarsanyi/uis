@@ -93,11 +93,14 @@ class Tester extends Task
         config.test.files = [config.test.files]
       testables = if updated_file then [updated_file] else config.test.files
 
-      options = @getDefaultOptions 'spec', @getCloneDeployment(), config.test.files
+      options = @getDefaultOptions 'spec', @getCloneDeployment(), testables
       options.specReporter = suppressPassed: true
 
-      for test_file in testables when test_file.indexOf('.coffee') > -1
-        options.preprocessors[test_file] = 'coffee'
+      if updated_file and updated_file.indexOf('.coffee') > -1
+        options.preprocessors[updated_file] = 'coffee'
+      else
+        for test_file in testables when test_file.indexOf('.coffee') > -1
+          options.preprocessors[test_file] = 'coffee'
 
       if config.test.teamcity and not updated_file
         options.reporters.push 'teamcity'
@@ -133,8 +136,8 @@ class Tester extends Task
     data.line = inf.line + 1 if inf.line?
 
     if inf.file and data.line
-      if @watched[inf.file]?.data
-        src = @watched[inf.file].data
+      if @_watched?[inf.file]?.data
+        src = @_watched?[inf.file].data
       else
         try src = fs.readFileSync inf.file, encoding: 'utf8'
       if src and (lines = src.split('\n')).length and lines.length >= data.line

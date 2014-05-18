@@ -91,8 +91,8 @@ class SassFilesCompiler extends FilesCompiler
         if data.file and data.line
           if source.path is long_file
             src = source.data
-          else if @watched[long_file]?.data
-            src = @watched[long_file].data
+          else if @_watched[long_file]?.data
+            src = @_watched[long_file].data
           else
             try src = fs.readFileSync long_file, encoding: 'utf8'
           if src and (lines = src.split('\n')).length and lines.length >= data.line

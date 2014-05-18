@@ -145,8 +145,8 @@
           if (data.file && data.line) {
             if (source.path === long_file) {
               src = source.data;
-            } else if ((_ref1 = this.watched[long_file]) != null ? _ref1.data : void 0) {
-              src = this.watched[long_file].data;
+            } else if ((_ref1 = this._watched[long_file]) != null ? _ref1.data : void 0) {
+              src = this._watched[long_file].data;
             } else {
               try {
                 src = fs.readFileSync(long_file, {
