@@ -1,5 +1,6 @@
 CoffeeFile          = require '../file/coffee'
 CoffeeFilesCompiler = require '../task/files-compiler/coffee'
+CoverageReporter    = require '../task/coverage-reporter'
 JsFile              = require '../file/js'
 Repo                = require '../repo'
 TestFilesDeployer   = require '../task/files-deployer/test'
@@ -16,9 +17,10 @@ class TestRepo extends Repo
     super
 
   getTasks: ->
-    filesCompiler: new CoffeeFilesCompiler @
-    filesDeployer: new TestFilesDeployer @
-    tester:        new Tester @
+    filesCompiler:    new CoffeeFilesCompiler @
+    filesDeployer:    new TestFilesDeployer @
+    tester:           new Tester @
+    coverageReporter: new CoverageReporter @
 
 module.exports = new TestRepo
 

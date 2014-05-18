@@ -260,7 +260,7 @@
           if (msg.description) {
             node = create(panel, {
               padding: '4px 2px',
-              whiteSpace: 'normal'
+              whiteSpace: 'pre'
             });
             node.innerHTML = msg.description;
           }
@@ -747,7 +747,8 @@
     filesDeployer: 'deploy',
     deployer: 'deploy',
     filesLinter: 'lint',
-    tester: 'test'
+    tester: 'test',
+    coverageReporter: 'coverage'
   };
 
   colors = {

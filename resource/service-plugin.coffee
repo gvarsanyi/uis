@@ -181,7 +181,7 @@ class HUD
         if msg.description
           node = create panel,
             padding:    '4px 2px'
-            whiteSpace: 'normal'
+            whiteSpace: 'pre'
           node.innerHTML = msg.description
         if msg.file
           node = create panel,
@@ -491,15 +491,16 @@ style = (node, styles) ->
 hud = new HUD
 
 symbols =
-  filesLoader:   'load'
-  filesCompiler: 'compile'
-  concatenator:  'concat'
-  filesMinifier: 'minify'
-  minifier:      'minify'
-  filesDeployer: 'deploy'
-  deployer:      'deploy'
-  filesLinter:   'lint'
-  tester:        'test'
+  filesLoader:      'load'
+  filesCompiler:    'compile'
+  concatenator:     'concat'
+  filesMinifier:    'minify'
+  minifier:         'minify'
+  filesDeployer:    'deploy'
+  deployer:         'deploy'
+  filesLinter:      'lint'
+  tester:           'test'
+  coverageReporter: 'coverage'
 
 colors =
   load:  ['#001', '#114', '#001']

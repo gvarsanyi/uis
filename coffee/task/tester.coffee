@@ -1,19 +1,39 @@
-fs        = require 'fs'
+fs     = require 'fs'
 
-karma     = require 'karma'
+karma  = require 'karma'
 
-Task      = require '../task'
-config    = require '../config'
-messenger = require '../messenger'
+Task   = require '../task'
+config = require '../config'
 
 
 class Tester extends Task
   name: 'tester'
 
-  listeners: @
-
   condition: =>
     !!config[@source.name].files and @source.tasks.filesLoader?.count()
+
+  followUp: (node) =>
+    @source.tasks.coverageReporter?.work node
+
+  getCloneDeployment: =>
+    deployment = []
+    for item in config.test.repos
+      list = item.repo
+      list = [list] unless typeof list is 'object'
+      for repo in list
+        deployment.push @source.repoTmp + 'clone' + @source.projectPath + '/' + repo
+    deployment
+
+  getDefaultOptions: (reporter, deployment, test_files) =>
+    autoWatch:     false
+    browsers:      ['PhantomJS']
+    colors:        false
+    files:         deployment.concat test_files
+    frameworks:    ['jasmine']
+    logLevel:      'ERROR'
+    preprocessors: {}
+    reporters:     [reporter]
+    singleRun:     true
 
   size: =>
     @_result or 0
@@ -63,54 +83,24 @@ class Tester extends Task
         else if line.indexOf('##teamcity') > -1
           console.log line
         else if line
-          console.log '[' + i + ']', line
+          console.log 'karma output [' + i + ']', line
 
       @warning(warning) if warning
       callback()
 
     try
-      deployment = []
-      for item in config.test.repos
-        list = item.repo
-        list = [list] unless typeof list is 'object'
-        for repo in list
-          deployment.push @source.repoTmp + 'clone' + @source.projectPath + '/' + repo
-
       unless config.test.files and typeof config.test.files is 'object'
         config.test.files = [config.test.files]
       testables = if updated_file then [updated_file] else config.test.files
 
-      options =
-        autoWatch:     false
-        browsers:      ['PhantomJS']
-        colors:        false
-        files:         deployment.concat testables
-        frameworks:    ['jasmine']
-        logLevel:      'WARN'
-        preprocessors: {}
-        reporters:     ['spec']
-        singleRun:     true
-        specReporter:  suppressPassed: true
+      options = @getDefaultOptions 'spec', @getCloneDeployment(), config.test.files
+      options.specReporter = suppressPassed: true
 
       for test_file in testables when test_file.indexOf('.coffee') > -1
         options.preprocessors[test_file] = 'coffee'
 
-      if config.test.coverage
-        options.reporters.push 'coverage'
-        for item in config.test.repos when not (item.thirdParty or item.testOnly)
-          list = item.repo
-          list = [list] unless typeof list is 'object'
-          for repo in list
-            options.preprocessors[@source.repoTmp + 'clone' + @source.projectPath + '/' + repo] = 'coverage'
-        options.coverageReporter = reporters: [
-          {type: 'html', dir: @source.repoTmp + 'coverage/'}
-          {type: 'text-summary'}]
-        if config.test.teamcity
-          options.coverageReporter.reporters.push type: 'teamcity'
-
-      options.reporters.push('teamcity') if config.test.teamcity
-
-      console.log JSON.stringify options, null, 2
+      if config.test.teamcity and not updated_file
+        options.reporters.push 'teamcity'
 
       orig_stdout = process.stdout.write
       orig_stderr = process.stderr.write
