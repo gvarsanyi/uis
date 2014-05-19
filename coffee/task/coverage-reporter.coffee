@@ -10,6 +10,25 @@ config = require '../config'
 class CoverageReporter extends Task
   name: 'coverageReporter'
 
+  constructor: ->
+    super
+
+    # test.coverage is falsy or a dictionary: {warningBar: 60, errorBar: 8-}
+    if config.test.coverage
+      default_bars = {warningBar: 80, errorBar: 60}
+      unless typeof config.test.coverage is 'object'
+        config.test.coverage =
+          warningBar: default_bars.warningBar
+          errorBar:   default_bars.errorBar
+      for type in ['warningBar', 'errorBar']
+        if isNaN Number String val = config.test.coverage[type]
+          config.test.coverage[type] = default_bars[type]
+        config.test.coverage[type] = Math.min 100, (Math.max 0, Number config.test.coverage[type])
+      if config.test.coverage.errorBar > config.test.coverage.warningBar
+        config.test.coverage.warningBar = config.test.coverage.errorBar
+      if config.test.coverage.warningBar + config.test.coverage.errorBar is 0
+        config.test.coverage = false
+
   condition: =>
     config.test.coverage and
     !!config[@source.name].files and
@@ -33,7 +52,6 @@ class CoverageReporter extends Task
           @error 'coverage output file generation failed'
           callback()
         else if files.length > 1
-          console.log files
           @error 'coverage output file generation ambiguity'
           callback()
         else
@@ -53,7 +71,7 @@ class CoverageReporter extends Task
                 if line.substr(0, 6) is '      '
                   file = dir + parts[0].trim()
                   report.files[file] = info
-                  if statements < 80
+                  if statements < config.test.coverage.warningBar
                     lowest.push {file, statements}
                 else if line.substr(0, 3) is '   '
                   dir = parts[0].trim()
@@ -61,22 +79,22 @@ class CoverageReporter extends Task
                 else if line.substr(0, 9) is 'All files'
                   report.all = info
 
-              if report.all?.statements and report.all.statements < 80
+              if report.all?.statements and report.all.statements < config.test.coverage.warningBar
                 lowest.sort (a, b) ->
                   return 1 if a.statements > b.statements
                   -1
-                msg = 'Files not meeting the 80% bar:'
+                msg = 'Files not meeting the ' + config.test.coverage.warningBar + '% bar:'
                 if lowest.length > 10
+                  msg = lowest.length + ' files not meeting the ' + config.test.coverage.warningBar + '% bar. 10 lowest coverages:'
                   lowest = lowest[0 .. 9]
-                  msg = 'Files not meeting the 80% bar - 10 lowest coverages:'
                 for item in lowest
                   msg += '\n  ' + item.file + ' (' + item.statements + '%)'
-                @[if report.all.statements < 60 then 'error' else 'warning']
+                @[if report.all.statements < config.test.coverage.errorBar then 'error' else 'warning']
                   title: 'Low test coverage'
                   description: report.all.statements + '% of all statements covered.\n\n' + msg
 
-              for file, info of report.files when info.statements < 80
-                @[if info.statements < 60 then 'error' else 'warning']
+              for file, info of report.files when info.statements < config.test.coverage.warningBar
+                @[if info.statements < config.test.coverage.errorBar then 'error' else 'warning']
                   file: file
                   title: 'Low test coverage'
                   description: info.statements + '% of statements covered.'
@@ -85,9 +103,6 @@ class CoverageReporter extends Task
               callback()
 
     try
-      unless config.test.files and typeof config.test.files is 'object'
-        config.test.files = [config.test.files]
-
       tester = @source.tasks.tester
 
       options = tester.getDefaultOptions 'dot', tester.getCloneDeployment(), config.test.files

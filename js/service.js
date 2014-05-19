@@ -81,17 +81,14 @@
         var msg;
         switch (err.code) {
           case 'EADDRINUSE':
-            messenger.note('port ' + config.service.port + ' is already in use');
+            console.error('port ' + config.service.port + ' is already in use');
             break;
           case 'EACCES':
             msg = config.service.port;
             if (!(process.getuid() === 0 || config.service.port > 1023)) {
               msg += ' (you need root permissions)';
             }
-            messenger.note('No permission to open port ' + msg);
-            break;
-          default:
-            messenger.note('server error: ' + err);
+            console.error('No permission to open port', msg);
         }
         return process.exit(1);
       });
@@ -111,7 +108,7 @@
           }
         });
       });
-      contents = path.resolve(config.service.contents);
+      contents = path.resolve(config.service.contentsDir);
       patch_js = function(deploy) {
         deploy = path.resolve(deploy);
         if (deploy.substr(0, contents.length) === contents) {
@@ -137,7 +134,7 @@
       if (deploy = (_ref2 = config.js) != null ? _ref2.deployMinified : void 0) {
         patch_js(deploy);
       }
-      app.use(express["static"](config.service.contents));
+      app.use(express["static"](contents));
       if (config.service.proxy) {
         if (!(config.service.proxy instanceof Array)) {
           config.service.proxy = [config.service.proxy];

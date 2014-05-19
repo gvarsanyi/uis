@@ -21,17 +21,18 @@ class Repo
     @projectPath = path.resolve process.cwd()
     @setTmp()
 
-    @dirs = config[@name]?.repos
-    unless @dirs instanceof Array
-      @dirs = [@dirs]
-    for item, i in @dirs
+    unless config[@name].repos
+      console.error 'Missing repos section in config'
+      process.exit 1
+    unless config[@name].repos instanceof Array
+      config[@name].repos = [config[@name].repos]
+    for item, i in config[@name].repos
       unless typeof item is 'object'
-        @dirs[i] = repo: item
+        config[@name].repos[i] = repo: item
 
     @tasks = filesLoader: new FilesLoader @
     for name, task of @getTasks?() or {}
       @tasks[name] = task
-
 
     @load()
 
@@ -39,10 +40,7 @@ class Repo
     if config.singleRun
       for name, task of @tasks
         return unless task.done()
-
-      setTimeout ->
-        process.exit 0
-      , 10
+      process.exit 0
 
   fileUpdate: (event, file, force_reload) =>
     if node = @sources[file] # changed/deleted
@@ -66,7 +64,7 @@ class Repo
           options[k] = v
         return new class_ref @, file, options
 
-    for repo in config[@name].repos
+    for repo in config[@name].repos or []
       options = {}
       for opt in ['testOnly', 'thirdParty'] when repo[opt]?
         options[opt] = repo[opt]
@@ -97,6 +95,8 @@ class Repo
       unless config.singleRun
         watch = new gaze
         watch.on 'all', @fileUpdate
+#         watch.on 'ready', (args...) => console.log @name, 'watch ready', args...
+#         watch.on 'error', (args...) => console.log @name, 'watch error', args...
         watch.add repo.repo
 
     # start work

@@ -9,6 +9,13 @@ config = require '../config'
 class Tester extends Task
   name: 'tester'
 
+  constructor: ->
+    super
+
+    # test.files is an array
+    unless config.test.files and typeof config.test.files is 'object'
+      config.test.files = [config.test.files]
+
   condition: =>
     !!config[@source.name].files and @source.tasks.filesLoader?.count()
 
@@ -51,8 +58,8 @@ class Tester extends Task
       process.stderr.write = orig_stderr if orig_stderr
 
       for line, i in stdout or []
-        if (index = line.indexOf 'PhantomJS 1.9.7 (Linux): Executed ') > -1
-          if result = Number line.substr(index + 25).split(' ')[3]
+        if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf '): Executed ') > -1
+          if result = Number line.substr(index + 12).split(' ')[3]
             @result result
         else if line.substr(0, 6) is '    ✗ '
           @warning(warning) if warning
@@ -89,8 +96,6 @@ class Tester extends Task
       callback()
 
     try
-      unless config.test.files and typeof config.test.files is 'object'
-        config.test.files = [config.test.files]
       testables = if updated_file then [updated_file] else config.test.files
 
       options = @getDefaultOptions 'spec', @getCloneDeployment(), testables

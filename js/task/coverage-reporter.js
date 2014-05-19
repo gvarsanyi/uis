@@ -18,15 +18,42 @@
   CoverageReporter = (function(_super) {
     __extends(CoverageReporter, _super);
 
+    CoverageReporter.prototype.name = 'coverageReporter';
+
     function CoverageReporter() {
       this.wrapError = __bind(this.wrapError, this);
       this.work = __bind(this.work, this);
       this.size = __bind(this.size, this);
       this.condition = __bind(this.condition, this);
-      return CoverageReporter.__super__.constructor.apply(this, arguments);
+      var default_bars, type, val, _i, _len, _ref;
+      CoverageReporter.__super__.constructor.apply(this, arguments);
+      if (config.test.coverage) {
+        default_bars = {
+          warningBar: 80,
+          errorBar: 60
+        };
+        if (typeof config.test.coverage !== 'object') {
+          config.test.coverage = {
+            warningBar: default_bars.warningBar,
+            errorBar: default_bars.errorBar
+          };
+        }
+        _ref = ['warningBar', 'errorBar'];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          type = _ref[_i];
+          if (isNaN(Number(String(val = config.test.coverage[type])))) {
+            config.test.coverage[type] = default_bars[type];
+          }
+          config.test.coverage[type] = Math.min(100, Math.max(0, Number(config.test.coverage[type])));
+        }
+        if (config.test.coverage.errorBar > config.test.coverage.warningBar) {
+          config.test.coverage.warningBar = config.test.coverage.errorBar;
+        }
+        if (config.test.coverage.warningBar + config.test.coverage.errorBar === 0) {
+          config.test.coverage = false;
+        }
+      }
     }
-
-    CoverageReporter.prototype.name = 'coverageReporter';
 
     CoverageReporter.prototype.condition = function() {
       var _ref;
@@ -56,7 +83,6 @@
                 _this.error('coverage output file generation failed');
                 return callback();
               } else if (files.length > 1) {
-                console.log(files);
                 _this.error('coverage output file generation ambiguity');
                 return callback();
               } else {
@@ -100,7 +126,7 @@
                       if (line.substr(0, 6) === '      ') {
                         file = dir + parts[0].trim();
                         report.files[file] = info;
-                        if (statements < 80) {
+                        if (statements < config.test.coverage.warningBar) {
                           lowest.push({
                             file: file,
                             statements: statements
@@ -113,23 +139,23 @@
                         report.all = info;
                       }
                     }
-                    if (((_ref2 = report.all) != null ? _ref2.statements : void 0) && report.all.statements < 80) {
+                    if (((_ref2 = report.all) != null ? _ref2.statements : void 0) && report.all.statements < config.test.coverage.warningBar) {
                       lowest.sort(function(a, b) {
                         if (a.statements > b.statements) {
                           return 1;
                         }
                         return -1;
                       });
-                      msg = 'Files not meeting the 80% bar:';
+                      msg = 'Files not meeting the ' + config.test.coverage.warningBar + '% bar:';
                       if (lowest.length > 10) {
+                        msg = lowest.length + ' files not meeting the ' + config.test.coverage.warningBar + '% bar. 10 lowest coverages:';
                         lowest = lowest.slice(0, 10);
-                        msg = 'Files not meeting the 80% bar - 10 lowest coverages:';
                       }
                       for (_j = 0, _len1 = lowest.length; _j < _len1; _j++) {
                         item = lowest[_j];
                         msg += '\n  ' + item.file + ' (' + item.statements + '%)';
                       }
-                      _this[report.all.statements < 60 ? 'error' : 'warning']({
+                      _this[report.all.statements < config.test.coverage.errorBar ? 'error' : 'warning']({
                         title: 'Low test coverage',
                         description: report.all.statements + '% of all statements covered.\n\n' + msg
                       });
@@ -137,8 +163,8 @@
                     _ref3 = report.files;
                     for (file in _ref3) {
                       info = _ref3[file];
-                      if (info.statements < 80) {
-                        _this[info.statements < 60 ? 'error' : 'warning']({
+                      if (info.statements < config.test.coverage.warningBar) {
+                        _this[info.statements < config.test.coverage.errorBar ? 'error' : 'warning']({
                           file: file,
                           title: 'Low test coverage',
                           description: info.statements + '% of statements covered.'
@@ -153,9 +179,6 @@
             });
           };
           try {
-            if (!(config.test.files && typeof config.test.files === 'object')) {
-              config.test.files = [config.test.files];
-            }
             tester = _this.source.tasks.tester;
             options = tester.getDefaultOptions('dot', tester.getCloneDeployment(), config.test.files);
             _ref = config.test.files;

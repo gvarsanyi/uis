@@ -28,21 +28,24 @@
       this.load = __bind(this.load, this);
       this.fileUpdate = __bind(this.fileUpdate, this);
       this.checkAllTasksFinished = __bind(this.checkAllTasksFinished, this);
-      var i, item, name, task, _i, _len, _ref, _ref1, _ref2;
+      var i, item, name, task, _i, _len, _ref, _ref1;
       this.pathes = [];
       this.sources = {};
       this.name = this.constructor.name.replace('Repo', '').toLowerCase();
       this.projectPath = path.resolve(process.cwd());
       this.setTmp();
-      this.dirs = (_ref = config[this.name]) != null ? _ref.repos : void 0;
-      if (!(this.dirs instanceof Array)) {
-        this.dirs = [this.dirs];
+      if (!config[this.name].repos) {
+        console.error('Missing repos section in config');
+        process.exit(1);
       }
-      _ref1 = this.dirs;
-      for (i = _i = 0, _len = _ref1.length; _i < _len; i = ++_i) {
-        item = _ref1[i];
+      if (!(config[this.name].repos instanceof Array)) {
+        config[this.name].repos = [config[this.name].repos];
+      }
+      _ref = config[this.name].repos;
+      for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+        item = _ref[i];
         if (typeof item !== 'object') {
-          this.dirs[i] = {
+          config[this.name].repos[i] = {
             repo: item
           };
         }
@@ -50,9 +53,9 @@
       this.tasks = {
         filesLoader: new FilesLoader(this)
       };
-      _ref2 = (typeof this.getTasks === "function" ? this.getTasks() : void 0) || {};
-      for (name in _ref2) {
-        task = _ref2[name];
+      _ref1 = (typeof this.getTasks === "function" ? this.getTasks() : void 0) || {};
+      for (name in _ref1) {
+        task = _ref1[name];
         this.tasks[name] = task;
       }
       this.load();
@@ -68,9 +71,7 @@
             return;
           }
         }
-        return setTimeout(function() {
-          return process.exit(0);
-        }, 10);
+        return process.exit(0);
       }
     };
 
@@ -115,7 +116,7 @@
           }
         };
       })(this);
-      _ref = config[this.name].repos;
+      _ref = config[this.name].repos || [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         repo = _ref[_i];
         options = {};

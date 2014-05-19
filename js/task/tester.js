@@ -16,6 +16,8 @@
   Tester = (function(_super) {
     __extends(Tester, _super);
 
+    Tester.prototype.name = 'tester';
+
     function Tester() {
       this.work = __bind(this.work, this);
       this.size = __bind(this.size, this);
@@ -23,10 +25,11 @@
       this.getCloneDeployment = __bind(this.getCloneDeployment, this);
       this.followUp = __bind(this.followUp, this);
       this.condition = __bind(this.condition, this);
-      return Tester.__super__.constructor.apply(this, arguments);
+      Tester.__super__.constructor.apply(this, arguments);
+      if (!(config.test.files && typeof config.test.files === 'object')) {
+        config.test.files = [config.test.files];
+      }
     }
-
-    Tester.prototype.name = 'tester';
 
     Tester.prototype.condition = function() {
       var _ref;
@@ -98,8 +101,8 @@
             _ref = stdout || [];
             for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
               line = _ref[i];
-              if ((index = line.indexOf('PhantomJS 1.9.7 (Linux): Executed ')) > -1) {
-                if (result = Number(line.substr(index + 25).split(' ')[3])) {
+              if (line.substr(0, 10) === 'PhantomJS ' && (index = line.indexOf('): Executed ')) > -1) {
+                if (result = Number(line.substr(index + 12).split(' ')[3])) {
                   _this.result(result);
                 }
               } else if (line.substr(0, 6) === '    ✗ ') {
@@ -148,9 +151,6 @@
             return callback();
           };
           try {
-            if (!(config.test.files && typeof config.test.files === 'object')) {
-              config.test.files = [config.test.files];
-            }
             testables = updated_file ? [updated_file] : config.test.files;
             options = _this.getDefaultOptions('spec', _this.getCloneDeployment(), testables);
             options.specReporter = {

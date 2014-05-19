@@ -51,14 +51,12 @@ class Service
     process.on 'uncaughtException', (err) ->
       switch err.code
         when 'EADDRINUSE'
-          messenger.note 'port ' + config.service.port + ' is already in use'
+          console.error 'port ' + config.service.port + ' is already in use'
         when 'EACCES'
           msg = config.service.port
           unless process.getuid() is 0 or config.service.port > 1023
             msg += ' (you need root permissions)'
-          messenger.note 'No permission to open port ' + msg
-        else
-          messenger.note 'server error: ' + err
+          console.error 'No permission to open port', msg
       process.exit 1
 
     app.get '/healthcheck', (req, res) ->
@@ -74,7 +72,7 @@ class Service
           platform:     process.platform
           architecture: process.arch
 
-    contents = path.resolve config.service.contents
+    contents = path.resolve config.service.contentsDir
     patch_js = (deploy) ->
       deploy = path.resolve deploy
       if deploy.substr(0, contents.length) is contents
@@ -88,7 +86,7 @@ class Service
     patch_js(deploy) if deploy = config.js?.deploy
     patch_js(deploy) if deploy = config.js?.deployMinified
 
-    app.use express.static config.service.contents
+    app.use express.static contents
 
     if config.service.proxy
       unless config.service.proxy instanceof Array
