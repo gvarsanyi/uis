@@ -128,7 +128,6 @@ class Task
       watchables = watchables.concat append
 
       updated = (event, file) =>
-        console.log 'eee', event, file
         if @_watched[file]
           @_watched[file].changed =>
             @watchedFileChanged event, file, source

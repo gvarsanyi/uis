@@ -90,13 +90,14 @@ class SassFilesCompiler extends FilesCompiler
         data.line = val if (val = Number parts[2]) > 1 or val is 0 or val is 1
 
         if data.file and data.line
+          src = null
           if source.path is long_file
             src = source.data
-          else if @_watched[long_file]?.data
+          else if @_watched[long_file]?.data?
             src = @_watched[long_file].data
           else
             try src = fs.readFileSync long_file, encoding: 'utf8'
-          if src and (lines = src.split('\n')).length and lines.length >= data.line
+          if src? and (lines = String(src).split('\n')).length and lines.length >= data.line
             data.lines =
               from: Math.max 1, data.line - 3
               to:   Math.min lines.length - 1, data.line * 1 + 3

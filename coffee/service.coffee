@@ -29,10 +29,12 @@ class Service
   deployFilter: (msg) =>
     return if @deployed is true
 
-    if msg.stat?.done and msg.task in ['deployer', 'filesDeployer'] and msg.repo in ['css', 'html', 'js']
+    if msg.stat?.done or msg.stat?.error?.length and
+    msg.task in ['deployer', 'filesDeployer'] and
+    msg.repo in ['css', 'html', 'js']
       @deployed[msg.repo] = true
     count = 0
-    count += 1 for k of @deployed
+    count += 1 for k, v of @deployed when v
     if count is 3
       @deployed = true
       console.log 'deployments ready'

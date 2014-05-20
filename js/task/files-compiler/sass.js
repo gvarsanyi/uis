@@ -145,9 +145,10 @@
             data.line = val;
           }
           if (data.file && data.line) {
+            src = null;
             if (source.path === long_file) {
               src = source.data;
-            } else if ((_ref1 = this._watched[long_file]) != null ? _ref1.data : void 0) {
+            } else if (((_ref1 = this._watched[long_file]) != null ? _ref1.data : void 0) != null) {
               src = this._watched[long_file].data;
             } else {
               try {
@@ -156,7 +157,7 @@
                 });
               } catch (_error) {}
             }
-            if (src && (lines = src.split('\n')).length && lines.length >= data.line) {
+            if ((src != null) && (lines = String(src).split('\n')).length && lines.length >= data.line) {
               data.lines = {
                 from: Math.max(1, data.line - 3),
                 to: Math.min(lines.length - 1, data.line * 1 + 3)

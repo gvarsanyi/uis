@@ -251,7 +251,6 @@
         watchables = watchables.concat(append);
         updated = (function(_this) {
           return function(event, file) {
-            console.log('eee', event, file);
             if (_this._watched[file]) {
               return _this._watched[file].changed(function() {
                 return _this.watchedFileChanged(event, file, source);

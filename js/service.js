@@ -43,16 +43,20 @@
     Service.prototype.pending = [];
 
     Service.prototype.deployFilter = function(msg) {
-      var count, k, _ref, _ref1, _ref2, _results;
+      var count, k, v, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _results;
       if (this.deployed === true) {
         return;
       }
-      if (((_ref = msg.stat) != null ? _ref.done : void 0) && ((_ref1 = msg.task) === 'deployer' || _ref1 === 'filesDeployer') && ((_ref2 = msg.repo) === 'css' || _ref2 === 'html' || _ref2 === 'js')) {
+      if (((_ref = msg.stat) != null ? _ref.done : void 0) || ((_ref1 = msg.stat) != null ? (_ref2 = _ref1.error) != null ? _ref2.length : void 0 : void 0) && ((_ref3 = msg.task) === 'deployer' || _ref3 === 'filesDeployer') && ((_ref4 = msg.repo) === 'css' || _ref4 === 'html' || _ref4 === 'js')) {
         this.deployed[msg.repo] = true;
       }
       count = 0;
-      for (k in this.deployed) {
-        count += 1;
+      _ref5 = this.deployed;
+      for (k in _ref5) {
+        v = _ref5[k];
+        if (v) {
+          count += 1;
+        }
       }
       if (count === 3) {
         this.deployed = true;
