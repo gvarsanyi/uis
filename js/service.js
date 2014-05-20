@@ -38,22 +38,30 @@
   Service = (function() {
     Service.prototype.name = 'web-service';
 
-    Service.prototype.deployed = 0;
+    Service.prototype.deployed = {};
 
     Service.prototype.pending = [];
 
     Service.prototype.deployFilter = function(msg) {
-      var _ref, _ref1, _results;
-      if (((_ref = msg.stat) != null ? _ref.done : void 0) && ((_ref1 = msg.task) === 'deployer' || _ref1 === 'filesDeployer') && msg.repo !== 'test') {
-        this.deployed += 1;
-        if (this.deployed > 2) {
-          messenger.note('deployments ready');
-          _results = [];
-          while (this.pending.length) {
-            _results.push(this.pending.shift()());
-          }
-          return _results;
+      var count, k, _ref, _ref1, _ref2, _results;
+      if (this.deployed === true) {
+        return;
+      }
+      if (((_ref = msg.stat) != null ? _ref.done : void 0) && ((_ref1 = msg.task) === 'deployer' || _ref1 === 'filesDeployer') && ((_ref2 = msg.repo) === 'css' || _ref2 === 'html' || _ref2 === 'js')) {
+        this.deployed[msg.repo] = true;
+      }
+      count = 0;
+      for (k in this.deployed) {
+        count += 1;
+      }
+      if (count === 3) {
+        this.deployed = true;
+        console.log('deployments ready');
+        _results = [];
+        while (this.pending.length) {
+          _results.push(this.pending.shift()());
         }
+        return _results;
       }
     };
 
@@ -66,12 +74,12 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         repo_name = _ref[_i];
         if (!config[repo_name]) {
-          this.deployed += 1;
+          this.deployed[repo_name] = true;
         }
       }
       app.use((function(_this) {
         return function(req, res, next) {
-          if (_this.deployed > 2) {
+          if (_this.deployed === true) {
             return next();
           }
           return _this.pending.push(next);

@@ -34,16 +34,14 @@
               pretty: true,
               includes: (includes = [])
             });
-            if (config.singleRun) {
-              return callback();
-            } else {
-              return _this.watch(includes, source, function(err) {
+            if (!config.singleRun) {
+              _this.watch(includes, source, function(err) {
                 if (err) {
-                  _this.error(err, source);
+                  return _this.error(err, source);
                 }
-                return callback();
               });
             }
+            return callback();
           } catch (_error) {
             err = _error;
             _this.error(err, source);

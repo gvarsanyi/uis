@@ -36,20 +36,24 @@
   };
 
   load = function(env) {
-    var ext, opts, _i, _len, _ref;
+    var dir, ext, opts, _i, _j, _len, _len1, _ref, _ref1;
     if (env == null) {
       env = '';
     }
     if (env) {
       env = '.' + env;
     }
-    _ref = ['coffee', 'js', 'json'];
+    _ref = [cwd + '/.uis', cwd];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      ext = _ref[_i];
-      try {
-        opts = require(cwd + '/uis' + env + '.conf.' + ext);
-        break;
-      } catch (_error) {}
+      dir = _ref[_i];
+      _ref1 = ['coffee', 'js', 'json'];
+      for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+        ext = _ref1[_j];
+        try {
+          opts = require(dir + '/uis' + env + '.conf.' + ext);
+          break;
+        } catch (_error) {}
+      }
     }
     if (!opts) {
       console.error('Missing uis' + env + '.conf.[coffee|js|json] file');

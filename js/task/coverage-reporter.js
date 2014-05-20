@@ -16,7 +16,25 @@
   config = require('../config');
 
   CoverageReporter = (function(_super) {
+    var double_dec;
+
     __extends(CoverageReporter, _super);
+
+    double_dec = function(n) {
+      var parts;
+      n = String(n);
+      if (n.indexOf('.') === -1) {
+        n += '.00';
+      } else {
+        parts = n.split('.');
+        while (parts[1].length < 2) {
+          parts[1] += '0';
+        }
+        parts[1] = parts[1].substr(0, 2);
+        n = parts.join('.');
+      }
+      return n;
+    };
 
     CoverageReporter.prototype.name = 'coverageReporter';
 
@@ -89,7 +107,7 @@
                 return fs.readFile(files[0], {
                   encoding: 'utf8'
                 }, function(err, data) {
-                  var branches, dir, file, functions, info, item, line, lines, lowest, msg, parts, report, statements, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3;
+                  var branches, cols, desc, dir, file, functions, info, item, line, lines, lowest, parts, report, rows, statements, _i, _j, _len, _len1, _ref, _ref1, _ref2;
                   if (err) {
                     _this.error(err);
                     return callback();
@@ -139,35 +157,42 @@
                         report.all = info;
                       }
                     }
-                    if (((_ref2 = report.all) != null ? _ref2.statements : void 0) && report.all.statements < config.test.coverage.warningBar) {
+                    if (lowest.length) {
                       lowest.sort(function(a, b) {
                         if (a.statements > b.statements) {
                           return 1;
                         }
                         return -1;
                       });
-                      msg = 'Files not meeting the ' + config.test.coverage.warningBar + '% bar:';
-                      if (lowest.length > 10) {
-                        msg = lowest.length + ' files not meeting the ' + config.test.coverage.warningBar + '% bar. 10 lowest coverages:';
-                        lowest = lowest.slice(0, 10);
-                      }
+                      rows = [];
                       for (_j = 0, _len1 = lowest.length; _j < _len1; _j++) {
                         item = lowest[_j];
-                        msg += '\n  ' + item.file + ' (' + item.statements + '%)';
+                        rows.push([item.file, double_dec(item.statements) + '%']);
                       }
-                      _this[report.all.statements < config.test.coverage.errorBar ? 'error' : 'warning']({
-                        title: 'Low test coverage',
-                        description: report.all.statements + '% of all statements covered.\n\n' + msg
-                      });
-                    }
-                    _ref3 = report.files;
-                    for (file in _ref3) {
-                      info = _ref3[file];
-                      if (info.statements < config.test.coverage.warningBar) {
-                        _this[info.statements < config.test.coverage.errorBar ? 'error' : 'warning']({
-                          file: file,
+                      desc = lowest.length + ' file' + (lowest.length > 1 ? 's' : '') + ' do' + (lowest.length > 1 ? '' : 'es') + ' not meet the bar.';
+                      cols = [
+                        {
+                          title: 'Files not meeting the bar'
+                        }, {
+                          align: 'right'
+                        }
+                      ];
+                      if (((_ref2 = report.all) != null ? _ref2.statements : void 0) && report.all.statements < config.test.coverage.warningBar) {
+                        _this[report.all.statements < config.test.coverage.errorBar || lowest[0].statements < config.test.coverage.errorBar ? 'error' : 'warning']({
                           title: 'Low test coverage',
-                          description: info.statements + '% of statements covered.'
+                          description: report.all.statements + '% of all statements' + ' covered. ' + desc,
+                          table: {
+                            data: rows,
+                            columns: cols
+                          }
+                        });
+                      } else {
+                        _this[lowest[0].statements < config.test.coverage.errorBar ? 'error' : 'warning']({
+                          description: report.all.statements + '% of statements ' + ' covered overall, but ' + desc,
+                          table: {
+                            data: rows,
+                            columns: cols
+                          }
                         });
                       }
                     }
@@ -210,9 +235,6 @@
                   {
                     type: 'html',
                     dir: _this.source.tmp + '.coverage/html/'
-                  }, {
-                    type: 'lcovonly',
-                    dir: _this.source.tmp + '.coverage/lcov/'
                   }, {
                     type: 'text',
                     dir: _this.source.tmp + '.coverage/text/',

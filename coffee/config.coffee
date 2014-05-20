@@ -25,10 +25,11 @@ copy_opts = (from, to, from_str) ->
 
 load = (env='') ->
   env = '.' + env if env
-  for ext in ['coffee', 'js', 'json']
-    try
-      opts = require cwd + '/uis' + env + '.conf.' + ext
-      break
+  for dir in [cwd + '/.uis', cwd]
+    for ext in ['coffee', 'js', 'json']
+      try
+        opts = require dir + '/uis' + env + '.conf.' + ext
+        break
   unless opts
     console.error 'Missing uis' + env + '.conf.[coffee|js|json] file'
     process.exit 1

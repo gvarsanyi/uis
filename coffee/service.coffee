@@ -23,21 +23,26 @@ patch += fs.readFileSync __dirname + '/../resource/service-plugin.js', encoding:
 class Service
   name: 'web-service'
 
-  deployed: 0
+  deployed: {}
   pending:  []
 
   deployFilter: (msg) =>
-    if msg.stat?.done and msg.task in ['deployer', 'filesDeployer'] and msg.repo isnt 'test'
-      @deployed += 1
-      if @deployed > 2
-        messenger.note 'deployments ready'
-        while @pending.length
-          @pending.shift()()
+    return if @deployed is true
+
+    if msg.stat?.done and msg.task in ['deployer', 'filesDeployer'] and msg.repo in ['css', 'html', 'js']
+      @deployed[msg.repo] = true
+    count = 0
+    count += 1 for k of @deployed
+    if count is 3
+      @deployed = true
+      console.log 'deployments ready'
+      while @pending.length
+        @pending.shift()()
 
   constructor: ->
     for repo_name in ['css', 'html', 'js']
       unless config[repo_name]
-        @deployed += 1
+        @deployed[repo_name] = true
 
 #     app.use (req, res, next) -> # log
 #       messenger.note req.method + ' ' + req.url +
@@ -45,7 +50,7 @@ class Service
 #       next()
 
     app.use (req, res, next) =>
-      return next() if @deployed > 2
+      return next() if @deployed is true
       @pending.push next
 
     process.on 'uncaughtException', (err) ->

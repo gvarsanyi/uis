@@ -110,10 +110,13 @@ class Task
       source = undefined
 
     try
-      for k of @_watched
-        delete @_watched[k]
-      @_gaze.close() if @_gaze
-      delete @_watching
+      unless source
+        for k of @_watched
+          delete @_watched[k]
+
+        @_gaze.close() if @_gaze
+        delete @_watching
+
       append = []
       for watchable in watchables
         watchable = @source.projectPath + '/' + watchable unless watchable[0] is '/'
@@ -125,23 +128,33 @@ class Task
       watchables = watchables.concat append
 
       updated = (event, file) =>
+        console.log 'eee', event, file
         if @_watched[file]
           @_watched[file].changed =>
             @watchedFileChanged event, file, source
 
       gaze_error = null
+      count = 0
+      total = watchables.length
       if watchables.length and watchables[0]
         @_gaze = new gaze
         @_gaze.on 'all', updated
-        @_gaze.on 'error', (err) ->
-          gaze_error = err
-        @_gaze.on 'ready', =>
-          callback? gaze_error
         for watchable in watchables
           @_gaze.add watchable
+#         @_gaze.on 'error', (err) ->
+#           if gaze_error instanceof Array
+#             gaze_error.push err
+#           else if gaze_error
+#             (gaze_error = [gaze_error]).push err
+#           else
+#             gaze_error = err
+#         @_gaze.on 'ready', ->
+#           count += total
+#           if count is total
+#             callback? gaze_error
 
         @_watching = true
-      else
+      else unless source
         delete @_gaze
         callback?()
     catch err

@@ -19,19 +19,20 @@ class SassFilesCompiler extends FilesCompiler
       compilers += 1
       @error(err, source) if err
       if compilers is 2 or not source.options.rubysass
-        if config.singleRun
-          callback()
-        else
+        unless config.singleRun
           @watch stats.includedFiles, source, (err) =>
             @error(err, source) if err
-            callback()
+        callback()
 
     try
       unless source.data?
         throw new Error '[SassFilesCompiler] Missing source: ' + source.path
 
       if source.options.rubysass
-        cmd = 'sass --cache-location=' + @source.repoTmp + '../.sass-cache -q ' + source.path
+        bin = 'sass'
+        if typeof source.options.rubysass is 'string'
+          bin = source.options.rubysass
+        cmd = bin + ' --cache-location=' + @source.repoTmp + '../.sass-cache -q ' + source.path
         child_process.exec cmd, maxBuffer: 128 * 1024 * 1024, (err, stdout, stderr) =>
           source[@sourceProperty] = stdout unless err
           finish err

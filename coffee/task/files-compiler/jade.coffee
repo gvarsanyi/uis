@@ -18,12 +18,10 @@ class JadeFilesCompiler extends FilesCompiler
         pretty:   true
         includes: (includes = [])
 
-      if config.singleRun
-        callback()
-      else
+      unless config.singleRun
         @watch includes, source, (err) =>
           @error(err, source) if err
-          callback()
+      callback()
     catch err
       @error err, source
       callback()

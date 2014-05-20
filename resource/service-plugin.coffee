@@ -169,6 +169,9 @@ class HUD
           borderRadius: '3px'
           display:      'inline-block'
           margin:       '3px'
+          maxHeight:    '200px'
+          overflowX:    'hidden'
+          overflowY:    'auto'
           padding:      '3px'
           width:        '100%'
         if msg.title
@@ -201,6 +204,43 @@ class HUD
               node.innerHTML += ' @ lines ' + msg.line.join '-'
             else
               node.innerHTML += ' @ line ' + msg.line
+        if msg.table
+          table = create panel,
+            background: '#233'
+            display:    'table'
+          , 'table'
+
+          has_title = false
+          for col in msg.table.columns
+            col.align = 'left' if col.align isnt 'right'
+            has_title = true if col.title?
+
+          if has_title
+            tr = create table, display: 'table-row', 'tr'
+            for col in msg.table.columns
+              th = create tr,
+                background:    '#344'
+                borderSpacing: '1px'
+                color:         '#eee'
+                display:       'table-cell'
+                fontWeight:    'bold'
+                padding:       '2px'
+                textAlign:     col.align
+              , 'th'
+              th.innerHTML = col.title if col.title?
+
+          for row, row_n in msg.table.data
+            tr = create table, display: 'table-row', 'tr'
+            for col, i in msg.table.columns
+              td = create tr,
+                background:    (if row_n % 2 then '#485a5a' else '#455')
+                borderSpacing: '1px'
+                color:         '#eee'
+                display:       'table-cell'
+                padding:       '2px'
+                textAlign:     col.align
+              , 'td'
+              td.innerHTML = if col.src? then row[col.src] else row[i]
         if msg.lines
           lines = create panel,
             background: '#455'

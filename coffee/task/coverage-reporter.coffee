@@ -8,6 +8,18 @@ config = require '../config'
 
 
 class CoverageReporter extends Task
+  double_dec = (n) ->
+    n = String n
+    if n.indexOf('.') is -1
+      n += '.00'
+    else
+      parts = n.split '.'
+      while parts[1].length < 2
+        parts[1] += '0'
+      parts[1] = parts[1].substr 0, 2
+      n = parts.join '.'
+    n
+
   name: 'coverageReporter'
 
   constructor: ->
@@ -79,25 +91,33 @@ class CoverageReporter extends Task
                 else if line.substr(0, 9) is 'All files'
                   report.all = info
 
-              if report.all?.statements and report.all.statements < config.test.coverage.warningBar
+              if lowest.length
                 lowest.sort (a, b) ->
                   return 1 if a.statements > b.statements
                   -1
-                msg = 'Files not meeting the ' + config.test.coverage.warningBar + '% bar:'
-                if lowest.length > 10
-                  msg = lowest.length + ' files not meeting the ' + config.test.coverage.warningBar + '% bar. 10 lowest coverages:'
-                  lowest = lowest[0 .. 9]
-                for item in lowest
-                  msg += '\n  ' + item.file + ' (' + item.statements + '%)'
-                @[if report.all.statements < config.test.coverage.errorBar then 'error' else 'warning']
-                  title: 'Low test coverage'
-                  description: report.all.statements + '% of all statements covered.\n\n' + msg
 
-              for file, info of report.files when info.statements < config.test.coverage.warningBar
-                @[if info.statements < config.test.coverage.errorBar then 'error' else 'warning']
-                  file: file
-                  title: 'Low test coverage'
-                  description: info.statements + '% of statements covered.'
+                rows = []
+                for item in lowest
+                  rows.push [item.file, double_dec(item.statements) + '%']
+
+                desc = lowest.length + ' file' +
+                       (if lowest.length > 1 then 's' else '') + ' do' +
+                       (if lowest.length > 1 then '' else 'es') +
+                       ' not meet the bar.'
+                cols = [{title: 'Files not meeting the bar'}
+                        {align: 'right'}]
+
+                if report.all?.statements and report.all.statements < config.test.coverage.warningBar
+                  @[if report.all.statements < config.test.coverage.errorBar or lowest[0].statements < config.test.coverage.errorBar then 'error' else 'warning']
+                    title: 'Low test coverage'
+                    description: report.all.statements + '% of all statements' +
+                                 ' covered. ' + desc
+                    table: {data: rows, columns: cols}
+                else
+                  @[if lowest[0].statements < config.test.coverage.errorBar then 'error' else 'warning']
+                    description: report.all.statements + '% of statements ' +
+                                 ' covered overall, but ' + desc
+                    table: {data: rows, columns: cols}
 
               @result report
               callback()
@@ -119,7 +139,6 @@ class CoverageReporter extends Task
             options.preprocessors[@source.repoTmp + 'clone' + @source.projectPath + '/' + repo] = 'coverage'
         options.coverageReporter = reporters: [
           {type: 'html', dir: @source.tmp + '.coverage/html/'}
-          {type: 'lcovonly', dir: @source.tmp + '.coverage/lcov/'}
           {type: 'text', dir: @source.tmp + '.coverage/text/', file: 'coverage.txt'}]
         if config.test.teamcity
           options.coverageReporter.reporters.push type: 'teamcity'

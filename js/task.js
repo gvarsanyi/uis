@@ -211,7 +211,7 @@
     };
 
     Task.prototype.watch = function(watchables, source, callback) {
-      var append, err, file, gaze_error, k, updated, watchable, _i, _j, _k, _len, _len1, _len2, _ref;
+      var append, count, err, file, gaze_error, k, total, updated, watchable, _i, _j, _k, _len, _len1, _len2, _ref;
       if (watchables == null) {
         watchables = [];
       }
@@ -223,13 +223,15 @@
         source = void 0;
       }
       try {
-        for (k in this._watched) {
-          delete this._watched[k];
+        if (!source) {
+          for (k in this._watched) {
+            delete this._watched[k];
+          }
+          if (this._gaze) {
+            this._gaze.close();
+          }
+          delete this._watching;
         }
-        if (this._gaze) {
-          this._gaze.close();
-        }
-        delete this._watching;
         append = [];
         for (_i = 0, _len = watchables.length; _i < _len; _i++) {
           watchable = watchables[_i];
@@ -249,6 +251,7 @@
         watchables = watchables.concat(append);
         updated = (function(_this) {
           return function(event, file) {
+            console.log('eee', event, file);
             if (_this._watched[file]) {
               return _this._watched[file].changed(function() {
                 return _this.watchedFileChanged(event, file, source);
@@ -257,23 +260,17 @@
           };
         })(this);
         gaze_error = null;
+        count = 0;
+        total = watchables.length;
         if (watchables.length && watchables[0]) {
           this._gaze = new gaze;
           this._gaze.on('all', updated);
-          this._gaze.on('error', function(err) {
-            return gaze_error = err;
-          });
-          this._gaze.on('ready', (function(_this) {
-            return function() {
-              return typeof callback === "function" ? callback(gaze_error) : void 0;
-            };
-          })(this));
           for (_k = 0, _len2 = watchables.length; _k < _len2; _k++) {
             watchable = watchables[_k];
             this._gaze.add(watchable);
           }
           return this._watching = true;
-        } else {
+        } else if (!source) {
           delete this._gaze;
           return typeof callback === "function" ? callback() : void 0;
         }

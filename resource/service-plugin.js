@@ -226,7 +226,7 @@
         shown_issues = 0;
         hidden_issues = 0;
         add_info = function(msg, status) {
-          var code, cut, i, line, line_chars, lines, n, node, panel, push, spc, _i, _j, _k, _l, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _results1;
+          var code, col, cut, has_title, i, line, line_chars, lines, n, node, panel, push, row, row_n, spc, table, td, th, tr, _i, _j, _k, _l, _len, _len1, _len2, _len3, _m, _n, _o, _p, _ref1, _ref10, _ref11, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _results1;
           if (status == null) {
             status = 'warn';
           }
@@ -245,6 +245,9 @@
             borderRadius: '3px',
             display: 'inline-block',
             margin: '3px',
+            maxHeight: '200px',
+            overflowX: 'hidden',
+            overflowY: 'auto',
             padding: '3px',
             width: '100%'
           });
@@ -288,6 +291,64 @@
               }
             }
           }
+          if (msg.table) {
+            table = create(panel, {
+              background: '#233',
+              display: 'table'
+            }, 'table');
+            has_title = false;
+            _ref1 = msg.table.columns;
+            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+              col = _ref1[_i];
+              if (col.align !== 'right') {
+                col.align = 'left';
+              }
+              if (col.title != null) {
+                has_title = true;
+              }
+            }
+            if (has_title) {
+              tr = create(table, {
+                display: 'table-row'
+              }, 'tr');
+              _ref2 = msg.table.columns;
+              for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+                col = _ref2[_j];
+                th = create(tr, {
+                  background: '#344',
+                  borderSpacing: '1px',
+                  color: '#eee',
+                  display: 'table-cell',
+                  fontWeight: 'bold',
+                  padding: '2px',
+                  textAlign: col.align
+                }, 'th');
+                if (col.title != null) {
+                  th.innerHTML = col.title;
+                }
+              }
+            }
+            _ref3 = msg.table.data;
+            for (row_n = _k = 0, _len2 = _ref3.length; _k < _len2; row_n = ++_k) {
+              row = _ref3[row_n];
+              tr = create(table, {
+                display: 'table-row'
+              }, 'tr');
+              _ref4 = msg.table.columns;
+              for (i = _l = 0, _len3 = _ref4.length; _l < _len3; i = ++_l) {
+                col = _ref4[i];
+                td = create(tr, {
+                  background: (row_n % 2 ? '#485a5a' : '#455'),
+                  borderSpacing: '1px',
+                  color: '#eee',
+                  display: 'table-cell',
+                  padding: '2px',
+                  textAlign: col.align
+                }, 'td');
+                td.innerHTML = col.src != null ? row[col.src] : row[i];
+              }
+            }
+          }
           if (msg.lines) {
             lines = create(panel, {
               background: '#455',
@@ -296,7 +357,7 @@
               margin: '2px 0 0 0',
               position: 'absolute'
             });
-            for (n = _i = _ref1 = msg.lines.from, _ref2 = msg.lines.to; _ref1 <= _ref2 ? _i <= _ref2 : _i >= _ref2; n = _ref1 <= _ref2 ? ++_i : --_i) {
+            for (n = _m = _ref5 = msg.lines.from, _ref6 = msg.lines.to; _ref5 <= _ref6 ? _m <= _ref6 : _m >= _ref6; n = _ref5 <= _ref6 ? ++_m : --_m) {
               if (msg.lines[n] != null) {
                 line = create(lines, {
                   color: '#eee',
@@ -314,7 +375,7 @@
               }
             }
             line_chars = 0;
-            for (n = _j = _ref3 = msg.lines.from, _ref4 = msg.lines.to; _ref3 <= _ref4 ? _j <= _ref4 : _j >= _ref4; n = _ref3 <= _ref4 ? ++_j : --_j) {
+            for (n = _n = _ref7 = msg.lines.from, _ref8 = msg.lines.to; _ref7 <= _ref8 ? _n <= _ref8 : _n >= _ref8; n = _ref7 <= _ref8 ? ++_n : --_n) {
               if (msg.lines[n] != null) {
                 line_chars = Math.max(line_chars, String(n).length);
               }
@@ -327,7 +388,7 @@
               zIndex: 2147483646
             });
             _results1 = [];
-            for (n = _k = _ref5 = msg.lines.from, _ref6 = msg.lines.to; _ref5 <= _ref6 ? _k <= _ref6 : _k >= _ref6; n = _ref5 <= _ref6 ? ++_k : --_k) {
+            for (n = _o = _ref9 = msg.lines.from, _ref10 = msg.lines.to; _ref9 <= _ref10 ? _o <= _ref10 : _o >= _ref10; n = _ref9 <= _ref10 ? ++_o : --_o) {
               if ((code = msg.lines[n]) != null) {
                 line = create(node, {
                   color: '#eee',
@@ -343,7 +404,7 @@
                 }
                 code = code.split('\t').join('    ');
                 cut = 0;
-                for (i = _l = _ref7 = code.length - 1; _ref7 <= 0 ? _l <= 0 : _l >= 0; i = _ref7 <= 0 ? ++_l : --_l) {
+                for (i = _p = _ref11 = code.length - 1; _ref11 <= 0 ? _p <= 0 : _p >= 0; i = _ref11 <= 0 ? ++_p : --_p) {
                   if (code[i] === ' ') {
                     cut += 1;
                   } else {

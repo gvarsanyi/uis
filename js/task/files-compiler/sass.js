@@ -31,7 +31,7 @@
     SassFilesCompiler.prototype.workFile = function() {
       return this.preWorkFile(arguments, (function(_this) {
         return function(source, callback) {
-          var cmd, compilers, err, finish, node_sass_error, node_sass_success, stats;
+          var bin, cmd, compilers, err, finish, node_sass_error, node_sass_success, stats;
           stats = {};
           compilers = 0;
           finish = function(err) {
@@ -40,16 +40,14 @@
               _this.error(err, source);
             }
             if (compilers === 2 || !source.options.rubysass) {
-              if (config.singleRun) {
-                return callback();
-              } else {
-                return _this.watch(stats.includedFiles, source, function(err) {
+              if (!config.singleRun) {
+                _this.watch(stats.includedFiles, source, function(err) {
                   if (err) {
-                    _this.error(err, source);
+                    return _this.error(err, source);
                   }
-                  return callback();
                 });
               }
+              return callback();
             }
           };
           try {
@@ -57,7 +55,11 @@
               throw new Error('[SassFilesCompiler] Missing source: ' + source.path);
             }
             if (source.options.rubysass) {
-              cmd = 'sass --cache-location=' + _this.source.repoTmp + '../.sass-cache -q ' + source.path;
+              bin = 'sass';
+              if (typeof source.options.rubysass === 'string') {
+                bin = source.options.rubysass;
+              }
+              cmd = bin + ' --cache-location=' + _this.source.repoTmp + '../.sass-cache -q ' + source.path;
               child_process.exec(cmd, {
                 maxBuffer: 128 * 1024 * 1024
               }, function(err, stdout, stderr) {
