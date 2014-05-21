@@ -161,6 +161,10 @@ module.exports.update = (update) ->
     if warning?
       info_out 'warning', warning
 
+module.exports.log = (msg) ->
+  out = String msg.msg
+  console.log '[' + msg.repo + ']', out.substr 0, out.length - 1
 
-module.exports.note = (note) ->
-  console.log '[' + note.repo + ']', note.note
+module.exports.error = (msg) ->
+  out = String msg.msg
+  console.error '[' + msg.repo + '] ERROR', out.substr 0, out.length - 1

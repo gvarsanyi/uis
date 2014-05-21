@@ -83,9 +83,9 @@
             var _base;
             if ((changed || force_reload) && !_this.tasks.filesLoader.error()) {
               if (!node.data) {
-                return messenger.note('emptied: ' + _this.shortFile(file));
+                return console.log('emptied: ' + _this.shortFile(file));
               } else {
-                messenger.note('updating: ' + _this.shortFile(file));
+                console.log('updating: ' + _this.shortFile(file));
                 if (typeof (_base = _this.tasks.filesLoader).followUp === "function") {
                   _base.followUp(node);
                 }
@@ -95,7 +95,7 @@
           };
         })(this));
       } else {
-        return messenger.note('deleted: ' + this.shortFile(file));
+        return console.log('deleted: ' + this.shortFile(file));
       }
     };
 

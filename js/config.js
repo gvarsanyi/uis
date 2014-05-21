@@ -46,6 +46,9 @@
     _ref = [cwd + '/.uis', cwd];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       dir = _ref[_i];
+      if (opts) {
+        break;
+      }
       _ref1 = ['coffee', 'js', 'json'];
       for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
         ext = _ref1[_j];

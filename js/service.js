@@ -47,16 +47,14 @@
       if (this.deployed === true) {
         return;
       }
-      if (((_ref = msg.stat) != null ? _ref.done : void 0) || ((_ref1 = msg.stat) != null ? (_ref2 = _ref1.error) != null ? _ref2.length : void 0 : void 0) && ((_ref3 = msg.task) === 'deployer' || _ref3 === 'filesDeployer') && ((_ref4 = msg.repo) === 'css' || _ref4 === 'html' || _ref4 === 'js')) {
+      if ((((_ref = msg.stat) != null ? _ref.done : void 0) || ((_ref1 = msg.stat) != null ? (_ref2 = _ref1.error) != null ? _ref2.length : void 0 : void 0)) && ((_ref3 = msg.task) === 'deployer' || _ref3 === 'filesDeployer') && ((_ref4 = msg.repo) === 'css' || _ref4 === 'html' || _ref4 === 'js')) {
         this.deployed[msg.repo] = true;
       }
       count = 0;
       _ref5 = this.deployed;
       for (k in _ref5) {
         v = _ref5[k];
-        if (v) {
-          count += 1;
-        }
+        count += 1;
       }
       if (count === 3) {
         this.deployed = true;
@@ -162,7 +160,7 @@
             url += req.url;
             handler = function(err, preq, pres, data) {
               res.type('json');
-              messenger.note('[proxy response] ' + ((pres != null ? pres.statusCode : void 0) || '?') + ' ' + req.method + ' ' + url);
+              console.log('[proxy response] ' + ((pres != null ? pres.statusCode : void 0) || '?') + ' ' + req.method + ' ' + url);
               try {
                 return res.json((pres != null ? pres.statusCode : void 0) || 500, data || {
                   error: 'Server Error'
@@ -178,7 +176,7 @@
             client = restify.createJsonClient({
               url: url
             });
-            messenger.note('[proxy request] ' + req.method + ' ' + url);
+            console.log('[proxy request] ' + req.method + ' ' + url);
             method = req.method.toLowerCase().replace('delete', 'del');
             switch (req.method) {
               case 'POST':
@@ -202,7 +200,7 @@
           });
           bayeux.attach(server);
           bayeux.on('subscribe', function(client_id, channel) {
-            messenger.note('[client subscription] ' + client_id + ': ' + channel);
+            console.log('[client subscription] ' + client_id + ': ' + channel);
             if (channel === '/init') {
               return _this.publish('/init', {
                 data: stats.data,
@@ -210,7 +208,7 @@
               });
             }
           });
-          return messenger.note('listening @ ' + config.service["interface"] + ':' + config.service.port);
+          return console.log('listening @ ' + config.service["interface"] + ':' + config.service.port);
         };
       })(this));
     }

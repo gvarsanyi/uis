@@ -44,6 +44,8 @@
       if (name !== 'service') {
         this.path = 'repo/' + name;
       }
+      this.errBuffer = '';
+      this.outBuffer = '';
       this.connect();
     }
 
@@ -89,12 +91,47 @@
           return _this.del();
         };
       })(this));
-      this.node.stderr.on('data', function(data) {
-        return process.stderr.write(data);
-      });
-      this.node.stdout.on('data', function(data) {
-        return process.stdout.write(data);
-      });
+      this.node.stderr.on('data', (function(_this) {
+        return function(data) {
+          var msg, pos, _results;
+          _this.errBuffer += data;
+          _results = [];
+          while ((pos = _this.errBuffer.indexOf('\n')) > -1) {
+            msg = {
+              repo: _this.name,
+              type: 'note',
+              error: true,
+              msg: _this.errBuffer.substr(0, pos + 1)
+            };
+            output.error(msg);
+            if (service && _this.name !== 'service') {
+              service.send(msg);
+            }
+            _results.push(_this.errBuffer = _this.errBuffer.substr(pos + 1));
+          }
+          return _results;
+        };
+      })(this));
+      this.node.stdout.on('data', (function(_this) {
+        return function(data) {
+          var msg, pos, _results;
+          _this.outBuffer += data;
+          _results = [];
+          while ((pos = _this.outBuffer.indexOf('\n')) > -1) {
+            msg = {
+              repo: _this.name,
+              type: 'note',
+              msg: _this.outBuffer.substr(0, pos + 1)
+            };
+            output.log(msg);
+            if (service && _this.name !== 'service') {
+              service.send(msg);
+            }
+            _results.push(_this.outBuffer = _this.outBuffer.substr(pos + 1));
+          }
+          return _results;
+        };
+      })(this));
       if (this.onMsg != null) {
         return this.node.on('message', this.onMsg);
       }
@@ -152,7 +189,7 @@
   _ref1 = ['js', 'css', 'html', 'test'];
   for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
     name = _ref1[_i];
-    if (config[name] && (name !== 'test' || config.js)) {
+    if (config[name]) {
       new Child(name, function(msg) {
         var _j, _len1, _name, _ref2, _results;
         _ref2 = stats.incoming(msg);

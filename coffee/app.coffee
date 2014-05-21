@@ -24,6 +24,9 @@ class Child
     @path = name
     @path = 'repo/' + name unless name is 'service'
 
+    @errBuffer = ''
+    @outBuffer = ''
+
     @connect()
 
   connect: =>
@@ -51,11 +54,23 @@ class Child
       console.log(@name + ' disconnected') if @node
       @del()
 
-    @node.stderr.on 'data', (data) ->
-      process.stderr.write data
+    @node.stderr.on 'data', (data) =>
+      @errBuffer += data
+      while (pos = @errBuffer.indexOf('\n')) > -1
+        msg = {repo: @name, type: 'note', error: true, msg: @errBuffer.substr 0, pos + 1}
+        output.error msg
+        if service and @name isnt 'service'
+          service.send msg
+        @errBuffer = @errBuffer.substr pos + 1
 
-    @node.stdout.on 'data', (data) ->
-      process.stdout.write data
+    @node.stdout.on 'data', (data) =>
+      @outBuffer += data
+      while (pos = @outBuffer.indexOf('\n')) > -1
+        msg = {repo: @name, type: 'note', msg: @outBuffer.substr 0, pos + 1}
+        output.log msg
+        if service and @name isnt 'service'
+          service.send msg
+        @outBuffer = @outBuffer.substr pos + 1
 
     if @onMsg?
       @node.on 'message', @onMsg
@@ -90,19 +105,18 @@ if config.service and not config.singleRun
     data: stats.data
     ids:  stats.ids
 
-for name in ['js', 'css', 'html', 'test']
-  if config[name] and (name isnt 'test' or config.js)
-    new Child name, (msg) ->
-      for msg in stats.incoming msg
-        if service
-          service.send msg
-        switch msg?.type
-          when 'stat'
-            stats[msg.repo] ?= {}
-            stats[msg.repo][msg.task] = msg.stat
-            output.update msg
-          when 'note'
-            output.note msg
+for name in ['js', 'css', 'html', 'test'] when config[name]
+  new Child name, (msg) ->
+    for msg in stats.incoming msg
+      if service
+        service.send msg
+      switch msg?.type
+        when 'stat'
+          stats[msg.repo] ?= {}
+          stats[msg.repo][msg.task] = msg.stat
+          output.update msg
+        when 'note'
+          output.note msg
 
 Child.onAllDone = ->
   console.log 'bye'

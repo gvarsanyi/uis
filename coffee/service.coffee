@@ -29,12 +29,12 @@ class Service
   deployFilter: (msg) =>
     return if @deployed is true
 
-    if msg.stat?.done or msg.stat?.error?.length and
+    if (msg.stat?.done or msg.stat?.error?.length) and
     msg.task in ['deployer', 'filesDeployer'] and
     msg.repo in ['css', 'html', 'js']
       @deployed[msg.repo] = true
     count = 0
-    count += 1 for k, v of @deployed when v
+    count += 1 for k, v of @deployed
     if count is 3
       @deployed = true
       console.log 'deployments ready'
@@ -47,8 +47,8 @@ class Service
         @deployed[repo_name] = true
 
 #     app.use (req, res, next) -> # log
-#       messenger.note req.method + ' ' + req.url +
-#                      if req.body? then ' ' + JSON.stringify(req.body) else ''
+#       console.log req.method + ' ' + req.url +
+#                   if req.body? then ' ' + JSON.stringify(req.body) else ''
 #       next()
 
     app.use (req, res, next) =>
@@ -109,15 +109,15 @@ class Service
 
             handler = (err, preq, pres, data) ->
               res.type 'json'
-              messenger.note '[proxy response] ' + (pres?.statusCode or '?') +
-                             ' ' + req.method + ' ' + url
+              console.log '[proxy response] ' + (pres?.statusCode or '?') +
+                          ' ' + req.method + ' ' + url
               try
                 res.json pres?.statusCode or 500, data or error: 'Server Error'
               catch
                 try res.json 500, error: 'Server Error'
 
             client = restify.createJsonClient {url}
-            messenger.note '[proxy request] ' + req.method + ' ' + url
+            console.log '[proxy request] ' + req.method + ' ' + url
 
             method = req.method.toLowerCase().replace 'delete', 'del'
             switch req.method
@@ -131,12 +131,12 @@ class Service
       bayeux.attach server
 
       bayeux.on 'subscribe', (client_id, channel) =>
-        messenger.note '[client subscription] ' + client_id + ': ' + channel
+        console.log '[client subscription] ' + client_id + ': ' + channel
         if channel is '/init'
           @publish '/init', {data: stats.data, ids: stats.ids}
 
-      messenger.note 'listening @ ' + config.service.interface + ':' +
-                     config.service.port
+      console.log 'listening @ ' + config.service.interface + ':' +
+                  config.service.port
 
   incoming: (msg) =>
     if msg.type is 'stat-init'
@@ -148,7 +148,7 @@ class Service
       @deployFilter msg
 
   publish: (channel, message) =>
-#     messenger.note '[bayeux] ' + channel + ' : ' + JSON.stringify message
+#     console.log '[bayeux] ' + channel + ' : ' + JSON.stringify message
     bayeux.getClient().publish channel, message
 
 

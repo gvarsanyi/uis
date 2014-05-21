@@ -26,6 +26,7 @@ copy_opts = (from, to, from_str) ->
 load = (env='') ->
   env = '.' + env if env
   for dir in [cwd + '/.uis', cwd]
+    break if opts
     for ext in ['coffee', 'js', 'json']
       try
         opts = require dir + '/uis' + env + '.conf.' + ext

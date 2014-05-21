@@ -47,13 +47,13 @@ class Repo
       @tasks.filesLoader.workFile node, (changed) =>
         if (changed or force_reload) and not @tasks.filesLoader.error()
           unless node.data
-            messenger.note 'emptied: ' + @shortFile file
+            console.log 'emptied: ' + @shortFile file
           else
-            messenger.note 'updating: ' + @shortFile file
+            console.log 'updating: ' + @shortFile file
             @tasks.filesLoader.followUp? node
             @checkAllTasksFinished()
     else # new file
-      messenger.note 'deleted: ' + @shortFile file
+      console.log 'deleted: ' + @shortFile file
 
   load: =>
     instanciate_file = (file, _options) =>

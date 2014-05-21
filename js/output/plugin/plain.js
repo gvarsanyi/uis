@@ -230,8 +230,16 @@
     }
   };
 
-  module.exports.note = function(note) {
-    return console.log('[' + note.repo + ']', note.note);
+  module.exports.log = function(msg) {
+    var out;
+    out = String(msg.msg);
+    return console.log('[' + msg.repo + ']', out.substr(0, out.length - 1));
+  };
+
+  module.exports.error = function(msg) {
+    var out;
+    out = String(msg.msg);
+    return console.error('[' + msg.repo + '] ERROR', out.substr(0, out.length - 1));
   };
 
 }).call(this);

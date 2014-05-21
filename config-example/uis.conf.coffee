@@ -49,4 +49,4 @@ module.exports =
     coverage:
       errorBar:   60
       warningBar: 80
-    teamcity: true
+    teamcity: false

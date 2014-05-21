@@ -56,7 +56,7 @@ class CoverageReporter extends Task
       return if finished
       finished = true
 
-      glob @source.tmp + '.coverage/text/**/coverage.txt', (err, files) =>
+      glob @source.repoTmp + 'coverage/text/**/coverage.txt', (err, files) =>
         if err
           @error err
           callback()
@@ -132,14 +132,20 @@ class CoverageReporter extends Task
 
       if config.test.coverage
         options.reporters.push 'coverage'
+
         for item in config.test.repos when not (item.thirdParty or item.testOnly)
           list = item.repo
           list = [list] unless typeof list is 'object'
+          dir = @source.repoTmp + 'clone' + @source.projectPath + '/'
           for repo in list
-            options.preprocessors[@source.repoTmp + 'clone' + @source.projectPath + '/' + repo] = 'coverage'
-        options.coverageReporter = reporters: [
-          {type: 'html', dir: @source.tmp + '.coverage/html/'}
-          {type: 'text', dir: @source.tmp + '.coverage/text/', file: 'coverage.txt'}]
+            options.preprocessors[dir + repo] = 'coverage'
+
+        dir = @source.repoTmp + 'coverage/'
+        options.coverageReporter =
+          compileCoffee: false
+          reporters: [{type: 'html', dir: dir + 'html/'}
+                      {type: 'text', dir: dir + 'text/', file: 'coverage.txt'}]
+
         if config.test.teamcity
           options.coverageReporter.reporters.push type: 'teamcity'
 

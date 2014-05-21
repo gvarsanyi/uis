@@ -13,7 +13,7 @@ class TestRepo extends Repo
   extensions: {js: JsFile, coffee: CoffeeFile}
 
   constructor: ->
-    config.test.repos = config.js.repos
+    config.test.repos = config.js.repos unless config.test.repos
     super
 
   getTasks: ->

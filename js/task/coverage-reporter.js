@@ -86,14 +86,14 @@
       var args;
       return this.preWork((args = arguments), (function(_this) {
         return function(callback) {
-          var err, finish, finished, item, list, options, repo, test_file, tester, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+          var dir, err, finish, finished, item, list, options, repo, test_file, tester, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
           finished = false;
           finish = function() {
             if (finished) {
               return;
             }
             finished = true;
-            return glob(_this.source.tmp + '.coverage/text/**/coverage.txt', function(err, files) {
+            return glob(_this.source.repoTmp + 'coverage/text/**/coverage.txt', function(err, files) {
               if (err) {
                 _this.error(err);
                 return callback();
@@ -225,19 +225,22 @@
                 if (typeof list !== 'object') {
                   list = [list];
                 }
+                dir = _this.source.repoTmp + 'clone' + _this.source.projectPath + '/';
                 for (_k = 0, _len2 = list.length; _k < _len2; _k++) {
                   repo = list[_k];
-                  options.preprocessors[_this.source.repoTmp + 'clone' + _this.source.projectPath + '/' + repo] = 'coverage';
+                  options.preprocessors[dir + repo] = 'coverage';
                 }
               }
+              dir = _this.source.repoTmp + 'coverage/';
               options.coverageReporter = {
+                compileCoffee: false,
                 reporters: [
                   {
                     type: 'html',
-                    dir: _this.source.tmp + '.coverage/html/'
+                    dir: dir + 'html/'
                   }, {
                     type: 'text',
-                    dir: _this.source.tmp + '.coverage/text/',
+                    dir: dir + 'text/',
                     file: 'coverage.txt'
                   }
                 ]

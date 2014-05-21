@@ -120,8 +120,11 @@ module.exports.update = (update) ->
     push_y += 4
 
 
-module.exports.note = (note) ->
-  for name in ['css', 'html', 'js', 'test']
-    if note[name]
-      for msg in note[name] or []
-        process.stdout.write ('[' + name + '] ' + msg).split(esc).join('\\0').substr(0, process.stdout.columns - 1) + '\r'
+escaped_out = (msg) ->
+  process.stdout.write String(msg).split(esc).join('\\0').substr(0, process.stdout.columns - 1) + '\r'
+
+module.exports.log = (msg) ->
+  escaped_out '[' + msg.repo + '] ' + msg.msg
+
+module.exports.error = (msg) ->
+  escaped_out '[' + msg.repo + '] ERROR ' + msg.msg

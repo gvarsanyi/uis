@@ -161,14 +161,14 @@ class Task
 
   watchedFileChanged: (event, file, source) =>
     if source and @source.sources[source.path]
-      messenger.note 'changed: ' + @source.shortFile(source.path) +
-                     ' (' + @source.shortFile(file) + ')'
+      console.log 'changed: ' + @source.shortFile(source.path) + ' (' +
+                  @source.shortFile(file) + ')'
       @workFile source, =>
         @followUp?(source) unless @error()
         @source.checkAllTasksFinished()
       , true # forces stat update pre- and post-workFile
     else
-      messenger.note 'changed: ' + @source.shortFile file
+      console.log 'changed: ' + @source.shortFile file
       @work {file}
 
   watched: =>

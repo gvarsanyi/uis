@@ -281,7 +281,7 @@
 
     Task.prototype.watchedFileChanged = function(event, file, source) {
       if (source && this.source.sources[source.path]) {
-        messenger.note('changed: ' + this.source.shortFile(source.path) + ' (' + this.source.shortFile(file) + ')');
+        console.log('changed: ' + this.source.shortFile(source.path) + ' (' + this.source.shortFile(file) + ')');
         return this.workFile(source, (function(_this) {
           return function() {
             if (!_this.error()) {
@@ -293,7 +293,7 @@
           };
         })(this), true);
       } else {
-        messenger.note('changed: ' + this.source.shortFile(file));
+        console.log('changed: ' + this.source.shortFile(file));
         return this.work({
           file: file
         });

@@ -31,7 +31,9 @@
     };
 
     function TestRepo() {
-      config.test.repos = config.js.repos;
+      if (!config.test.repos) {
+        config.test.repos = config.js.repos;
+      }
       TestRepo.__super__.constructor.apply(this, arguments);
     }
 
