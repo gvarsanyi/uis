@@ -16,6 +16,7 @@ stats.init {css: {}, html: {}, js: {}, test: {}}, {}
 class Child
   ext = if __dirname.split('/').pop() is 'coffee' then '.coffee' else '.js'
   cwd = process.cwd()
+  note_id = 0
 
   @count: 0
   @nodes: {}
@@ -51,13 +52,19 @@ class Child
       @del()
 
     @node.on 'disconnect', =>
-      console.log(@name + ' disconnected') if @node
+      console.log(@name + ' disconnected') if @node and not config.singleRun
       @del()
 
     @node.stderr.on 'data', (data) =>
       @errBuffer += data
       while (pos = @errBuffer.indexOf('\n')) > -1
-        msg = {repo: @name, type: 'note', error: true, msg: @errBuffer.substr 0, pos + 1}
+        msg =
+          repo: @name
+          type: 'note'
+          id:   note_id
+          error: true
+          msg: @errBuffer.substr 0, pos + 1
+        note_id += 1
         output.error msg
         if service and @name isnt 'service'
           service.send msg
@@ -66,7 +73,12 @@ class Child
     @node.stdout.on 'data', (data) =>
       @outBuffer += data
       while (pos = @outBuffer.indexOf('\n')) > -1
-        msg = {repo: @name, type: 'note', msg: @outBuffer.substr 0, pos + 1}
+        msg =
+          repo: @name
+          type: 'note'
+          id:   note_id
+          msg: @outBuffer.substr 0, pos + 1
+        note_id += 1
         output.log msg
         if service and @name isnt 'service'
           service.send msg

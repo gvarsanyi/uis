@@ -81,24 +81,30 @@
     };
 
     Stats.prototype.incoming = function(msg) {
-      var id, msgs, _base, _base1, _i, _len, _name, _name1, _ref, _ref1;
-      msgs = cue_processor(msg);
-      for (_i = 0, _len = msgs.length; _i < _len; _i++) {
-        msg = msgs[_i];
-        if (msg.type === 'stat') {
-          if (((id = (_ref = this.ids) != null ? (_ref1 = _ref[msg.repo]) != null ? _ref1[msg.task] : void 0 : void 0) == null) || id <= msg.id) {
-            if ((_base = this.data)[_name = msg.repo] == null) {
-              _base[_name] = {};
+      var err, id, msgs, _base, _base1, _i, _len, _name, _name1, _ref, _ref1;
+      try {
+        msgs = cue_processor(msg);
+        for (_i = 0, _len = msgs.length; _i < _len; _i++) {
+          msg = msgs[_i];
+          if (msg.type === 'stat') {
+            if (((id = (_ref = this.ids) != null ? (_ref1 = _ref[msg.repo]) != null ? _ref1[msg.task] : void 0 : void 0) == null) || id <= msg.id) {
+              if ((_base = this.data)[_name = msg.repo] == null) {
+                _base[_name] = {};
+              }
+              this.data[msg.repo][msg.task] = msg.stat;
+              if ((_base1 = this.ids)[_name1 = msg.repo] == null) {
+                _base1[_name1] = {};
+              }
+              this.ids[msg.repo][msg.task] = msg.id;
             }
-            this.data[msg.repo][msg.task] = msg.stat;
-            if ((_base1 = this.ids)[_name1 = msg.repo] == null) {
-              _base1[_name1] = {};
-            }
-            this.ids[msg.repo][msg.task] = msg.id;
           }
         }
+        return msgs;
+      } catch (_error) {
+        err = _error;
+        console.error('err1', err);
+        throw new Error(err);
       }
-      return msgs;
     };
 
     return Stats;

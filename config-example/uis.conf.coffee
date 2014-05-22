@@ -45,8 +45,7 @@ module.exports =
     ]
 
   test:
-    files: 'test/**/*.coffee'
     coverage:
-      errorBar:   60
-      warningBar: 80
+      bar: 80
+    files: 'test/**/*.coffee'
     teamcity: false

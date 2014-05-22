@@ -1,13 +1,14 @@
-fs        = require 'fs'
-path      = require 'path'
+fs         = require 'fs'
+path       = require 'path'
 
-express   = require 'express'
-faye      = require 'faye'
-restify   = require 'restify'
+bodyparser = require 'body-parser'
+express    = require 'express'
+faye       = require 'faye'
+restify    = require 'restify'
 
-config    = require './config'
-messenger = require './messenger'
-stats     = require './stats'
+config     = require './config'
+messenger  = require './messenger'
+stats      = require './stats'
 
 
 app    = express()
@@ -45,6 +46,8 @@ class Service
     for repo_name in ['css', 'html', 'js']
       unless config[repo_name]
         @deployed[repo_name] = true
+
+    app.use bodyparser()
 
 #     app.use (req, res, next) -> # log
 #       console.log req.method + ' ' + req.url +
@@ -122,6 +125,7 @@ class Service
             method = req.method.toLowerCase().replace 'delete', 'del'
             switch req.method
               when 'POST', 'PUT'
+                console.log 'req.body pre', req
                 client[method] url, req.body, handler
               else
                 client[method] url, handler

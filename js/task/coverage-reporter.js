@@ -43,32 +43,20 @@
       this.work = __bind(this.work, this);
       this.size = __bind(this.size, this);
       this.condition = __bind(this.condition, this);
-      var default_bars, type, val, _i, _len, _ref;
       CoverageReporter.__super__.constructor.apply(this, arguments);
       if (config.test.coverage) {
-        default_bars = {
-          warningBar: 80,
-          errorBar: 60
-        };
         if (typeof config.test.coverage !== 'object') {
           config.test.coverage = {
-            warningBar: default_bars.warningBar,
-            errorBar: default_bars.errorBar
+            bar: 80
           };
-        }
-        _ref = ['warningBar', 'errorBar'];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          type = _ref[_i];
-          if (isNaN(Number(String(val = config.test.coverage[type])))) {
-            config.test.coverage[type] = default_bars[type];
+        } else if (isNaN(Number(String(config.test.coverage.bar)))) {
+          config.test.coverage.bar = 80;
+        } else {
+          config.test.coverage.bar = Math.min(100, config.test.coverage.bar);
+          config.test.coverage.bar = Math.max(0, config.test.coverage.bar);
+          if (config.test.coverage.bar === 0) {
+            config.test.coverage = false;
           }
-          config.test.coverage[type] = Math.min(100, Math.max(0, Number(config.test.coverage[type])));
-        }
-        if (config.test.coverage.errorBar > config.test.coverage.warningBar) {
-          config.test.coverage.warningBar = config.test.coverage.errorBar;
-        }
-        if (config.test.coverage.warningBar + config.test.coverage.errorBar === 0) {
-          config.test.coverage = false;
         }
       }
     }
@@ -144,7 +132,7 @@
                       if (line.substr(0, 6) === '      ') {
                         file = dir + parts[0].trim();
                         report.files[file] = info;
-                        if (statements < config.test.coverage.warningBar) {
+                        if (statements < config.test.coverage.bar) {
                           lowest.push({
                             file: file,
                             statements: statements
@@ -177,8 +165,8 @@
                           align: 'right'
                         }
                       ];
-                      if (((_ref2 = report.all) != null ? _ref2.statements : void 0) && report.all.statements < config.test.coverage.warningBar) {
-                        _this[report.all.statements < config.test.coverage.errorBar || lowest[0].statements < config.test.coverage.errorBar ? 'error' : 'warning']({
+                      if (((_ref2 = report.all) != null ? _ref2.statements : void 0) && report.all.statements < config.test.coverage.bar) {
+                        _this.warning({
                           title: 'Low test coverage',
                           description: report.all.statements + '% of all statements' + ' covered. ' + desc,
                           table: {
@@ -187,7 +175,7 @@
                           }
                         });
                       } else {
-                        _this[lowest[0].statements < config.test.coverage.errorBar ? 'error' : 'warning']({
+                        _this.warning({
                           description: report.all.statements + '% of statements ' + ' covered overall, but ' + desc,
                           table: {
                             data: rows,
@@ -233,7 +221,9 @@
               }
               dir = _this.source.repoTmp + 'coverage/';
               options.coverageReporter = {
-                compileCoffee: false,
+                instrumenter: {
+                  '**/*.coffee': 'istanbul'
+                },
                 reporters: [
                   {
                     type: 'html',
@@ -252,6 +242,9 @@
               }
             }
             return karma.server.start(options, function(exit_code) {
+              if (exit_code > 0) {
+                _this.error('Karma coverage failed, exit code: ' + exit_code);
+              }
               return finish();
             });
           } catch (_error) {

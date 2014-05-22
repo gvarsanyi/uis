@@ -51,7 +51,7 @@ obj_to_str = (status, inf) ->
           str = chr + str
         str
 
-    msg = '\n'
+    msg = ''
     unless push
       push = ''
     else
@@ -117,13 +117,21 @@ obj_to_str = (status, inf) ->
 info_out = (status, inf) ->
   output = if status is 'error' then 'error' else 'log'
 
-  console[output] ''
+  out = ''
   for block in inf
     if block instanceof Array
       for part in block
-        console[output] obj_to_str status, part
+        out += obj_to_str status, part
     else
-      console[output] obj_to_str status, block
+      out += obj_to_str status, block
+
+  if (lines = out.split '\n').length > 11
+    out = lines[0 .. 9].join('\n') + '\n  [' + (lines.length - 11) + ' more lines ...]'
+  else if out.length > 1024
+    out = out.substr(0, 1000) + ' [' + (out.length - 1000)  + ' more characters ...]'
+  else
+    out = out.substr 0, out.length - 1
+  console[output] out
 
 module.exports.update = (update) ->
   {done, count, error, warning, size, status} = update.stat

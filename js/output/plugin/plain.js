@@ -79,7 +79,7 @@
           return str;
         }
       };
-      msg = '\n';
+      msg = '';
       if (!push) {
         push = '';
       } else {
@@ -164,27 +164,28 @@
   };
 
   info_out = function(status, inf) {
-    var block, output, part, _i, _len, _results;
+    var block, lines, out, output, part, _i, _j, _len, _len1;
     output = status === 'error' ? 'error' : 'log';
-    console[output]('');
-    _results = [];
+    out = '';
     for (_i = 0, _len = inf.length; _i < _len; _i++) {
       block = inf[_i];
       if (block instanceof Array) {
-        _results.push((function() {
-          var _j, _len1, _results1;
-          _results1 = [];
-          for (_j = 0, _len1 = block.length; _j < _len1; _j++) {
-            part = block[_j];
-            _results1.push(console[output](obj_to_str(status, part)));
-          }
-          return _results1;
-        })());
+        for (_j = 0, _len1 = block.length; _j < _len1; _j++) {
+          part = block[_j];
+          out += obj_to_str(status, part);
+        }
       } else {
-        _results.push(console[output](obj_to_str(status, block)));
+        out += obj_to_str(status, block);
       }
     }
-    return _results;
+    if ((lines = out.split('\n')).length > 11) {
+      out = lines.slice(0, 10).join('\n') + '\n  [' + (lines.length - 11) + ' more lines ...]';
+    } else if (out.length > 1024) {
+      out = out.substr(0, 1000) + ' [' + (out.length - 1000) + ' more characters ...]';
+    } else {
+      out = out.substr(0, out.length - 1);
+    }
+    return console[output](out);
   };
 
   module.exports.update = function(update) {

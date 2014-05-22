@@ -24,11 +24,13 @@
   }, {});
 
   Child = (function() {
-    var cwd, ext;
+    var cwd, ext, note_id;
 
     ext = __dirname.split('/').pop() === 'coffee' ? '.coffee' : '.js';
 
     cwd = process.cwd();
+
+    note_id = 0;
 
     Child.count = 0;
 
@@ -85,7 +87,7 @@
       })(this));
       this.node.on('disconnect', (function(_this) {
         return function() {
-          if (_this.node) {
+          if (_this.node && !config.singleRun) {
             console.log(_this.name + ' disconnected');
           }
           return _this.del();
@@ -100,9 +102,11 @@
             msg = {
               repo: _this.name,
               type: 'note',
+              id: note_id,
               error: true,
               msg: _this.errBuffer.substr(0, pos + 1)
             };
+            note_id += 1;
             output.error(msg);
             if (service && _this.name !== 'service') {
               service.send(msg);
@@ -121,8 +125,10 @@
             msg = {
               repo: _this.name,
               type: 'note',
+              id: note_id,
               msg: _this.outBuffer.substr(0, pos + 1)
             };
+            note_id += 1;
             output.log(msg);
             if (service && _this.name !== 'service') {
               service.send(msg);

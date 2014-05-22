@@ -2,7 +2,6 @@
 repo = null
 
 message_ids = {}
-note_id     = 0
 
 send = (inf) ->
   if repo and process.send
@@ -32,12 +31,3 @@ module.exports.sendStat = (task) ->
     stat: stat
 
   message_ids[task] += 1
-
-module.exports.note = (note) ->
-  send
-    type: 'note'
-    repo: repo?.name
-    id:   note_id
-    note: note
-
-  note_id += 1

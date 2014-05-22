@@ -25,21 +25,16 @@ class CoverageReporter extends Task
   constructor: ->
     super
 
-    # test.coverage is falsy or a dictionary: {warningBar: 60, errorBar: 8-}
     if config.test.coverage
-      default_bars = {warningBar: 80, errorBar: 60}
       unless typeof config.test.coverage is 'object'
-        config.test.coverage =
-          warningBar: default_bars.warningBar
-          errorBar:   default_bars.errorBar
-      for type in ['warningBar', 'errorBar']
-        if isNaN Number String val = config.test.coverage[type]
-          config.test.coverage[type] = default_bars[type]
-        config.test.coverage[type] = Math.min 100, (Math.max 0, Number config.test.coverage[type])
-      if config.test.coverage.errorBar > config.test.coverage.warningBar
-        config.test.coverage.warningBar = config.test.coverage.errorBar
-      if config.test.coverage.warningBar + config.test.coverage.errorBar is 0
-        config.test.coverage = false
+        config.test.coverage = bar: 80
+      else if isNaN Number String config.test.coverage.bar
+        config.test.coverage.bar = 80
+      else
+        config.test.coverage.bar = Math.min 100, config.test.coverage.bar
+        config.test.coverage.bar = Math.max 0, config.test.coverage.bar
+        if config.test.coverage.bar is 0
+          config.test.coverage = false
 
   condition: =>
     config.test.coverage and
@@ -83,7 +78,7 @@ class CoverageReporter extends Task
                 if line.substr(0, 6) is '      '
                   file = dir + parts[0].trim()
                   report.files[file] = info
-                  if statements < config.test.coverage.warningBar
+                  if statements < config.test.coverage.bar
                     lowest.push {file, statements}
                 else if line.substr(0, 3) is '   '
                   dir = parts[0].trim()
@@ -107,14 +102,14 @@ class CoverageReporter extends Task
                 cols = [{title: 'Files not meeting the bar'}
                         {align: 'right'}]
 
-                if report.all?.statements and report.all.statements < config.test.coverage.warningBar
-                  @[if report.all.statements < config.test.coverage.errorBar or lowest[0].statements < config.test.coverage.errorBar then 'error' else 'warning']
+                if report.all?.statements and report.all.statements < config.test.coverage.bar
+                  @warning
                     title: 'Low test coverage'
                     description: report.all.statements + '% of all statements' +
                                  ' covered. ' + desc
                     table: {data: rows, columns: cols}
                 else
-                  @[if lowest[0].statements < config.test.coverage.errorBar then 'error' else 'warning']
+                  @warning
                     description: report.all.statements + '% of statements ' +
                                  ' covered overall, but ' + desc
                     table: {data: rows, columns: cols}
@@ -142,7 +137,7 @@ class CoverageReporter extends Task
 
         dir = @source.repoTmp + 'coverage/'
         options.coverageReporter =
-          compileCoffee: false
+          instrumenter: '**/*.coffee': 'istanbul'
           reporters: [{type: 'html', dir: dir + 'html/'}
                       {type: 'text', dir: dir + 'text/', file: 'coverage.txt'}]
 
@@ -150,6 +145,7 @@ class CoverageReporter extends Task
           options.coverageReporter.reporters.push type: 'teamcity'
 
       karma.server.start options, (exit_code) =>
+        @error('Karma coverage failed, exit code: ' + exit_code) if exit_code > 0
         finish()
     catch err
       @error err

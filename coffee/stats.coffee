@@ -54,13 +54,17 @@ class Stats
     list
 
   incoming: (msg) =>
-    msgs = cue_processor msg
-    for msg in msgs when msg.type is 'stat'
-      if not (id = @ids?[msg.repo]?[msg.task])? or id <= msg.id
-        @data[msg.repo] ?= {}
-        @data[msg.repo][msg.task] = msg.stat
-        @ids[msg.repo] ?= {}
-        @ids[msg.repo][msg.task] = msg.id
-    msgs
+    try
+      msgs = cue_processor msg
+      for msg in msgs when msg.type is 'stat'
+        if not (id = @ids?[msg.repo]?[msg.task])? or id <= msg.id
+          @data[msg.repo] ?= {}
+          @data[msg.repo][msg.task] = msg.stat
+          @ids[msg.repo] ?= {}
+          @ids[msg.repo][msg.task] = msg.id
+      msgs
+    catch err
+      console.error 'err1', err
+      throw new Error err
 
 module.exports = stats = new Stats
