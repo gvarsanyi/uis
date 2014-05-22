@@ -2,6 +2,7 @@
 (function() {
   module.exports = {
     concatenator: 'concat',
+    coverageReporter: 'coverage',
     deployer: 'deploy',
     filesCompiler: 'compile',
     filesDeployer: 'deploy',

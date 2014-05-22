@@ -64,7 +64,7 @@
       this.node.on('error', (function(_this) {
         return function(err) {
           if (_this.node) {
-            console.error(_this.name + ' error', err);
+            output.error(_this.name + ' error', err);
           }
           return _this.del();
         };
@@ -72,7 +72,7 @@
       this.node.on('close', (function(_this) {
         return function(code, signal) {
           if (_this.node) {
-            console.log(_this.name + ' closed', code, signal);
+            output.log(_this.name + ' closed', code, signal);
           }
           return _this.del();
         };
@@ -80,7 +80,7 @@
       this.node.on('exit', (function(_this) {
         return function(code, signal) {
           if (_this.node) {
-            console.log(_this.name + ' exited', code, signal);
+            output.log(_this.name + ' exited', code, signal);
           }
           return _this.del();
         };
@@ -88,7 +88,7 @@
       this.node.on('disconnect', (function(_this) {
         return function() {
           if (_this.node && !config.singleRun) {
-            console.log(_this.name + ' disconnected');
+            output.error(_this.name + ' disconnected');
           }
           return _this.del();
         };
@@ -152,7 +152,7 @@
       Child.count -= 1;
       delete this.node;
       if (Child.count === 1 && (((_ref1 = Child.nodes.service) != null ? _ref1.node : void 0) != null)) {
-        console.log('Shutting down service');
+        output.log('Shutting down service');
         Child.nodes.service.node.kill();
       }
       if (Child.count === 0 && (Child.onAllDone != null)) {
@@ -226,7 +226,7 @@
   }
 
   Child.onAllDone = function() {
-    return console.log('bye');
+    return output.log('bye');
   };
 
 }).call(this);

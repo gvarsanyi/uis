@@ -40,19 +40,19 @@ class Child
                                {cwd, silent: true}
 
     @node.on 'error', (err) =>
-      console.error(@name + ' error', err) if @node
+      output.error(@name + ' error', err) if @node
       @del()
 
     @node.on 'close', (code, signal) =>
-      console.log(@name + ' closed', code, signal) if @node
+      output.log(@name + ' closed', code, signal) if @node
       @del()
 
     @node.on 'exit', (code, signal) =>
-      console.log(@name + ' exited', code, signal) if @node
+      output.log(@name + ' exited', code, signal) if @node
       @del()
 
     @node.on 'disconnect', =>
-      console.log(@name + ' disconnected') if @node and not config.singleRun
+      output.error(@name + ' disconnected') if @node and not config.singleRun
       @del()
 
     @node.stderr.on 'data', (data) =>
@@ -94,7 +94,7 @@ class Child
     delete @node
 
     if Child.count is 1 and Child.nodes.service?.node?
-      console.log 'Shutting down service'
+      output.log 'Shutting down service'
       Child.nodes.service.node.kill()
     if Child.count is 0 and Child.onAllDone?
       Child.onAllDone()
@@ -131,4 +131,4 @@ for name in ['js', 'css', 'html', 'test'] when config[name]
           output.note msg
 
 Child.onAllDone = ->
-  console.log 'bye'
+  output.log 'bye'
