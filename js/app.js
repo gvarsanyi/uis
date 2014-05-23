@@ -66,7 +66,6 @@
           if (_this.node) {
             output.error({
               repo: 'uis',
-              error: true,
               msg: _this.name + ' error',
               err: err
             });
@@ -105,7 +104,6 @@
           if (_this.node && !config.singleRun) {
             output.error({
               repo: 'uis',
-              error: true,
               msg: _this.name + ' disconnected'
             });
           }
@@ -122,7 +120,6 @@
               repo: _this.name,
               type: 'note',
               id: note_id,
-              error: true,
               msg: _this.errBuffer.substr(0, pos + 1)
             };
             note_id += 1;

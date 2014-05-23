@@ -5,6 +5,8 @@ module.exports =
 
   service:
     contentsDir: 'static'
+    hud:         false
+    log:         false
     interface:   ''
     port:        9080
     proxy:

@@ -3,10 +3,14 @@ module.exports =
   output:    'plain'
   singleRun: true
 
-  service: false
-  css: false
-  html: false
-  js: false
+  service:   false
+
+  css:       false
+
+  html:      false
+
+  js:        false
+
   test:
     repos: [
       {

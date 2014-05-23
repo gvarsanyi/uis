@@ -38,7 +38,7 @@ load = (env='') ->
         opts = require dir + '/uis' + env + '.conf.' + ext
         break
   unless opts
-    console.error 'Missing uis' + env + '.conf.[coffee|js|json] file'
+    console.error 'Missing ./[.uis/]uis' + env + '.conf.[coffee|js|json] file'
     process.exit 1
 
   copy_opts opts, options

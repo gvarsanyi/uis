@@ -1,9 +1,9 @@
 #!/usr/bin/env coffee
 
-child_process = require 'child_process'
+child_process   = require 'child_process'
 
-config = require './config'
-stats  = require './stats'
+config          = require './config'
+stats           = require './stats'
 
 
 unless config.output in ['fancy', 'plain']
@@ -40,8 +40,7 @@ class Child
                                {cwd, silent: true}
 
     @node.on 'error', (err) =>
-      if @node
-        output.error {repo: 'uis', error: true, msg: @name + ' error', err}
+      output.error({repo: 'uis', msg: @name + ' error', err}) if @node
       @del()
 
     @node.on 'close', (code, signal) =>
@@ -54,7 +53,7 @@ class Child
 
     @node.on 'disconnect', =>
       if @node and not config.singleRun
-        output.error {repo: 'uis', error: true, msg: @name + ' disconnected'}
+        output.error {repo: 'uis', msg: @name + ' disconnected'}
       @del()
 
     @node.stderr.on 'data', (data) =>
@@ -64,7 +63,6 @@ class Child
           repo: @name
           type: 'note'
           id:   note_id
-          error: true
           msg: @errBuffer.substr 0, pos + 1
         note_id += 1
         output.error msg

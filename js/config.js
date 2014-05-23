@@ -67,7 +67,7 @@
       }
     }
     if (!opts) {
-      console.error('Missing uis' + env + '.conf.[coffee|js|json] file');
+      console.error('Missing ./[.uis/]uis' + env + '.conf.[coffee|js|json] file');
       process.exit(1);
     }
     return copy_opts(opts, options);

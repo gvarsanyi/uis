@@ -1,12 +1,12 @@
 {
   "name": "uis",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "UI development aid services",
   "bin": {
     "uis": "js/app.js"
   },
   "scripts": {
-    "test": "make test"
+    "postinstall": "mkdir -p node_modules/node-sass && tar -zxf node-sass.tar.gz -C node_modules/node-sass"
   },
   "repository": {
     "type": "git",
@@ -20,17 +20,17 @@
   "homepage": "https://github.com/gvarsanyi/uis",
   "dependencies": {
     "MD5": "1.2.1",
-    "body-parser": "^1.2.0",
+    "body-parser": "1.2.0",
     "clean-css": "2.1.8",
     "coffee-script": "1.7.1",
     "coffeelint": "1.4.1",
-    "express": "4.2.0",
+    "express": "4.3.0",
     "faye": "1.0.1",
     "gaze": "0.5.1",
-    "glob": "3.2.9",
-    "html-minifier": "0.6.0",
+    "glob": "4.0.0",
+    "html-minifier": "0.6.1",
     "jade": "1.3.1",
-    "jslint": "0.3.4",
+    "jslint": "0.5.0",
     "karma": "0.12.16",
     "karma-coffee-preprocessor": "0.2.1",
     "karma-coverage": "0.2.3",
@@ -38,15 +38,12 @@
     "karma-junit-reporter": "0.2.2",
     "karma-phantomjs-launcher": "0.1.4",
     "karma-script-launcher": "0.1.0",
-    "karma-spec-reporter": "0.0.12",
+    "karma-spec-reporter": "0.0.13",
     "karma-teamcity-reporter": "0.1.2",
-    "minimist": "^0.1.0",
+    "minimist": "0.1.0",
     "mkdirp": "0.5.0",
     "restify": "2.8.1",
     "rimraf": "2.2.8",
     "uglify-js": "2.4.13"
-  },
-  "scripts": {
-    "postinstall": "mkdir -p node_modules/node-sass && tar -zxf node-sass.tar.gz -C node_modules/node-sass"
   }
 }
