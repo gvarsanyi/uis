@@ -201,7 +201,7 @@
     if (error) {
       error_state = 'error';
     }
-    if (done || error || warning) {
+    if (done && (count || error || warning)) {
       msg = '';
       if (error != null) {
         msg = ': ' + ngroup(error.length, 'error');
@@ -234,13 +234,19 @@
   module.exports.log = function(msg) {
     var out;
     out = String(msg.msg);
-    return console.log('[' + msg.repo + ']', out.substr(0, out.length - 1));
+    if (out.substr(out.length - 1) === '\n') {
+      out = out.substr(0, out.length - 1);
+    }
+    return console.log('[' + msg.repo + ']', out);
   };
 
   module.exports.error = function(msg) {
     var out;
     out = String(msg.msg);
-    return console.error('[' + msg.repo + '] ERROR', out.substr(0, out.length - 1));
+    if (out.substr(out.length - 1) === '\n') {
+      out = out.substr(0, out.length - 1);
+    }
+    return console.error('[' + msg.repo + '] ERROR', out);
   };
 
 }).call(this);

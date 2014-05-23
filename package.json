@@ -1,8 +1,7 @@
 {
   "name": "uis",
-  "version": "0.0.0",
-  "description": "",
-  "main": "js/app.js",
+  "version": "1.9.0",
+  "description": "UI development aid services",
   "bin": {
     "uis": "js/app.js"
   },
@@ -34,7 +33,7 @@
     "jslint": "0.3.4",
     "karma": "0.12.16",
     "karma-coffee-preprocessor": "0.2.1",
-    "karma-coverage": "git://github.com/gvarsanyi/karma-coverage.git#6b7c0892cac950abb353d211466be24bb537c181",
+    "karma-coverage": "0.2.3",
     "karma-jasmine": "0.1.5",
     "karma-junit-reporter": "0.2.2",
     "karma-phantomjs-launcher": "0.1.4",
@@ -46,5 +45,8 @@
     "restify": "2.8.1",
     "rimraf": "2.2.8",
     "uglify-js": "2.4.13"
+  },
+  "scripts": {
+    "postinstall": "mkdir -p node_modules/node-sass && tar -zxf node-sass.tar.gz -C node_modules/node-sass"
   }
 }

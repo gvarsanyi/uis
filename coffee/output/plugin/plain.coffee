@@ -142,7 +142,7 @@ module.exports.update = (update) ->
   error_state = 'error'   if error
 
 
-  if done or error or warning #or true
+  if done and (count or error or warning)
     msg = ''
     if error?
       msg = ': ' + ngroup error.length, 'error'
@@ -171,8 +171,10 @@ module.exports.update = (update) ->
 
 module.exports.log = (msg) ->
   out = String msg.msg
-  console.log '[' + msg.repo + ']', out.substr 0, out.length - 1
+  out = out.substr(0, out.length - 1) if out.substr(out.length - 1) is '\n'
+  console.log '[' + msg.repo + ']', out
 
 module.exports.error = (msg) ->
   out = String msg.msg
-  console.error '[' + msg.repo + '] ERROR', out.substr 0, out.length - 1
+  out = out.substr(0, out.length - 1) if out.substr(out.length - 1) is '\n'
+  console.error '[' + msg.repo + '] ERROR', out

@@ -101,10 +101,8 @@
             _ref = stdout || [];
             for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
               line = _ref[i];
-              if (line.substr(0, 10) === 'PhantomJS ' && (index = line.indexOf('): Executed ')) > -1) {
-                if (result = Number(line.substr(index + 12).split(' ')[3])) {
-                  _this.result(result);
-                }
+              if (line.substr(0, 10) === 'PhantomJS ' && (index = line.indexOf('): Executed ')) > -1 && (result = Number(line.substr(index + 12).split(' ')[2]))) {
+                _this.result(result);
               } else if (line.substr(0, 6) === '    ✗ ') {
                 if (warning) {
                   _this.warning(warning);
@@ -141,8 +139,6 @@
                 _this.error(inf);
               } else if (line.indexOf('##teamcity') > -1) {
                 console.log(line);
-              } else if (line) {
-                console.log('karma output [' + i + ']', line);
               }
             }
             if (warning) {

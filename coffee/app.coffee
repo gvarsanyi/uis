@@ -40,19 +40,21 @@ class Child
                                {cwd, silent: true}
 
     @node.on 'error', (err) =>
-      output.error(@name + ' error', err) if @node
+      if @node
+        output.error {repo: 'uis', error: true, msg: @name + ' error', err}
       @del()
 
     @node.on 'close', (code, signal) =>
-      output.log(@name + ' closed', code, signal) if @node
+      output.log({repo: 'uis', msg: @name + ' closed', code, signal}) if @node
       @del()
 
     @node.on 'exit', (code, signal) =>
-      output.log(@name + ' exited', code, signal) if @node
+      output.log({repo: 'uis', msg: @name + ' exited', code, signal}) if @node
       @del()
 
     @node.on 'disconnect', =>
-      output.error(@name + ' disconnected') if @node and not config.singleRun
+      if @node and not config.singleRun
+        output.error {repo: 'uis', error: true, msg: @name + ' disconnected'}
       @del()
 
     @node.stderr.on 'data', (data) =>
@@ -94,7 +96,7 @@ class Child
     delete @node
 
     if Child.count is 1 and Child.nodes.service?.node?
-      output.log 'Shutting down service'
+      output.log {repo: 'uis', msg: 'Shutting down service'}
       Child.nodes.service.node.kill()
     if Child.count is 0 and Child.onAllDone?
       Child.onAllDone()
@@ -111,7 +113,7 @@ class Child
 if config.service and not config.singleRun
   service = new Child 'service', (msg) ->
     if msg?.type is 'note'
-      output.note msg
+      output.log msg
   service.send
     type: 'stat-init'
     data: stats.data
@@ -128,7 +130,7 @@ for name in ['js', 'css', 'html', 'test'] when config[name]
           stats[msg.repo][msg.task] = msg.stat
           output.update msg
         when 'note'
-          output.note msg
+          output.log msg
 
 Child.onAllDone = ->
-  output.log 'bye'
+  console.log 'bye! .oOo.'

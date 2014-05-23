@@ -1,4 +1,5 @@
 Outblock = require '../outblock'
+config   = require '../../config'
 ngroup   = require '../ngroup'
 plural   = require '../plural'
 stats    = require '../../stats'
@@ -46,19 +47,16 @@ print_block = (push_x, push_y, title, inf, prev_inf) ->
     outblock.color([86, 86, 86]).write(hourglass, prev_inf).x(push_x).reset()
 
   if inf.error?.length
-
     outblock.color(colors.err).write(ngroup inf.error.length)
       .color(colors.faint).write(plural ' error', inf.error.length)
   else
     if inf.status
-      if title in ['test', 'coverage']
-        if inf.warning?.length
-          outblock.color(colors.warn).write(ngroup inf.warning.length)
-            .color(colors.faint).write(plural ' warning', inf.warning.length)
-        else if title is 'test'
+      if title is 'test'
+        if inf.size?
           outblock.color(colors.white).write(ngroup inf.size)
             .color(colors.faint).write(plural(' test', inf.size) + ' passed')
-        else # coverage
+      else if title is 'coverage'
+        if inf.size?.all?.statements?
           color = colors.white
           if inf.size.all.statements < (config.test?.coverage?.bar or 80)
             color = colors.warn

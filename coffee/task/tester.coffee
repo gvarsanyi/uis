@@ -58,9 +58,9 @@ class Tester extends Task
       process.stderr.write = orig_stderr if orig_stderr
 
       for line, i in stdout or []
-        if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf '): Executed ') > -1
-          if result = Number line.substr(index + 12).split(' ')[3]
-            @result result
+        if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf '): Executed ') > -1 and
+        result = Number line.substr(index + 12).split(' ')[2]
+          @result result
         else if line.substr(0, 6) is '    ✗ '
           @warning(warning) if warning
           warning =
@@ -89,8 +89,8 @@ class Tester extends Task
           @error inf
         else if line.indexOf('##teamcity') > -1
           console.log line
-        else if line
-          console.log 'karma output [' + i + ']', line
+#         else if line
+#           console.log 'karma output [' + i + ']', line
 
       @warning(warning) if warning
       callback()

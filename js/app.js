@@ -64,7 +64,12 @@
       this.node.on('error', (function(_this) {
         return function(err) {
           if (_this.node) {
-            output.error(_this.name + ' error', err);
+            output.error({
+              repo: 'uis',
+              error: true,
+              msg: _this.name + ' error',
+              err: err
+            });
           }
           return _this.del();
         };
@@ -72,7 +77,12 @@
       this.node.on('close', (function(_this) {
         return function(code, signal) {
           if (_this.node) {
-            output.log(_this.name + ' closed', code, signal);
+            output.log({
+              repo: 'uis',
+              msg: _this.name + ' closed',
+              code: code,
+              signal: signal
+            });
           }
           return _this.del();
         };
@@ -80,7 +90,12 @@
       this.node.on('exit', (function(_this) {
         return function(code, signal) {
           if (_this.node) {
-            output.log(_this.name + ' exited', code, signal);
+            output.log({
+              repo: 'uis',
+              msg: _this.name + ' exited',
+              code: code,
+              signal: signal
+            });
           }
           return _this.del();
         };
@@ -88,7 +103,11 @@
       this.node.on('disconnect', (function(_this) {
         return function() {
           if (_this.node && !config.singleRun) {
-            output.error(_this.name + ' disconnected');
+            output.error({
+              repo: 'uis',
+              error: true,
+              msg: _this.name + ' disconnected'
+            });
           }
           return _this.del();
         };
@@ -152,7 +171,10 @@
       Child.count -= 1;
       delete this.node;
       if (Child.count === 1 && (((_ref1 = Child.nodes.service) != null ? _ref1.node : void 0) != null)) {
-        output.log('Shutting down service');
+        output.log({
+          repo: 'uis',
+          msg: 'Shutting down service'
+        });
         Child.nodes.service.node.kill();
       }
       if (Child.count === 0 && (Child.onAllDone != null)) {
@@ -182,7 +204,7 @@
   if (config.service && !config.singleRun) {
     service = new Child('service', function(msg) {
       if ((msg != null ? msg.type : void 0) === 'note') {
-        return output.note(msg);
+        return output.log(msg);
       }
     });
     service.send({
@@ -214,7 +236,7 @@
               _results.push(output.update(msg));
               break;
             case 'note':
-              _results.push(output.note(msg));
+              _results.push(output.log(msg));
               break;
             default:
               _results.push(void 0);
@@ -226,7 +248,7 @@
   }
 
   Child.onAllDone = function() {
-    return output.log('bye');
+    return console.log('bye! .oOo.');
   };
 
 }).call(this);
