@@ -164,11 +164,12 @@
   };
 
   info_out = function(status, inf) {
-    var block, lines, out, output, part, _i, _j, _len, _len1;
+    var block, lines, out, output, part, _i, _j, _len, _len1, _results;
     output = status === 'error' ? 'error' : 'log';
-    out = '';
+    _results = [];
     for (_i = 0, _len = inf.length; _i < _len; _i++) {
       block = inf[_i];
+      out = '';
       if (block instanceof Array) {
         for (_j = 0, _len1 = block.length; _j < _len1; _j++) {
           part = block[_j];
@@ -177,15 +178,16 @@
       } else {
         out += obj_to_str(status, block);
       }
+      if ((lines = out.split('\n')).length > 11) {
+        out = lines.slice(0, 10).join('\n') + '\n  [' + (lines.length - 11) + ' more lines ...]';
+      } else if (out.length > 1024) {
+        out = out.substr(0, 1000) + ' [' + (out.length - 1000) + ' more characters ...]';
+      } else {
+        out = out.substr(0, out.length - 1);
+      }
+      _results.push(console[output]('\n' + out));
     }
-    if ((lines = out.split('\n')).length > 11) {
-      out = lines.slice(0, 10).join('\n') + '\n  [' + (lines.length - 11) + ' more lines ...]';
-    } else if (out.length > 1024) {
-      out = out.substr(0, 1000) + ' [' + (out.length - 1000) + ' more characters ...]';
-    } else {
-      out = out.substr(0, out.length - 1);
-    }
-    return console[output](out);
+    return _results;
   };
 
   module.exports.update = function(update) {

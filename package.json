@@ -1,6 +1,6 @@
 {
   "name": "uis",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "UI development aid services",
   "bin": {
     "uis": "js/app.js"
