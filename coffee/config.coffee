@@ -3,6 +3,12 @@ fs       = require 'fs'
 minimist = require 'minimist'
 
 
+argv = minimist process.argv[2 ..]
+if argv.v or argv.version
+  pkg = require '../package.json'
+  console.log pkg.name, pkg.version
+  process.exit 0
+
 require 'coffee-script/register'
 
 
@@ -44,7 +50,6 @@ cwd = process.cwd()
 
 load()
 
-argv = minimist process.argv[2 ..]
 
 for env in argv._ or []
   load env
