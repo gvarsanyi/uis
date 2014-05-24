@@ -254,6 +254,7 @@
       _results = [];
       for (_i = 0, _len = msgs.length; _i < _len; _i++) {
         msg = msgs[_i];
+        console.log(msg);
         this.publish('/update', msg);
         _results.push(this.deployFilter(msg));
       }

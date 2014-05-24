@@ -55,6 +55,39 @@ class Stats
           list.push msg
     list
 
+  repos: (name) =>
+    return [name] if name
+    (k for k of @data)
+
+  hasError: (repo) =>
+    for repo in @repos repo
+      for task, inf of @data[repo]
+        return true if inf.error?.length
+    false
+
+  hasWarning: (repo) =>
+    for repo in @repos repo
+      for task, inf of @data[repo]
+        return true if inf.warning?.length
+    false
+
+  isDone: (repo) =>
+    for repo in @repos repo
+      for task, inf of @data[repo]
+        continue if inf.error?.length
+        return false unless inf.done
+    true
+
+  state: (repo) =>
+    state = 'load'
+    if @hasError repo
+      state = 'error'
+    else if @hasWarning repo
+      state = 'warn'
+    else if @isDone repo
+      state = 'check'
+    state
+
   incoming: (msg) =>
     msgs = cue_processor msg
     for msg in msgs when msg.type is 'stat'
@@ -64,6 +97,72 @@ class Stats
         @ids[msg.repo] ?= {}
         @ids[msg.repo][msg.task] = msg.id
     msgs
+
+
+class HUD2
+  pending = false
+  ready   = false
+
+  constructor: ->
+    loaded = =>
+      ready = true
+      @render() if pending
+      pending = false
+
+    document.addEventListener 'DOMContentLoaded', loaded, false
+    window.addEventListener 'load', loaded, false
+
+  render: =>
+    unless ready
+      return pending = true
+
+    unless @div
+      @div = create document.body,
+        background:    'linear-gradient(#122, #233, #122)'
+        border:        '#011 solid 1px'
+        borderBottom:  'solid 0px transparent'
+        borderRight:   'solid 0px transparent'
+        borderRadius:  '32px 0 0 0'
+        bottom:        0
+        height:        '24px'
+        position:      'fixed'
+        right:         0 #'-80px'
+        verticalAlign: 'bottom'
+        width:         '24px'
+
+      @state = create @div,
+        color:        '#0a1616'
+        fontSize:     '18px'
+        height:       '18px'
+        lineHeight:   '18px'
+        position:     'absolute'
+        right:        0
+        top:          '4px'
+        textAlign:    'center'
+        textShadow:   '1px 1px #000'
+        width:        '18px'
+        '@-moz-keyframes':    'spin{100%{-moz-transform: rotate(360deg);}}'
+        '@-webkit-keyframes': 'spin{100%{-webkit-transform: rotate(360deg);}}'
+        '@keyframes':         'spin{100%{transform:rotate(360deg);}}'
+
+    state = stats.state()
+    @state.innerHTML = state_symbols[state]
+    anim = if state is 'load' then 'spin 1s linear infinite' else 'none'
+    style @state,
+      '-webkit-animation': anim
+      animation:           anim
+      color:               colors[state][0]
+    style @title, color: colors[state][0]
+
+#       @css  = new Repo('css',  0, @) unless @css
+#       @html = new Repo('html', 1, @) unless @html
+#       @js   = new Repo('js',   2, @) unless @js
+#       @test = new Repo('test', 3, @) unless @test
+
+#     @css.render()
+#     @js.render()
+#     @html.render()
+#     @test.render()
 
 
 class HUD
@@ -80,9 +179,9 @@ class HUD
 
     loaded = =>
       ready = true
-      @render() if pending
-      pending = false
-      sticky()
+      if pending
+        pending = false
+        @render()
 
     document.addEventListener 'DOMContentLoaded', loaded, false
     window.addEventListener 'load', loaded, false
@@ -103,52 +202,17 @@ class HUD
         pt = repos[repo] = {}
 
         pt.div = create div,
-          background:    'linear-gradient(#122, #233, #122)'
-          border:        '#011 solid 1px'
-          borderBottom:  'solid 0px transparent'
-          borderRadius:  '17px 3px 3px 3px'
           bottom:        0
           display:       'inline-block'
           margin:        '0 1%'
           maxWidth:      '40%'
-          opacity:       .85
-          paddingRight:  '2px'
+          marginRight:   '10px'
           verticalAlign: 'bottom'
 
-        pt.title = create pt.div,
-          background:   'linear-gradient(#374, #394, #374)'
-          border:       '#122 solid 1px'
-          borderBottom: 'transparent 0 solid'
-          borderRadius: '17px 3px 17px 3px'
-          color:        '#f8f8f8'
-          display:      'inline-block'
-          fontSize:     '11px'
-          fontWeight:   'bold'
-          height:       '20px'
-          left:         '-2px'
-          lineHeight:   '18px'
-          marginRight:  '2px'
-          padding:      '0 9px'
-          textAlign:    'center'
-          top:          '-1px'
-        pt.title.innerHTML = repo.toUpperCase()
-
-        pt.head = create pt.div,
-          display:    'inline-block'
-          lineHeight: '18px'
-
-        pt.info = create pt.div
+        pt.info  = create pt.div
         pt.error = create pt.info
         pt.warn  = create pt.info
 
-      for task, stat of tasks when symbols[task] and stat.count
-        unless pt[task]
-          for t of symbols when pt[t]
-            remove pt[t]
-            delete pt[t]
-          break
-
-      repo_status = 'done'
       pt.error.innerHTML = ''
       pt.warn.innerHTML = ''
       touched = {}
@@ -293,57 +357,22 @@ class HUD
       issue_cue = []
       for task of symbols
         if (stat = tasks[task])?.count
-          unless pt[task]
-            pt[task] = create pt.head,
-              display:    'inline-block'
-              fontWeight: 'bold'
-              fontSize:   '11px'
-              lineHeight: '18px'
-              margin:     '0 4px'
-
-          out = symbols[task]
-
-          status = 'load'
-          status = 'done' if stat.done
-
-          if n = stat.error?.length
-            status = 'error'
-            out += ':' + n
-            for info in stat.error
-              issue_cue.push {level: 'error', info}
-            if n = stat.warning?.length
-              out += '<span style="color: ' + colors['warn'][0] + ';">+' + n + '</span>'
-              for info in stat.warning
-                issue_cue.push {level: 'warn', info}
-          else if n = stat.warning?.length
-            status = 'warn'
-            out += ':' + n
-            for info in stat.warning
-              issue_cue.push {level: 'warn', info}
-          style pt[task], color: colors[status][0]
-
-          pt[task].innerHTML = out
-
-          repo_status = 'check' if repo_status is 'done'
-          unless stat.done or repo_status in ['warn', 'error']
-            repo_status = 'load'
-          if stat.warning?.length and repo_status isnt 'error'
-            repo_status = 'warn'
-          if stat.error?.length
-            repo_status = 'error'
+          for info in stat.error or []
+            issue_cue.push {level: 'error', info}
+          for info in stat.warning or []
+            issue_cue.push {level: 'warn', info}
 
       issue_cue.reverse()
       issue_cue.sort (a, b) ->
         return 1 if a.level is 'warn'
         -1
 
-#       for issue, i in issue_cue when i < 3
-#         add_info issue.info, issue.level
       if issue = issue_cue[0]
         add_info issue.info, issue.level
-        style pt.div, opacity: 1
+        style pt.div, display: 'inline-block'
+      else
+        style pt.div, display: 'none'
 
-      style pt.title, background: 'linear-gradient(' + colors[repo_status].join(', ') + ')'
 
 bayeux     = new Faye.Client '/bayeux', retry: .5
 reload_i   = 0
@@ -377,7 +406,7 @@ show = ->
       bottom:   '5px'
       overflow: 'hidden'
       maxWidth: '20%'
-      zIndex:   2147483647
+      zIndex:   2147483645
   return
 
 add = (msg) ->
@@ -508,6 +537,7 @@ create = (parent, styles, tag='DIV') ->
       border:        '0 solid transparent'
       borderRadius:  0
       color:         '#eee'
+      display:       'block'
       font:          '13px normal Arial,sans-serif'
       lineHeight:    '13px'
       margin:        0
@@ -528,8 +558,6 @@ remove = (node) ->
 style = (node, styles) ->
   try node.style[k] = v for k, v of styles
 
-hud = new HUD
-
 symbols =
   filesLoader:      'load'
   filesCompiler:    'compile'
@@ -543,13 +571,23 @@ symbols =
   coverageReporter: 'coverage'
 
 colors =
-  load:  ['#001', '#114', '#001']
+  load:  ['#18e', '#4bf', '#18e']
   done:  ['#eee', '#fff', '#eee']
   check: ['#394', '#6c7', '#394']
   warn:  ['#e81', '#fb4', '#e81']
   error: ['#e33', '#f66', '#e33']
   note:  ['#347', '#349', '#347']
 
+state_symbols =
+  load:  '&#8987;'
+  check: '&#10003;'
+  done:  '&#10003;'
+  warn:  '&#9888;'
+  error: '&#10007;'
+  note:  '&#9432;'
+
+hud = new HUD
+hud2 = new HUD2
 
 reload_css = ->
   reload_i += 1
@@ -571,6 +609,7 @@ process_msg = (msg) ->
         else
           reload()
       hud.render()
+      hud2.render()
 
 subscription = bayeux.subscribe '/update', (msg) ->
   for msg in stats.incoming msg
@@ -582,3 +621,4 @@ subscription.then ->
     for msg in stats.init msg.data, msg.ids
       process_msg msg
     hud.render()
+    hud2.render()
