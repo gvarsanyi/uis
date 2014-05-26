@@ -169,6 +169,9 @@
     _results = [];
     for (_i = 0, _len = inf.length; _i < _len; _i++) {
       block = inf[_i];
+      if (!(!block.muted)) {
+        continue;
+      }
       out = '';
       if (block instanceof Array) {
         for (_j = 0, _len1 = block.length; _j < _len1; _j++) {

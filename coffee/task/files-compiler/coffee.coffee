@@ -43,6 +43,9 @@ class FilesCoffeeCompiler extends FilesCompiler
       for line_literal, i in lines[data.lines.from - 1 .. data.lines.to - 1]
         data.lines[i + data.lines.from] = line_literal
 
+    if @source.name is 'test' and not source.options.testOnly
+      data.muted = true
+
     data
 
 module.exports = FilesCoffeeCompiler

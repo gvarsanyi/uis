@@ -169,7 +169,6 @@ class Service
     else
       msgs = stats.incoming msg
     for msg in msgs
-      console.log msg
       @publish '/update', msg
       @deployFilter msg
 

@@ -67,6 +67,9 @@
           data.lines[i + data.lines.from] = line_literal;
         }
       }
+      if (this.source.name === 'test' && !source.options.testOnly) {
+        data.muted = true;
+      }
       return data;
     };
 

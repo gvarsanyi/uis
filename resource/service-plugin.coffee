@@ -61,14 +61,14 @@ class Stats
 
   hasError: (repo) =>
     for repo in @repos repo
-      for task, inf of @data[repo]
-        return true if inf.error?.length
+      for task, inf of @data[repo] when not inf.muted
+        return inf.error[0] if inf.error?.length
     false
 
   hasWarning: (repo) =>
     for repo in @repos repo
-      for task, inf of @data[repo]
-        return true if inf.warning?.length
+      for task, inf of @data[repo] when not inf.muted
+        return inf.warning[0] if inf.warning?.length
     false
 
   isDone: (repo) =>
@@ -99,7 +99,7 @@ class Stats
     msgs
 
 
-class HUD2
+class HUD
   pending = false
   ready   = false
 
@@ -117,6 +117,17 @@ class HUD2
       return pending = true
 
     unless @div
+      @panel = create document.body,
+        bottom:        '5px'
+        position:      'fixed'
+        right:         '5px'
+        verticalAlign: 'bottom'
+        maxWidth:      '20%'
+
+      @msgs = create @panel
+
+      @info = create @panel
+
       @div = create document.body,
         background:    'linear-gradient(#122, #233, #122)'
         border:        '#011 solid 1px'
@@ -126,7 +137,7 @@ class HUD2
         bottom:        0
         height:        '24px'
         position:      'fixed'
-        right:         0 #'-80px'
+        right:         0
         verticalAlign: 'bottom'
         width:         '24px'
 
@@ -154,322 +165,219 @@ class HUD2
       color:               colors[state][0]
     style @title, color: colors[state][0]
 
-#       @css  = new Repo('css',  0, @) unless @css
-#       @html = new Repo('html', 1, @) unless @html
-#       @js   = new Repo('js',   2, @) unless @js
-#       @test = new Repo('test', 3, @) unless @test
+    status = 'error'
+    unless msg = stats.hasError()
+      msg = stats.hasWarning()
+      status = 'warn'
 
-#     @css.render()
-#     @js.render()
-#     @html.render()
-#     @test.render()
-
-
-class HUD
-  div     = null
-  repos   = {}
-  pending = false
-  ready   = false
-
-  constructor: ->
-    sticky = =>
-      reattach div
-      show()
-      setTimeout sticky, 33
-
-    loaded = =>
-      ready = true
-      if pending
-        pending = false
-        @render()
-
-    document.addEventListener 'DOMContentLoaded', loaded, false
-    window.addEventListener 'load', loaded, false
-
-  render: =>
-    unless ready
-      return pending = true
-
-    unless reattach div
-      div = create document.body,
-        position: 'fixed'
-        left:     0
-        bottom:   0
-        width:    '80%'
-
-    for repo, tasks of stats.data
-      unless pt = repos[repo]
-        pt = repos[repo] = {}
-
-        pt.div = create div,
-          bottom:        0
-          display:       'inline-block'
-          margin:        '0 1%'
-          maxWidth:      '40%'
-          marginRight:   '10px'
-          verticalAlign: 'bottom'
-
-        pt.info  = create pt.div
-        pt.error = create pt.info
-        pt.warn  = create pt.info
-
-      pt.error.innerHTML = ''
-      pt.warn.innerHTML = ''
-      touched = {}
-      shown_issues = 0
-      hidden_issues = 0
-
-      add_info = (msg, status='warn') ->
-        if shown_issues > 2
-          hidden_issues += 1
-          return
-        shown_issues += 1
-        if touched[status]
-          create pt[status], null, 'br'
-        touched[status] = true
-        panel = create pt[status],
-          background:   '#233'
-          borderLeft:   colors[status][0] + ' groove 2px'
+    unless msg
+      style @info, display: 'none'
+    else
+      @info.innerHTML = ''
+      style @info,
+        background:   '#233'
+        borderLeft:   colors[status][0] + ' groove 2px'
+        borderRadius: '3px'
+        display:      'block'
+        margin:       '3px'
+        maxHeight:    '250px'
+        overflowX:    'hidden'
+        overflowY:    'auto'
+        padding:      '3px'
+        width:        '100%'
+      if msg.title
+        node = create @info,
+          background: '#455'
+          fontWeight: 'bold'
+          padding:    '2px'
+          whiteSpace: 'normal'
+        node.innerHTML = msg.title
+      if msg.description
+        node = create @info,
+          padding:    '4px 2px'
+          whiteSpace: 'pre'
+        node.innerHTML = msg.description
+      if msg.file
+        node = create @info,
+          background:   '#344'
           borderRadius: '3px'
-          display:      'inline-block'
-          margin:       '3px'
-          maxHeight:    '200px'
-          overflowX:    'hidden'
-          overflowY:    'auto'
+          color:        '#ddd'
+          fontWeight:   'bold'
           padding:      '3px'
-          width:        '100%'
-        if msg.title
-          node = create panel,
-            background: '#455'
-            fontWeight: 'bold'
-            padding:    '2px'
-            whiteSpace: 'normal'
-          node.innerHTML = msg.title
-        if msg.description
-          node = create panel,
-            padding:    '4px 2px'
-            whiteSpace: 'pre'
-          node.innerHTML = msg.description
-        if msg.file
-          node = create panel,
-            background:   '#344'
-            borderRadius: '3px'
-            color:        '#ddd'
-            fontWeight:   'bold'
-            padding:      '3px'
-          if msg.lines
-            style node,
-              border:       'solid 1px #455'
-              borderBottom: 'solid 1px #233'
-              borderRadius: '3px 3px 0 0'
-          node.innerHTML = msg.file
-          if msg.line and not msg.lines
-            if typeof msg.line is 'object'
-              node.innerHTML += ' @ lines ' + msg.line.join '-'
-            else
-              node.innerHTML += ' @ line ' + msg.line
-        if msg.table
-          table = create panel,
-            background: '#233'
-            display:    'table'
-          , 'table'
-
-          has_title = false
-          for col in msg.table.columns
-            col.align = 'left' if col.align isnt 'right'
-            has_title = true if col.title?
-
-          if has_title
-            tr = create table, display: 'table-row', 'tr'
-            for col in msg.table.columns
-              th = create tr,
-                background:    '#344'
-                borderSpacing: '1px'
-                color:         '#eee'
-                display:       'table-cell'
-                fontWeight:    'bold'
-                padding:       '2px'
-                textAlign:     col.align
-              , 'th'
-              th.innerHTML = col.title if col.title?
-
-          for row, row_n in msg.table.data
-            tr = create table, display: 'table-row', 'tr'
-            for col, i in msg.table.columns
-              td = create tr,
-                background:    (if row_n % 2 then '#485a5a' else '#455')
-                borderSpacing: '1px'
-                color:         '#eee'
-                display:       'table-cell'
-                padding:       '2px'
-                textAlign:     col.align
-              , 'td'
-              td.innerHTML = if col.src? then row[col.src] else row[i]
         if msg.lines
-          lines = create panel,
-            background: '#455'
-            color:      '#eee'
-            left:       0
-            margin:     '2px 0 0 0'
-            position:   'absolute'
-          for n in [msg.lines.from .. msg.lines.to]
-            if msg.lines[n]?
-              line = create lines,
-                color:       '#eee'
-                fontFamily:  '"Lucida Console", Monaco, monospace'
-                padding:     '0 4px 0 2px'
-                textAlign:   'right'
-                whiteSpace:  'pre'
-              if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
-                style line, background: '#633'
-              line.innerHTML = n
-          line_chars = 0
-          for n in [msg.lines.from .. msg.lines.to]
-            if msg.lines[n]?
-              line_chars = Math.max line_chars, String(n).length
-          push = line_chars * 10 + 10
-          node = create panel,
-            background: '#455'
-            padding:    '2px 2px 2px ' + push + 'px'
-            overflow:   'auto'
-            zIndex:     2147483646
-          for n in [msg.lines.from .. msg.lines.to]
-            if (code = msg.lines[n])?
-              line = create node,
-                color:       '#eee'
-                fontFamily:  '"Lucida Console", Monaco, monospace'
-                overflow:    'visible'
-                whiteSpace:  'pre'
-              if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
-                style line, {fontWeight: 'bold', color: '#e66'}
-              code = code.split('\t').join '    '
-              cut = 0
-              for i in [code.length - 1 .. 0]
-                if code[i] is ' '
-                  cut += 1
-                else
-                  break
-              if cut
-                spc = '<span style="background: #766;">' + code.substr(code.length - cut) + '</span>'
-                code = code.substr(0, code.length - cut) + spc
-              line.innerHTML = code or ' '
+          style node,
+            border:       'solid 1px #455'
+            borderBottom: 'solid 1px #233'
+            borderRadius: '3px 3px 0 0'
+        node.innerHTML = msg.file
+        if msg.line and not msg.lines
+          if typeof msg.line is 'object'
+            node.innerHTML += ' @ lines ' + msg.line.join '-'
+          else
+            node.innerHTML += ' @ line ' + msg.line
+      if msg.table
+        table = create @info,
+          background: '#233'
+          display:    'table'
+        , 'table'
 
-      issue_cue = []
-      for task of symbols
-        if (stat = tasks[task])?.count
-          for info in stat.error or []
-            issue_cue.push {level: 'error', info}
-          for info in stat.warning or []
-            issue_cue.push {level: 'warn', info}
+        has_title = false
+        for col in msg.table.columns
+          col.align = 'left' if col.align isnt 'right'
+          has_title = true if col.title?
 
-      issue_cue.reverse()
-      issue_cue.sort (a, b) ->
-        return 1 if a.level is 'warn'
-        -1
+        if has_title
+          tr = create table, display: 'table-row', 'tr'
+          for col in msg.table.columns
+            th = create tr,
+              background:    '#344'
+              borderSpacing: '1px'
+              color:         '#eee'
+              display:       'table-cell'
+              fontWeight:    'bold'
+              padding:       '2px'
+              textAlign:     col.align
+            , 'th'
+            th.innerHTML = col.title if col.title?
 
-      if issue = issue_cue[0]
-        add_info issue.info, issue.level
-        style pt.div, display: 'inline-block'
-      else
-        style pt.div, display: 'none'
+        for row, row_n in msg.table.data
+          tr = create table, display: 'table-row', 'tr'
+          for col, i in msg.table.columns
+            td = create tr,
+              background:    (if row_n % 2 then '#485a5a' else '#455')
+              borderSpacing: '1px'
+              color:         '#eee'
+              display:       'table-cell'
+              padding:       '2px'
+              textAlign:     col.align
+            , 'td'
+            td.innerHTML = if col.src? then row[col.src] else row[i]
+      if msg.lines
+        lines = create @info,
+          background: '#455'
+          color:      '#eee'
+          left:       0
+          margin:     '2px 0 0 0'
+          position:   'absolute'
+        for n in [msg.lines.from .. msg.lines.to]
+          if msg.lines[n]?
+            line = create lines,
+              color:       '#eee'
+              fontFamily:  '"Lucida Console", Monaco, monospace'
+              padding:     '0 4px 0 2px'
+              textAlign:   'right'
+              whiteSpace:  'pre'
+            if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
+              style line, background: '#633'
+            line.innerHTML = n
+        line_chars = 0
+        for n in [msg.lines.from .. msg.lines.to]
+          if msg.lines[n]?
+            line_chars = Math.max line_chars, String(n).length
+        push = line_chars * 10 + 10
+        node = create @info,
+          background: '#455'
+          padding:    '2px 2px 2px ' + push + 'px'
+          overflow:   'auto'
+          zIndex:     2147483646
+        for n in [msg.lines.from .. msg.lines.to]
+          if (code = msg.lines[n])?
+            line = create node,
+              color:       '#eee'
+              fontFamily:  '"Lucida Console", Monaco, monospace'
+              overflow:    'visible'
+              whiteSpace:  'pre'
+            if n is msg.line or (typeof msg.line is 'object' and n in msg.line)
+              style line, {fontWeight: 'bold', color: '#e66'}
+            code = code.split('\t').join '    '
+            cut = 0
+            for i in [code.length - 1 .. 0]
+              if code[i] is ' '
+                cut += 1
+              else
+                break
+            if cut
+              spc = '<span style="background: #766;">' + code.substr(code.length - cut) + '</span>'
+              code = code.substr(0, code.length - cut) + spc
+            line.innerHTML = code or ' '
+
+      if table and (w1 = table.offsetWidth) > w2 = @info.offsetWidth - 28
+        style table, zoom: w2 / w1
+
+  showId:   0
+  shownMsg: 0
+  add: (msg) ->
+    return if @shownMsg > 20
+    @showId   += 1
+    @shownMsg += 1
+
+    if typeof msg is 'string'
+      msg = {repo: 'srv', note: msg}
+
+    div = create @msgs,
+      background:   'linear-gradient(#122, #233, #122)'
+      borderBottom: '#000 solid 1px'
+      borderRadius: '10px'
+      margin:       '3px 0 0'
+      opacity:      .85
+      overflow:     'hidden'
+      paddingRight: '9px'
+      zoom:         .01
+
+    status = 'note'
+    status = 'error' if msg.repo is 'error'
+    status = 'warn'  if msg.repo is 'log'
+
+    title = create div,
+      background:   'linear-gradient(' + colors[status].join(', ') + ')'
+      border:       '#122 solid 1px'
+      borderRadius: '10px'
+      color:        '#f8f8f8'
+      display:      'inline-block'
+      fontWeight:   'bold'
+      fontSize:     '11px'
+      height:       '18px'
+      lineHeight:   '18px'
+      padding:      '0 9px'
+      textAlign:    'center'
+    title.innerHTML = msg.repo.toUpperCase()
+
+    content = create div,
+      color:      '#eee'
+      display:    'inline-block'
+      fontSize:   '11px'
+      lineHeight: '18px'
+      padding:    '8px'
+      whiteSpace: 'normal'
+    content.innerHTML = msg.note
+
+    for i in [1 .. 10]
+      do (i) ->
+        setTimeout ->
+          div.style.zoom = i / 10
+        , i * 10
+
+    for i in [84 .. 0] when i % 2 is 0
+      do (i) ->
+        setTimeout ->
+          div.style.opacity = i / 100
+          div.style.left = ((85 - i) / 85 * 255) + 'px'
+        , 4825 + (85 - i) * 3
+
+    setTimeout =>
+      remove div
+      @shownMsg -= 1
+    , 5000
 
 
 bayeux     = new Faye.Client '/bayeux', retry: .5
 reload_i   = 0
 hud        = new HUD
 init       = true
-msg_div    = null
-msgs       = []
 reconnect  = false
 reloading  = false
 service_up = false
-show_id    = 0
 stats      = new Stats
-
-
-reattach = (node, parent=document.body) ->
-  if node and node.parentNode isnt parent
-    parent.appendChild node
-  node
-
-show = ->
-  unless msgs.length
-    if msg_div
-      remove msg_div
-      msg_div = null
-    return
-
-  unless reattach msg_div
-    msg_div = create document.body,
-      position: 'fixed'
-      right:    '5px'
-      bottom:   '5px'
-      overflow: 'hidden'
-      maxWidth: '20%'
-      zIndex:   2147483645
-  return
-
-add = (msg) ->
-  if typeof msg is 'string'
-    msg = {repo: 'srv', note: msg}
-  show_id += 1
-  return if msgs.length > 20
-  msgs.push msg
-  show()
-
-  div = create msg_div,
-    background:   'linear-gradient(#122, #233, #122)'
-    borderBottom: '#000 solid 1px'
-    borderRadius: '10px'
-    margin:       '3px 0 0'
-    opacity:      .85
-    overflow:     'hidden'
-    paddingRight: '9px'
-    zoom:         .01
-
-  status = 'note'
-  status = 'error' if msg.repo is 'error'
-  status = 'warn'  if msg.repo is 'log'
-
-  title = create div,
-    background:   'linear-gradient(' + colors[status].join(', ') + ')'
-    border:       '#122 solid 1px'
-    borderRadius: '10px'
-    color:        '#f8f8f8'
-    display:      'inline-block'
-    fontWeight:   'bold'
-    fontSize:     '11px'
-    height:       '18px'
-    lineHeight:   '18px'
-    padding:      '0 9px'
-    textAlign:    'center'
-  title.innerHTML = msg.repo.toUpperCase()
-
-  content = create div,
-    color:      '#eee'
-    display:    'inline-block'
-    fontSize:   '11px'
-    lineHeight: '18px'
-    padding:    '8px'
-    whiteSpace: 'normal'
-  content.innerHTML = msg.note
-
-  for i in [1 .. 10]
-    do (i) ->
-      setTimeout ->
-        div.style.zoom = i / 10
-      , i * 10
-  for i in [84 .. 0] when i % 2 is 0
-    do (i) ->
-      setTimeout ->
-        div.style.opacity = i / 100
-        div.style.left = ((85 - i) / 85 * 255) + 'px'
-      , 4825 + (85 - i) * 3
-  setTimeout ->
-    remove div
-    msgs.shift()
-    show()
-  , 5000
 
 
 stringify = (obj) ->
@@ -536,6 +444,7 @@ create = (parent, styles, tag='DIV') ->
     style node,
       border:        '0 solid transparent'
       borderRadius:  0
+      boxSizing:     'border-box'
       color:         '#eee'
       display:       'block'
       font:          '13px normal Arial,sans-serif'
@@ -548,6 +457,7 @@ create = (parent, styles, tag='DIV') ->
       verticalAlign: 'top'
       whiteSpace:    'nowrap'
       zIndex:        2147483647
+      zoom:          1
     if styles
       style node, styles
   node
@@ -586,8 +496,6 @@ state_symbols =
   error: '&#10007;'
   note:  '&#9432;'
 
-hud = new HUD
-hud2 = new HUD2
 
 reload_css = ->
   reload_i += 1
@@ -609,7 +517,6 @@ process_msg = (msg) ->
         else
           reload()
       hud.render()
-      hud2.render()
 
 subscription = bayeux.subscribe '/update', (msg) ->
   for msg in stats.incoming msg
@@ -621,4 +528,3 @@ subscription.then ->
     for msg in stats.init msg.data, msg.ids
       process_msg msg
     hud.render()
-    hud2.render()

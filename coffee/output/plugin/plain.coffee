@@ -117,7 +117,7 @@ obj_to_str = (status, inf) ->
 info_out = (status, inf) ->
   output = if status is 'error' then 'error' else 'log'
 
-  for block in inf
+  for block in inf when not block.muted
     out = ''
     if block instanceof Array
       for part in block
