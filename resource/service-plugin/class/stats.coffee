@@ -17,7 +17,7 @@ class Stats
     message_cue[repo] ?= {}
     message_cue[repo][task] ?= []
     id = stats?.ids?[repo]?[task]
-    return reload('server restarting') if id? and id >= msg.id
+    return comm.reload('server restarting') if id? and id >= msg.id
     if stats?.data and (not id? or msg.id is id + 1)
       stats.ids[repo] ?= {}
       stats.ids[repo][task] = msg.id

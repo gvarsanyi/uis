@@ -12,6 +12,8 @@ class Tester extends Task
   constructor: ->
     super
 
+    @fullTestDone = false
+
     # test.files is an array
     unless config.test.files and typeof config.test.files is 'object'
       config.test.files = [config.test.files]
@@ -46,12 +48,14 @@ class Tester extends Task
     @_result or 0
 
   work: => @preWork (args = arguments), (callback) =>
-    if typeof args[0] is 'object' and args[0].file and @_watched[args[0].file]
-      updated_file = args[0].file
+    if @fullTestDone
+      if typeof args[0] is 'object' and args[0].file and @_watched[args[0].file]
+        updated_file = args[0].file
 
     finished = false
     finish = =>
       return if finished
+      @fullTestDone = true
       finished = true
 
       process.stdout.write = orig_stdout if orig_stdout
@@ -101,11 +105,17 @@ class Tester extends Task
       options = @getDefaultOptions 'spec', @getCloneDeployment(), testables
       options.specReporter = suppressPassed: true
 
+      delete coverageReport
+
       if updated_file and updated_file.indexOf('.coffee') > -1
         options.preprocessors[updated_file] = 'coffee'
       else
         for test_file in testables when test_file.indexOf('.coffee') > -1
           options.preprocessors[test_file] = 'coffee'
+
+        if config.test.coverage
+          @source.tasks.coverageReporter?.addCoverageOptions options
+          @coverageReport = true
 
       if config.test.teamcity and not updated_file
         options.reporters.push 'teamcity'
@@ -130,7 +140,7 @@ class Tester extends Task
       @error err
       finish()
 
-  wrapError: (inf) ->
+  wrapError: (inf) =>
     unless inf and typeof inf is 'object' and inf.title? and inf.description?
       return super
 

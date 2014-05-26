@@ -36,6 +36,25 @@ class CoverageReporter extends Task
         if config.test.coverage.bar is 0
           config.test.coverage = false
 
+  addCoverageOptions: (options) =>
+    options.reporters.push 'coverage'
+
+    for item in config.test.repos when not (item.thirdParty or item.testOnly)
+      list = item.repo
+      list = [list] unless typeof list is 'object'
+      dir = @source.repoTmp + 'clone' + @source.projectPath + '/'
+      for repo in list
+        options.preprocessors[dir + repo] = 'coverage'
+
+    dir = @source.repoTmp + 'coverage/'
+    options.coverageReporter =
+      instrumenter: '**/*.coffee': 'istanbul'
+      reporters: [{type: 'html', dir: dir + 'html/'}
+                  {type: 'text', dir: dir + 'text/', file: 'coverage.txt'}]
+
+    if config.test.teamcity
+      options.coverageReporter.reporters.push type: 'teamcity'
+
   condition: =>
     config.test.coverage and
     !!config[@source.name].files and
@@ -99,25 +118,27 @@ class CoverageReporter extends Task
                        (if lowest.length > 1 then 's' else '') + ' do' +
                        (if lowest.length > 1 then '' else 'es') +
                        ' not meet the bar.'
-                cols = [{title: 'Files not meeting the bar'}
-                        {align: 'right'}]
+                columns = [{title: 'Files not meeting the bar', highlight: 'basename', width: '85%'}
+                           {align: 'right'}]
 
                 if report.all?.statements and report.all.statements < config.test.coverage.bar
                   @warning
                     title: 'Low test coverage'
                     description: report.all.statements + '% of all statements' +
                                  ' covered. ' + desc
-                    table: {data: rows, columns: cols}
+                    table: {columns, data: rows}
                 else
                   @warning
                     description: report.all.statements + '% of statements ' +
                                  ' covered overall, but ' + desc
-                    table: {data: rows, columns: cols}
+                    table: {columns, data: rows}
 
               @result report
               callback()
 
     try
+      return finish() if @source.tasks.tester?.coverageReport
+
       tester = @source.tasks.tester
 
       options = tester.getDefaultOptions 'dot', tester.getCloneDeployment(), config.test.files
@@ -125,24 +146,7 @@ class CoverageReporter extends Task
       for test_file in config.test.files when test_file.indexOf('.coffee') > -1
         options.preprocessors[test_file] = 'coffee'
 
-      if config.test.coverage
-        options.reporters.push 'coverage'
-
-        for item in config.test.repos when not (item.thirdParty or item.testOnly)
-          list = item.repo
-          list = [list] unless typeof list is 'object'
-          dir = @source.repoTmp + 'clone' + @source.projectPath + '/'
-          for repo in list
-            options.preprocessors[dir + repo] = 'coverage'
-
-        dir = @source.repoTmp + 'coverage/'
-        options.coverageReporter =
-          instrumenter: '**/*.coffee': 'istanbul'
-          reporters: [{type: 'html', dir: dir + 'html/'}
-                      {type: 'text', dir: dir + 'text/', file: 'coverage.txt'}]
-
-        if config.test.teamcity
-          options.coverageReporter.reporters.push type: 'teamcity'
+      @addCoverageOptions options
 
       karma.server.start options, (exit_code) =>
         @error('Karma coverage failed, exit code: ' + exit_code) if exit_code > 0

@@ -1,5 +1,5 @@
 (function() {
-  var Comm, DOM, HUD, Stats, hud, stats,
+  var Comm, DOM, HUD, Stats, comm, hud, stats,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
     __slice = [].slice,
     __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
@@ -289,7 +289,7 @@
     }
 
     HUD.prototype.render = function() {
-      var anim, code, col, cut, has_title, i, line, line_chars, lines, msg, n, node, push, row, row_n, spc, state, status, table, td, th, tr, w1, w2, _i, _j, _k, _l, _len, _len1, _len2, _len3, _m, _n, _o, _p, _ref, _ref1, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      var anim, code, col, content, cut, dir, ext, file, has_title, i, line, line_chars, lines, msg, n, node, parts, push, row, row_n, spc, state, status, table, td, th, tr, w1, w2, _i, _j, _k, _l, _len, _len1, _len2, _len3, _m, _n, _o, _p, _ref, _ref1, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
       if (!ready) {
         return pending = true;
       }
@@ -409,7 +409,8 @@
         if (msg.table) {
           table = DOM.create(this.info, {
             background: '#233',
-            display: 'table'
+            display: 'table',
+            tableLayout: 'fixed'
           }, 'table');
           has_title = false;
           _ref = msg.table.columns;
@@ -436,7 +437,8 @@
                 display: 'table-cell',
                 fontWeight: 'bold',
                 padding: '2px',
-                textAlign: col.align
+                textAlign: col.align,
+                width: col.width || 'auto'
               }, 'th');
               if (col.title != null) {
                 th.innerHTML = col.title;
@@ -458,9 +460,27 @@
                 color: '#eee',
                 display: 'table-cell',
                 padding: '2px',
-                textAlign: col.align
+                textAlign: col.align,
+                width: col.width || 'auto'
               }, 'td');
-              td.innerHTML = col.src != null ? row[col.src] : row[i];
+              content = col.src != null ? row[col.src] : row[i];
+              switch (col.highlight) {
+                case 'basename':
+                  parts = content.split('/');
+                  file = parts.pop();
+                  dir = parts.length ? parts.join('/') + '/' : '';
+                  parts = file.split('.');
+                  file = parts.shift();
+                  ext = parts.length ? '.' + parts.join('.') : '';
+                  content = file;
+                  if (dir) {
+                    content = '<span style="color: #999">' + dir + '</span>' + content;
+                  }
+                  if (ext) {
+                    content += '<span style="font-size: 9px; color: #999">' + ext + '</span>';
+                  }
+              }
+              td.innerHTML = content;
             }
           }
         }
@@ -668,7 +688,7 @@
       }
       id = typeof stats !== "undefined" && stats !== null ? (_ref = stats.ids) != null ? (_ref1 = _ref[repo]) != null ? _ref1[task] : void 0 : void 0 : void 0;
       if ((id != null) && id >= msg.id) {
-        return reload('server restarting');
+        return comm.reload('server restarting');
       }
       if ((typeof stats !== "undefined" && stats !== null ? stats.data : void 0) && ((id == null) || msg.id === id + 1)) {
         if ((_base1 = stats.ids)[repo] == null) {
@@ -829,6 +849,6 @@
 
   hud = new HUD;
 
-  new Comm;
+  comm = new Comm;
 
 }).call(this);

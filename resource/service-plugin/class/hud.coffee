@@ -133,8 +133,9 @@ class HUD
             node.innerHTML += ' @ line ' + msg.line
       if msg.table
         table = DOM.create @info,
-          background: '#233'
-          display:    'table'
+          background:  '#233'
+          display:     'table'
+          tableLayout: 'fixed'
         , 'table'
 
         has_title = false
@@ -153,6 +154,7 @@ class HUD
               fontWeight:    'bold'
               padding:       '2px'
               textAlign:     col.align
+              width:         col.width or 'auto'
             , 'th'
             th.innerHTML = col.title if col.title?
 
@@ -166,8 +168,23 @@ class HUD
               display:       'table-cell'
               padding:       '2px'
               textAlign:     col.align
+              width:         col.width or 'auto'
             , 'td'
-            td.innerHTML = if col.src? then row[col.src] else row[i]
+            content = if col.src? then row[col.src] else row[i]
+            switch col.highlight
+              when 'basename'
+                parts = content.split '/'
+                file = parts.pop()
+                dir = if parts.length then parts.join('/') + '/' else ''
+                parts = file.split '.'
+                file = parts.shift()
+                ext = if parts.length then '.' + parts.join('.') else ''
+                content = file
+                if dir
+                  content = '<span style="color: #999">' + dir + '</span>' + content
+                if ext
+                  content += '<span style="font-size: 9px; color: #999">' + ext + '</span>'
+            td.innerHTML = content
       if msg.lines
         lines = DOM.create @info,
           background: '#455'
