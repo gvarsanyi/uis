@@ -157,9 +157,9 @@ class Service
   deployFilter: (msg) =>
     return if @_deployed
 
-    if (msg.stat?.done or msg.stat?.error?.length) and
-    msg.task in ['deployer', 'filesDeployer'] and
-    msg.repo in ['css', 'html', 'js']
+    deploy_repo = msg.repo in ['css', 'html', 'js']
+    deploy_task = msg.task in ['deployer', 'filesDeployer']
+    if deploy_repo and ((msg.stat?.done and deploy_task) or msg.stat?.error?.length)
       @deployed[msg.repo] = true
       @deployCheck msg.repo
 

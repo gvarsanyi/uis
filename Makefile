@@ -1,10 +1,5 @@
 
 compile:
-	chmod a+x coffee/app.coffee
-	rm -rf js/*
-	coffee -o js/ coffee/
-	echo '#!/usr/bin/env node' | cat - js/app.js > js/_app.js
-	mv js/_app.js js/app.js
-	chmod a+x js/app.js
+	chmod a+x ./app.js
 	coffee -c patch/*.coffee
-	coffee -c resource/*.coffee
+	cat resource/service-plugin/class/*.coffee resource/service-plugin/service-plugin.coffee | coffee -s -p > resource/service-plugin.js

@@ -3,7 +3,7 @@
   "version": "1.9.2",
   "description": "UI development aid services",
   "bin": {
-    "uis": "js/app.js"
+    "uis": "app.js"
   },
   "scripts": {
     "postinstall": "mkdir -p node_modules/node-sass && tar -zxf node-sass.tar.gz -C node_modules/node-sass"
