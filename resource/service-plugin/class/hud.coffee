@@ -245,7 +245,7 @@ class HUD
     @shownMsg += 1
 
     if typeof msg is 'string'
-      msg = {repo: 'srv', note: msg}
+      msg = {repo: 'service', note: msg}
 
     div = DOM.create @msgs,
       background:   'linear-gradient(#122, #233, #122)'

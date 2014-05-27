@@ -14,6 +14,7 @@ class Comm
           hud.add 'disconnected'
           @reconnect = true
       , 1
+      @serviceUp = false
 
     @bayeux.on 'transport:up', =>
       unless @init

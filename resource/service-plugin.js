@@ -23,12 +23,13 @@
       });
       this.bayeux.on('transport:down', (function(_this) {
         return function() {
-          return setTimeout(function() {
+          setTimeout(function() {
             if (!_this.serviceUp) {
               hud.add('disconnected');
               return _this.reconnect = true;
             }
           }, 1);
+          return _this.serviceUp = false;
         };
       })(this));
       this.bayeux.on('transport:up', (function(_this) {
@@ -138,14 +139,14 @@
     };
 
     Comm.prototype.takeOverConsole = function() {
-      var orig_error, orig_log, stringify;
+      var stringify;
       stringify = function(obj) {
         if (obj && typeof obj === 'object' && (typeof JSON !== "undefined" && JSON !== null ? JSON.stringify : void 0)) {
           return JSON.stringify(obj);
         }
         return String(obj);
       };
-      if (orig_log = typeof console !== "undefined" && console !== null ? console.log : void 0) {
+      if (typeof console !== "undefined" && console !== null ? console.log : void 0) {
         console._log = console.log;
         console.log = function() {
           var args, item;
@@ -165,7 +166,7 @@
           return console._log.apply(console, args);
         };
       }
-      if (orig_error = typeof console !== "undefined" && console !== null ? console.error : void 0) {
+      if (typeof console !== "undefined" && console !== null ? console.error : void 0) {
         console._error = console.error;
         return console.error = function() {
           var args, item;
@@ -575,7 +576,7 @@
       this.shownMsg += 1;
       if (typeof msg === 'string') {
         msg = {
-          repo: 'srv',
+          repo: 'service',
           note: msg
         };
       }
