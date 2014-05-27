@@ -4,12 +4,13 @@ minimist = require 'minimist'
 
 
 argv = minimist process.argv[2 ..]
+
+
+# -v or --version
 if argv.v or argv.version
   pkg = require '../package.json'
-  console.log pkg.name, pkg.version
+  console.log pkg.name, 'v' + pkg.version
   process.exit 0
-
-require 'coffee-script/register'
 
 
 camelize = (str) ->
