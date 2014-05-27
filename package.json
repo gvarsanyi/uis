@@ -20,7 +20,7 @@
   "homepage": "https://github.com/gvarsanyi/uis",
   "dependencies": {
     "MD5": "1.2.1",
-    "body-parser": "1.2.0",
+    "body-parser": "1.2.1",
     "clean-css": "2.1.8",
     "coffee-script": "1.7.1",
     "coffeelint": "1.4.1",
