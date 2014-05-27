@@ -130,7 +130,6 @@ class Service
             method = req.method.toLowerCase().replace 'delete', 'del'
             switch req.method
               when 'POST', 'PUT'
-                console.log 'req.body pre', req
                 client[method] url, req.body, handler
               else
                 client[method] url, handler
