@@ -619,7 +619,7 @@
         padding: '8px',
         whiteSpace: 'normal'
       });
-      content.innerHTML = msg.note;
+      content.innerHTML = msg.note || msg.msg;
       _fn = function(i) {
         return setTimeout(function() {
           return DOM.style(div, {

@@ -282,7 +282,7 @@ class HUD
       lineHeight: '18px'
       padding:    '8px'
       whiteSpace: 'normal'
-    content.innerHTML = msg.note
+    content.innerHTML = msg.note or msg.msg
 
     for i in [1 .. 10]
       do (i) ->
