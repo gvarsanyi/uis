@@ -35,6 +35,8 @@ class Comm
           @processMsg msg
         hud.render()
 
+    @takeOverConsole()
+
   reload: (msg='reloading') ->
     return if @reloading
     @reloading = true
@@ -85,13 +87,13 @@ class Comm
         return JSON.stringify obj
       String obj
 
-    if orig_log = console?.log
+    if console?.log
       console._log = console.log
       console.log = (args...) ->
         hud.add {repo: 'log', note: (stringify(item) for item in args).join ' '}
         console._log args...
 
-    if orig_error = console?.error
+    if console?.error
       console._error = console.error
       console.error = (args...) ->
         hud.add {repo: 'error', note: (stringify(item) for item in args).join ' '}

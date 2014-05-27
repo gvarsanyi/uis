@@ -71,6 +71,7 @@
           });
         };
       })(this));
+      this.takeOverConsole();
     }
 
     Comm.prototype.reload = function(msg) {
