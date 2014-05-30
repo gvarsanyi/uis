@@ -1,6 +1,13 @@
 #/bin/sh
 
-HOME=$(getent passwd $USER | cut -d: -f6)
+if [ "$USER" = "root" ]; then
+  if [ -d "/var/root" ]; then
+    HOME="/var/root"
+  elif [ -d "/root" ]; then
+    HOME="/root"
+  fi
+fi
+
 SELF=$(readlink -m $0)
 BASEDIR=$(dirname $SELF)
 
