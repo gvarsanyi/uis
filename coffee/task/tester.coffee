@@ -62,6 +62,10 @@ class Tester extends Task
       process.stderr.write = orig_stderr if orig_stderr
 
       for line, i in stdout or []
+        if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf ') ERROR') > -1
+          @error {file: 'PhantomJS error', title: 'Failed to run tests', description: 'Tip: check if all your it() functions are inside a describe() function'}
+          return callback()
+
         if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf '): Executed ') > -1 and
         result = Number line.substr(index + 12).split(' ')[2]
           @result result
@@ -69,6 +73,11 @@ class Tester extends Task
           @warning(warning) if warning
           warning =
             file:  stdout[i - 1].trim()
+            title: line.substr 6
+        else if line.substr(0, 8) is '      ✗ '
+          @warning(warning) if warning
+          warning =
+            file:  stdout[i - 2].trim() + ': ' + stdout[i - 1].trim()
             title: line.substr 6
         else if line.substr(0, 1) is '\t' and line.trim() and warning
           if warning.description
@@ -93,8 +102,10 @@ class Tester extends Task
           @error inf
         else if line.indexOf('##teamcity') > -1
           console.log line
-#         else if line
-#           console.log 'karma output [' + i + ']', line
+
+        if config.test.log
+          for line, i in stdout or []
+            console.log 'karma output [' + i + ']', line
 
       @warning(warning) if warning
       callback()

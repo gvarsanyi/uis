@@ -141,8 +141,10 @@
     Comm.prototype.takeOverConsole = function() {
       var stringify;
       stringify = function(obj) {
-        if (obj && typeof obj === 'object' && (typeof JSON !== "undefined" && JSON !== null ? JSON.stringify : void 0)) {
-          return JSON.stringify(obj);
+        if (obj && typeof obj === 'object') {
+          try {
+            return JSON.stringify(obj);
+          } catch (_error) {}
         }
         return String(obj);
       };
@@ -196,12 +198,26 @@
     function DOM() {}
 
     DOM.create = function(parent, styles, tag) {
-      var node;
+      var err, loaded, node, processed;
       if (tag == null) {
         tag = 'DIV';
       }
       try {
-        parent.appendChild(node = document.createElement(tag.toUpperCase()));
+        node = document.createElement(tag.toUpperCase());
+        try {
+          parent.appendChild(node);
+        } catch (_error) {
+          err = _error;
+          processed = false;
+          loaded = function() {
+            if (!processed) {
+              parent.appendChild(node);
+            }
+            return processed = true;
+          };
+          document.addEventListener('DOMContentLoaded', loaded, false);
+          window.addEventListener('load', loaded, false);
+        }
         DOM.style(node, {
           border: '0 solid transparent',
           borderRadius: 0,

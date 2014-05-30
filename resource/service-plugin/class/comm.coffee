@@ -84,8 +84,8 @@ class Comm
 
   takeOverConsole: ->
     stringify = (obj) ->
-      if obj and typeof obj is 'object' and JSON?.stringify
-        return JSON.stringify obj
+      if obj and typeof obj is 'object'
+        try return JSON.stringify obj
       String obj
 
     if console?.log

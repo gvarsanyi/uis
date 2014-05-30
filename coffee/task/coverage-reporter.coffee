@@ -115,44 +115,31 @@ class CoverageReporter extends Task
                   rows.push [item.file, double_dec(item.statements) + '%']
 
                 desc = lowest.length + ' file' +
-                       (if lowest.length > 1 then 's' else '') + ' do' +
-                       (if lowest.length > 1 then '' else 'es') +
-                       ' not meet the bar.'
+                        (if lowest.length > 1 then 's' else '') + ' do' +
+                        (if lowest.length > 1 then '' else 'es') +
+                        ' not meet the bar.'
                 columns = [{title: 'Files not meeting the bar', highlight: 'basename', width: '85%'}
-                           {align: 'right'}]
+                            {align: 'right'}]
 
                 if report.all?.statements and report.all.statements < config.test.coverage.bar
                   @warning
                     title: 'Low test coverage'
                     description: report.all.statements + '% of all statements' +
-                                 ' covered. ' + desc
+                                  ' covered. ' + desc
                     table: {columns, data: rows}
                 else
                   @warning
                     description: report.all.statements + '% of statements ' +
-                                 ' covered overall, but ' + desc
+                                  ' covered overall, but ' + desc
                     table: {columns, data: rows}
 
               @result report
               callback()
 
-    try
-      return finish() if @source.tasks.tester?.coverageReport
+    return finish() if @source.tasks.tester.coverageReport
 
-      tester = @source.tasks.tester
-
-      options = tester.getDefaultOptions 'dot', tester.getCloneDeployment(), config.test.files
-
-      for test_file in config.test.files when test_file.indexOf('.coffee') > -1
-        options.preprocessors[test_file] = 'coffee'
-
-      @addCoverageOptions options
-
-      karma.server.start options, (exit_code) =>
-        @error('Karma coverage failed, exit code: ' + exit_code) if exit_code > 0
-        finish()
-    catch err
-      @error err
+    delete @source.tasks.tester.fullTestDone
+    @source.tasks.tester.work =>
       finish()
 
   wrapError: (inf) =>

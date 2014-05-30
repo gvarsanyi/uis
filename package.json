@@ -1,12 +1,13 @@
 {
   "name": "uis",
-  "version": "1.9.7",
+  "version": "1.9.8",
   "description": "UI development aid services",
   "bin": {
     "uis": "app.js"
   },
   "scripts": {
-    "postinstall": "mkdir -p node_modules/node-sass && tar -zxf node-sass.tar.gz -C node_modules/node-sass"
+    "preinstall": "rm -rf node_modules/node-sass",
+    "postinstall": "mkdir -p node_modules ; cd node_modules && git clone https://github.com/andrew/node-sass.git && cd node-sass && git checkout 16f7845f60abd9e57d1540c640d7476cf13eb2d4 && git submodule init && git submodule update && npm install ; npm install node-gyp ; node_modules/.bin/node-gyp rebuild"
   },
   "repository": {
     "type": "git",
@@ -18,13 +19,16 @@
     "url": "https://github.com/gvarsanyi/uis/issues"
   },
   "homepage": "https://github.com/gvarsanyi/uis",
+  "engines": {
+    "node": ">=0.10.3 <0.12"
+  },
   "dependencies": {
     "MD5": "1.2.1",
-    "body-parser": "1.2.1",
+    "body-parser": "1.2.2",
     "clean-css": "2.1.8",
     "coffee-script": "1.7.1",
-    "coffeelint": "1.4.1",
-    "express": "4.3.1",
+    "coffeelint": "1.5.1",
+    "express": "4.3.2",
     "faye": "1.0.1",
     "gaze": "0.5.1",
     "glob": "4.0.0",

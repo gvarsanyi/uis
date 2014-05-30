@@ -2,7 +2,18 @@
 class DOM
   @create: (parent, styles, tag='DIV') ->
     try
-      parent.appendChild node = document.createElement tag.toUpperCase()
+      node = document.createElement tag.toUpperCase()
+      try
+        parent.appendChild node
+      catch err
+        processed = false
+        loaded = ->
+          unless processed
+            parent.appendChild node
+          processed = true
+        document.addEventListener 'DOMContentLoaded', loaded, false
+        window.addEventListener 'load', loaded, false
+
       DOM.style node,
         border:        '0 solid transparent'
         borderRadius:  0
