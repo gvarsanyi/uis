@@ -1,13 +1,10 @@
 {
   "name": "uis",
-  "version": "1.9.10",
+  "version": "1.9.11",
   "description": "UI development aid services",
   "bin": {
-    "uis": "app.js"
-  },
-  "scripts": {
-    "preinstall": "rm -rf node_modules/node-sass",
-    "postinstall": "./build-node-sass.sh"
+    "uis": "app.js",
+    "uis-install-node-sass": "build-node-sass.sh"
   },
   "repository": {
     "type": "git",

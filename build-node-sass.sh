@@ -1,13 +1,16 @@
 #/bin/sh
 
-mkdir -p node_modules
-cd node_modules
+HOME=$(getent passwd $USER | cut -d: -f6)
+SELF=$(readlink -m $0)
+BASEDIR=$(dirname $SELF)
+
+rm -rf $BASEDIR/node_modules/node-sass
+cd $BASEDIR/node_modules
 git clone https://github.com/andrew/node-sass.git
 cd node-sass
 git checkout 16f7845f60abd9e57d1540c640d7476cf13eb2d4
 git submodule init
 git submodule update
 npm install
-npm install -g node-gyp
-echo cwd `pwd`
+command -v node-gyp >/dev/null 2>&1 || npm install -g node-gyp
 node-gyp rebuild
