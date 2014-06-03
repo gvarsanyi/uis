@@ -1,23 +1,20 @@
 #/bin/sh
 
-if [ "$USER" = "root" ]; then
-  if [ -d "/var/root" ]; then
-    HOME="/var/root"
-  elif [ -d "/root" ]; then
-    HOME="/root"
-  fi
+
+if [ -z "$1" ]; then
+  echo "Missing target directory for node-sass installation"
+  exit 1
 fi
 
-SELF=$(readlink -m $0)
-BASEDIR=$(dirname $SELF)
+echo "Attempting to install node-sass from git to: $1"
 
-rm -rf $BASEDIR/node_modules/node-sass
-cd $BASEDIR/node_modules
-git clone https://github.com/andrew/node-sass.git
-cd node-sass
-git checkout 16f7845f60abd9e57d1540c640d7476cf13eb2d4
-git submodule init
-git submodule update
-npm install
-command -v node-gyp >/dev/null 2>&1 || npm install -g node-gyp
-node-gyp rebuild
+rm -rf $1
+mkdir -p $1 && cd $1 && (
+  git clone https://github.com/andrew/node-sass.git ./
+  git checkout 16f7845f60abd9e57d1540c640d7476cf13eb2d4
+  git submodule init
+  git submodule update
+  npm install
+  command -v node-gyp >/dev/null 2>&1 || sudo npm install -g node-gyp
+  node-gyp rebuild
+)

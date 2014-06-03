@@ -28,6 +28,36 @@ class HUD
     document.addEventListener 'DOMContentLoaded', loaded, false
     window.addEventListener 'load', loaded, false
 
+    @infoAnimation = []
+    if document.cookie?.indexOf?('uis_info_hidden=1') > -1
+      @infoHidden = true
+
+  toggleInfoDisplay: =>
+    while @infoAnimation.length
+      clearTimeout @infoAnimation.pop()
+
+    if @infoHidden = not @infoHidden
+      year_off = new Date (new Date).getTime() + 365 * 24 * 60 * 60 * 1000
+      document.cookie = 'uis_info_hidden=1; expires=' + year_off.toUTCString()
+      for i in [1 .. 9]
+        do (i) =>
+          @infoAnimation.push setTimeout =>
+            DOM.style @info,
+              left:    (i * 255 / 10) + 'px'
+              opacity: (10 - i) / 10
+              zoom:    (10 - i) / 10
+          , i * 20
+      @infoAnimation.push setTimeout =>
+        DOM.style @info, display: 'none'
+      , 200
+    else
+      document.cookie = 'uis_info_hidden=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
+      DOM.style @info,
+        display: 'block'
+        left:    0
+        opacity: 1
+        zoom:    1
+
   render: =>
     unless ready
       return pending = true
@@ -56,6 +86,23 @@ class HUD
         right:         0
         verticalAlign: 'bottom'
         width:         '24px'
+        '-webkit-touch-callout': 'none'
+        '-webkit-user-select': 'none'
+        '-khtml-user-select': 'none'
+        '-moz-user-select': 'none'
+        '-ms-user-select': 'none'
+        'user-select': 'none'
+        'cursor': 'pointer'
+      @div.title = 'Toggle info visibility'
+      @div.addEventListener 'click', @toggleInfoDisplay
+      @div.addEventListener 'mousedown', =>
+        DOM.style @div,
+          background: 'linear-gradient(#011, #122, #011)'
+          borderTopWidth: '2px'
+      @div.addEventListener 'mouseup', =>
+        DOM.style @div,
+          background: 'linear-gradient(#122, #233, #122)'
+          borderTopWidth: '1px'
 
       @state = DOM.create @div,
         color:        '#0a1616'
@@ -94,7 +141,8 @@ class HUD
         background:   '#233'
         borderLeft:   colors[status][0] + ' groove 2px'
         borderRadius: '3px'
-        display:      'block'
+        display:      if @infoHidden then 'none' else 'block'
+        left:         0
         margin:       '3px'
         maxHeight:    '250px'
         overflowX:    'hidden'

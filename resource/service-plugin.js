@@ -292,7 +292,8 @@
 
     function HUD() {
       this.render = __bind(this.render, this);
-      var loaded;
+      this.toggleInfoDisplay = __bind(this.toggleInfoDisplay, this);
+      var loaded, _ref;
       loaded = (function(_this) {
         return function() {
           ready = true;
@@ -304,7 +305,51 @@
       })(this);
       document.addEventListener('DOMContentLoaded', loaded, false);
       window.addEventListener('load', loaded, false);
+      this.infoAnimation = [];
+      if (((_ref = document.cookie) != null ? typeof _ref.indexOf === "function" ? _ref.indexOf('uis_info_hidden=1') : void 0 : void 0) > -1) {
+        this.infoHidden = true;
+      }
     }
+
+    HUD.prototype.toggleInfoDisplay = function() {
+      var i, year_off, _fn, _i;
+      while (this.infoAnimation.length) {
+        clearTimeout(this.infoAnimation.pop());
+      }
+      if (this.infoHidden = !this.infoHidden) {
+        year_off = new Date((new Date).getTime() + 365 * 24 * 60 * 60 * 1000);
+        document.cookie = 'uis_info_hidden=1; expires=' + year_off.toUTCString();
+        _fn = (function(_this) {
+          return function(i) {
+            return _this.infoAnimation.push(setTimeout(function() {
+              return DOM.style(_this.info, {
+                left: (i * 255 / 10) + 'px',
+                opacity: (10 - i) / 10,
+                zoom: (10 - i) / 10
+              });
+            }, i * 20));
+          };
+        })(this);
+        for (i = _i = 1; _i <= 9; i = ++_i) {
+          _fn(i);
+        }
+        return this.infoAnimation.push(setTimeout((function(_this) {
+          return function() {
+            return DOM.style(_this.info, {
+              display: 'none'
+            });
+          };
+        })(this), 200));
+      } else {
+        document.cookie = 'uis_info_hidden=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        return DOM.style(this.info, {
+          display: 'block',
+          left: 0,
+          opacity: 1,
+          zoom: 1
+        });
+      }
+    };
 
     HUD.prototype.render = function() {
       var anim, code, col, content, cut, dir, ext, file, has_title, i, line, line_chars, lines, msg, n, node, parts, push, row, row_n, spc, state, status, table, td, th, tr, w1, w2, _i, _j, _k, _l, _len, _len1, _len2, _len3, _m, _n, _o, _p, _ref, _ref1, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
@@ -332,8 +377,33 @@
           position: 'fixed',
           right: 0,
           verticalAlign: 'bottom',
-          width: '24px'
+          width: '24px',
+          '-webkit-touch-callout': 'none',
+          '-webkit-user-select': 'none',
+          '-khtml-user-select': 'none',
+          '-moz-user-select': 'none',
+          '-ms-user-select': 'none',
+          'user-select': 'none',
+          'cursor': 'pointer'
         });
+        this.div.title = 'Toggle info visibility';
+        this.div.addEventListener('click', this.toggleInfoDisplay);
+        this.div.addEventListener('mousedown', (function(_this) {
+          return function() {
+            return DOM.style(_this.div, {
+              background: 'linear-gradient(#011, #122, #011)',
+              borderTopWidth: '2px'
+            });
+          };
+        })(this));
+        this.div.addEventListener('mouseup', (function(_this) {
+          return function() {
+            return DOM.style(_this.div, {
+              background: 'linear-gradient(#122, #233, #122)',
+              borderTopWidth: '1px'
+            });
+          };
+        })(this));
         this.state = DOM.create(this.div, {
           color: '#0a1616',
           fontSize: '18px',
@@ -376,7 +446,8 @@
           background: '#233',
           borderLeft: colors[status][0] + ' groove 2px',
           borderRadius: '3px',
-          display: 'block',
+          display: this.infoHidden ? 'none' : 'block',
+          left: 0,
           margin: '3px',
           maxHeight: '250px',
           overflowX: 'hidden',
