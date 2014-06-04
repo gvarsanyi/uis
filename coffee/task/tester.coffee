@@ -1,9 +1,11 @@
-fs     = require 'fs'
+child_process = require 'child_process'
+fs            = require 'fs'
+path          = require 'path'
 
-karma  = require 'karma'
+minimatch     = require 'minimatch'
 
-Task   = require '../task'
-config = require '../config'
+Task          = require '../task'
+config        = require '../config'
 
 
 class Tester extends Task
@@ -17,6 +19,8 @@ class Tester extends Task
     # test.files is an array
     unless config.test.files and typeof config.test.files is 'object'
       config.test.files = [config.test.files]
+    unless config.test.helpers and typeof config.test.helpers is 'object'
+      config.test.helpers = [config.test.helpers]
 
   condition: =>
     !!config[@source.name].files and @source.tasks.filesLoader?.count()
@@ -53,17 +57,26 @@ class Tester extends Task
         updated_file = args[0].file
 
     finished = false
+    exited   = false
     finish = =>
       return if finished
-      @fullTestDone = true
       finished = true
-
-      process.stdout.write = orig_stdout if orig_stdout
-      process.stderr.write = orig_stderr if orig_stderr
 
       for line, i in stdout or []
         if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf ') ERROR') > -1
-          @error {file: 'PhantomJS error', title: 'Failed to run tests', description: 'Tip: check if all your it() functions are inside a describe() function'}
+          if stdout[i + 1].substr(0, 2) is '  '
+            inf = {title: 'Failed to run tests', description: ''}
+            for following_line in stdout[i + 1 ...]
+              break unless following_line.trim()
+              if following_line.substr(0, 5) is '  at '
+                inf.file = following_line.substr 5
+              else
+                inf.description += following_line + '\n'
+            @error inf
+          else
+            @error {file: 'PhantomJS error', title: 'Failed to run tests', description: 'Tip: check if all your it() functions are inside a describe() function'}
+          if config.test.log
+            console.log(line) for line in stdout
           return callback()
 
         if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf '): Executed ') > -1 and
@@ -90,8 +103,8 @@ class Tester extends Task
             warning = null
         else if line.substr(0, 29) is 'ERROR [preprocessor.coffee]: '
           inf =
-            description: line.substr(29)
-            title: 'Compilation Error'
+            description: line.substr 29
+            title:       'Compilation Error'
           if stdout[i + 1].substr(0, 5) is '  at '
             parts = stdout[i + 1].substr(5).split ':'
             line = null
@@ -103,15 +116,30 @@ class Tester extends Task
         else if line.indexOf('##teamcity') > -1
           console.log line
 
-        if config.test.log
-          for line, i in stdout or []
-            console.log 'karma output [' + i + ']', line
+      if config.test.log
+        for line, i in stdout or [] when String(line).trim()
+          console.log 'karma output [' + i + ']', line
 
       @warning(warning) if warning
+      unless @_error?.length or @_warning?.length
+        @fullTestDone = true
       callback()
 
+    array_match = (matchee) ->
+      for file in config.test.files
+        file = path.resolve file
+        matchee = path.resolve matchee
+        return true if minimatch matchee, file
+      false
+
     try
-      testables = if updated_file then [updated_file] else config.test.files
+      testables = (item for item in config.test.helpers or [])
+      if updated_file and array_match updated_file
+        testables.push updated_file
+      else
+        updated_file = null
+        for file in config.test.files
+          testables.push file
 
       options = @getDefaultOptions 'spec', @getCloneDeployment(), testables
       options.specReporter = suppressPassed: true
@@ -119,6 +147,9 @@ class Tester extends Task
       delete coverageReport
 
       if updated_file and updated_file.indexOf('.coffee') > -1
+        if config.test.helpers
+          for file in config.test.helpers when file.indexOf('.coffee') > -1
+            options.preprocessors[file] = 'coffee'
         options.preprocessors[updated_file] = 'coffee'
       else
         for test_file in testables when test_file.indexOf('.coffee') > -1
@@ -131,24 +162,58 @@ class Tester extends Task
       if config.test.teamcity and not updated_file
         options.reporters.push 'teamcity'
 
-      orig_stdout = process.stdout.write
-      orig_stderr = process.stderr.write
+      karma = child_process.fork __dirname + '/../../resource/karma-wrapper.js',
+                                 {cwd: @source.projectPath, silent: true}
+
+      karma.on 'message', (msg) ->
+        if msg is 'ready'
+          karma.send options
+
       stdout = []
-      process.stdout.write = (out) =>
-        for line in out.replace(/\s+$/, '').split '\n'
+      karma.stdout.on 'data', (data) ->
+        for line in String(data).replace(/\s+$/, '').split '\n'
           stdout.push line
 
-      process.stderr.write = (out) =>
-        @error out
-
-      karma.server.start options, (exit_code) =>
+      karma.on 'error', (err) ->
+        if config.test.log
+          console.error 'karma-wrapper error', err
         finish()
 
+      karma.on 'close', (code, signal) ->
+        if not exited and config.test.log and (code or signal)
+          console.log 'karma-wrapper closed', code, signal or ''
+        exited = true
+        finish()
+
+      karma.on 'exit', (code, signal) ->
+        if not exited and config.test.log and (code or signal)
+          console.log 'karma-wrapper exited', code, signal or ''
+        exited = true
+#         finish()
+
+#       karma.on 'disconnect', ->
+#         if config.test.log
+#           console.log 'karma-wrapper disconnected'
+#         finish()
+
+      karma.stderr.on 'data', (data) =>
+        console.error String data
+        @error String data
+
+      for delay in [1, 10, 50, 100, 200, 300, 500, 750, 1000]
+        do (delay) ->
+          setTimeout ->
+            karma.send options
+          , delay
+
       unless config.singleRun and not updated_file?
-        @watch config.test.files, (err) =>
+        files = (item for item in config.test.files)
+        for file in config.test.helpers or []
+          files.push file
+        @watch files, (err) =>
           @error(err) if err
     catch err
-      @error err
+      @error String err
       finish()
 
   wrapError: (inf) =>
@@ -158,7 +223,7 @@ class Tester extends Task
     data =
       file:        if inf.file then @source.shortFile(inf.file) else 'test'
       title:       inf.title
-      description: inf.description
+      description: String(inf.description or '').trim()
     data.line = inf.line + 1 if inf.line?
 
     if inf.file and data.line
@@ -166,7 +231,7 @@ class Tester extends Task
         src = @_watched?[inf.file].data
       else
         try src = fs.readFileSync inf.file, encoding: 'utf8'
-      if src and (lines = src.split('\n')).length and lines.length >= data.line
+      if src and (lines = String(src).split('\n')).length and lines.length >= data.line
         data.lines =
           from: Math.max 1, data.line - 3
           to:   Math.min lines.length - 1, data.line * 1 + 3
