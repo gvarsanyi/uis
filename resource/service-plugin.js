@@ -500,7 +500,7 @@
       }
       this.hasMsg = !!msg;
       this.msgStatus = status;
-      if (!this.shouldShowInfo()) {
+      if (!msg) {
         return DOM.style(this.info, {
           display: 'none'
         });
@@ -510,7 +510,7 @@
           background: '#233',
           borderLeft: colors[status][0] + ' groove 2px',
           borderRadius: '3px',
-          display: 'block',
+          display: this.shouldShowInfo() ? 'block' : 'none',
           left: 0,
           margin: '3px',
           maxHeight: '250px',

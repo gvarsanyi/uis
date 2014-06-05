@@ -151,7 +151,7 @@ class HUD
     @hasMsg = !!msg
     @msgStatus = status
 
-    unless @shouldShowInfo()
+    unless msg
       DOM.style @info, display: 'none'
     else
       @info.innerHTML = ''
@@ -159,7 +159,7 @@ class HUD
         background:   '#233'
         borderLeft:   colors[status][0] + ' groove 2px'
         borderRadius: '3px'
-        display:      'block'
+        display:      if @shouldShowInfo() then 'block' else 'none'
         left:         0
         margin:       '3px'
         maxHeight:    '250px'
