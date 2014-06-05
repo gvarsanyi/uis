@@ -197,12 +197,19 @@
   DOM = (function() {
     function DOM() {}
 
-    DOM.create = function(parent, styles, tag) {
-      var err, loaded, node, processed;
+    DOM.create = function(parent, styles, tag, properties) {
+      var err, loaded, name, node, processed, type, value, _ref;
       if (tag == null) {
         tag = 'DIV';
       }
+      if (properties == null) {
+        properties = {};
+      }
       try {
+        _ref = tag.split(':'), tag = _ref[0], type = _ref[1];
+        if (type) {
+          properties.type = type;
+        }
         node = document.createElement(tag.toUpperCase());
         try {
           parent.appendChild(node);
@@ -217,6 +224,12 @@
           };
           document.addEventListener('DOMContentLoaded', loaded, false);
           window.addEventListener('load', loaded, false);
+        }
+        for (name in properties) {
+          value = properties[name];
+          try {
+            node.setAttribute(name, value);
+          } catch (_error) {}
         }
         DOM.style(node, {
           border: '0 solid transparent',
@@ -292,8 +305,11 @@
 
     function HUD() {
       this.render = __bind(this.render, this);
-      this.toggleInfoDisplay = __bind(this.toggleInfoDisplay, this);
-      var loaded, _ref;
+      this.shouldShowInfo = __bind(this.shouldShowInfo, this);
+      this.setInfoVisibility = __bind(this.setInfoVisibility, this);
+      this.setHidden = __bind(this.setHidden, this);
+      this.isHidden = __bind(this.isHidden, this);
+      var loaded, pos, _ref;
       loaded = (function(_this) {
         return function() {
           ready = true;
@@ -305,54 +321,58 @@
       })(this);
       document.addEventListener('DOMContentLoaded', loaded, false);
       window.addEventListener('load', loaded, false);
-      this.infoAnimation = [];
-      if (((_ref = document.cookie) != null ? typeof _ref.indexOf === "function" ? _ref.indexOf('uis_info_hidden=1') : void 0 : void 0) > -1) {
-        this.infoHidden = true;
+      this.infoHidden = 0;
+      if ((pos = (_ref = document.cookie) != null ? typeof _ref.indexOf === "function" ? _ref.indexOf('uis_info_hidden=') : void 0 : void 0) > -1) {
+        this.setInfoVisibility(Number(document.cookie.substr(pos + 16, 1)));
       }
     }
 
-    HUD.prototype.toggleInfoDisplay = function() {
-      var i, year_off, _fn, _i;
-      while (this.infoAnimation.length) {
-        clearTimeout(this.infoAnimation.pop());
+    HUD.prototype.hideBin = {
+      warn: 0,
+      err: 1,
+      log: 2
+    };
+
+    HUD.prototype.isHidden = function(opt) {
+      return !!((this.infoHidden >> this.hideBin[opt]) % 2);
+    };
+
+    HUD.prototype.setHidden = function(opt, to) {
+      var diff;
+      if (to == null) {
+        to = true;
       }
-      if (this.infoHidden = !this.infoHidden) {
-        year_off = new Date((new Date).getTime() + 365 * 24 * 60 * 60 * 1000);
-        document.cookie = 'uis_info_hidden=1; expires=' + year_off.toUTCString();
-        _fn = (function(_this) {
-          return function(i) {
-            return _this.infoAnimation.push(setTimeout(function() {
-              return DOM.style(_this.info, {
-                left: (i * 255 / 10) + 'px',
-                opacity: (10 - i) / 10,
-                zoom: (10 - i) / 10
-              });
-            }, i * 20));
-          };
-        })(this);
-        for (i = _i = 1; _i <= 9; i = ++_i) {
-          _fn(i);
+      if (!!to !== this.isHidden(opt)) {
+        diff = Math.pow(2, this.hideBin[opt]);
+        this.setInfoVisibility(this.infoHidden + diff * (to ? 1 : -1));
+        if (opt === 'log') {
+          return DOM.style(this.msgs, {
+            display: to ? 'none' : 'block'
+          });
+        } else {
+          return DOM.style(this.info, {
+            display: this.shouldShowInfo() ? 'block' : 'none'
+          });
         }
-        return this.infoAnimation.push(setTimeout((function(_this) {
-          return function() {
-            return DOM.style(_this.info, {
-              display: 'none'
-            });
-          };
-        })(this), 200));
-      } else {
-        document.cookie = 'uis_info_hidden=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-        return DOM.style(this.info, {
-          display: 'block',
-          left: 0,
-          opacity: 1,
-          zoom: 1
-        });
       }
     };
 
+    HUD.prototype.setInfoVisibility = function(to) {
+      var year_off;
+      if (!((8 > to && to > 2) || to === 1 || to === 0)) {
+        to = 0;
+      }
+      this.infoHidden = to;
+      year_off = new Date((new Date).getTime() + 365 * 24 * 60 * 60 * 1000);
+      return document.cookie = 'uis_info_hidden=' + to + '; expires=' + year_off.toUTCString();
+    };
+
+    HUD.prototype.shouldShowInfo = function() {
+      return this.hasMsg && ((this.msgStatus === 'error' && !this.isHidden('err')) || (this.msgStatus === 'warn' && !this.isHidden('warn')));
+    };
+
     HUD.prototype.render = function() {
-      var anim, code, col, content, cut, dir, ext, file, has_title, i, line, line_chars, lines, msg, n, node, parts, push, row, row_n, spc, state, status, table, td, th, tr, w1, w2, _i, _j, _k, _l, _len, _len1, _len2, _len3, _m, _n, _o, _p, _ref, _ref1, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      var anim, code, col, content, cut, dir, ext, file, has_title, i, inline, line, line_chars, lines, msg, n, node, parts, push, row, row_n, spc, state, status, table, td, th, title, toggle, tr, w1, w2, _fn, _i, _j, _k, _l, _len, _len1, _len2, _len3, _m, _n, _o, _p, _ref, _ref1, _ref10, _ref11, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
       if (!ready) {
         return pending = true;
       }
@@ -372,12 +392,12 @@
           borderBottom: 'solid 0px transparent',
           borderRight: 'solid 0px transparent',
           borderRadius: '32px 0 0 0',
-          bottom: 0,
-          height: '24px',
+          bottom: '-40px',
+          height: '64px',
           position: 'fixed',
-          right: 0,
+          right: '-150px',
           verticalAlign: 'bottom',
-          width: '24px',
+          width: '174px',
           '-webkit-touch-callout': 'none',
           '-webkit-user-select': 'none',
           '-khtml-user-select': 'none',
@@ -387,30 +407,31 @@
           'cursor': 'pointer'
         });
         this.div.title = 'Toggle info visibility';
-        this.div.addEventListener('click', this.toggleInfoDisplay);
-        this.div.addEventListener('mousedown', (function(_this) {
+        this.div.addEventListener('click', (function(_this) {
           return function() {
-            return DOM.style(_this.div, {
-              background: 'linear-gradient(#011, #122, #011)',
-              borderTopWidth: '2px'
-            });
-          };
-        })(this));
-        this.div.addEventListener('mouseup', (function(_this) {
-          return function() {
-            return DOM.style(_this.div, {
-              background: 'linear-gradient(#122, #233, #122)',
-              borderTopWidth: '1px'
-            });
+            var _ref;
+            if (String((_ref = _this.div.style) != null ? _ref.right : void 0).substr(0, 1) === '0') {
+              return setTimeout(function() {
+                return DOM.style(_this.div, {
+                  right: '-150px',
+                  bottom: '-40px'
+                });
+              }, 10);
+            } else {
+              return DOM.style(_this.div, {
+                right: 0,
+                bottom: 0
+              });
+            }
           };
         })(this));
         this.state = DOM.create(this.div, {
           color: '#0a1616',
           fontSize: '18px',
           height: '18px',
+          left: '5px',
           lineHeight: '18px',
           position: 'absolute',
-          right: 0,
           top: '4px',
           textAlign: 'center',
           textShadow: '1px 1px #000',
@@ -419,6 +440,47 @@
           '@-webkit-keyframes': 'spin{100%{-webkit-transform: rotate(360deg);}}',
           '@keyframes': 'spin{100%{transform:rotate(360deg);}}'
         });
+        this.options = DOM.create(this.div, {
+          margin: '6px 0 0 29px'
+        });
+        this.toggles = {};
+        inline = {
+          display: 'inline',
+          verticalAlign: 'bottom',
+          lineHeight: '17px',
+          cursor: 'pointer'
+        };
+        _ref = {
+          log: 'logs &amp; notifications',
+          warn: 'warnings',
+          err: 'errors'
+        };
+        _fn = (function(_this) {
+          return function(toggle, title) {
+            var br, chk, label;
+            chk = DOM.create(_this.options, inline, 'input:checkbox', {
+              id: '___uis_opt_' + toggle
+            });
+            label = DOM.create(_this.options, inline, 'label', {
+              "for": '___uis_opt_' + toggle
+            });
+            label.innerHTML = ' ' + title;
+            chk.checked = !_this.isHidden(toggle);
+            chk.addEventListener('change', function() {
+              return _this.setHidden(toggle, !chk.checked);
+            });
+            br = DOM.create(_this.options, inline, 'br');
+            return _this.toggles[toggle] = {
+              chk: chk,
+              label: label,
+              br: br
+            };
+          };
+        })(this);
+        for (toggle in _ref) {
+          title = _ref[toggle];
+          _fn(toggle, title);
+        }
       }
       state = stats.state();
       this.state.innerHTML = state_symbols[state];
@@ -436,7 +498,9 @@
         msg = stats.hasWarning();
         status = 'warn';
       }
-      if (!msg) {
+      this.hasMsg = !!msg;
+      this.msgStatus = status;
+      if (!this.shouldShowInfo()) {
         return DOM.style(this.info, {
           display: 'none'
         });
@@ -446,7 +510,7 @@
           background: '#233',
           borderLeft: colors[status][0] + ' groove 2px',
           borderRadius: '3px',
-          display: this.infoHidden ? 'none' : 'block',
+          display: 'block',
           left: 0,
           margin: '3px',
           maxHeight: '250px',
@@ -502,9 +566,9 @@
             tableLayout: 'fixed'
           }, 'table');
           has_title = false;
-          _ref = msg.table.columns;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            col = _ref[_i];
+          _ref1 = msg.table.columns;
+          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+            col = _ref1[_i];
             if (col.align !== 'right') {
               col.align = 'left';
             }
@@ -516,9 +580,9 @@
             tr = DOM.create(table, {
               display: 'table-row'
             }, 'tr');
-            _ref1 = msg.table.columns;
-            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-              col = _ref1[_j];
+            _ref2 = msg.table.columns;
+            for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+              col = _ref2[_j];
               th = DOM.create(tr, {
                 background: '#344',
                 borderSpacing: '1px',
@@ -534,15 +598,15 @@
               }
             }
           }
-          _ref2 = msg.table.data;
-          for (row_n = _k = 0, _len2 = _ref2.length; _k < _len2; row_n = ++_k) {
-            row = _ref2[row_n];
+          _ref3 = msg.table.data;
+          for (row_n = _k = 0, _len2 = _ref3.length; _k < _len2; row_n = ++_k) {
+            row = _ref3[row_n];
             tr = DOM.create(table, {
               display: 'table-row'
             }, 'tr');
-            _ref3 = msg.table.columns;
-            for (i = _l = 0, _len3 = _ref3.length; _l < _len3; i = ++_l) {
-              col = _ref3[i];
+            _ref4 = msg.table.columns;
+            for (i = _l = 0, _len3 = _ref4.length; _l < _len3; i = ++_l) {
+              col = _ref4[i];
               td = DOM.create(tr, {
                 background: (row_n % 2 ? '#485a5a' : '#455'),
                 borderSpacing: '1px',
@@ -581,7 +645,7 @@
             margin: '2px 0 0 0',
             position: 'absolute'
           });
-          for (n = _m = _ref4 = msg.lines.from, _ref5 = msg.lines.to; _ref4 <= _ref5 ? _m <= _ref5 : _m >= _ref5; n = _ref4 <= _ref5 ? ++_m : --_m) {
+          for (n = _m = _ref5 = msg.lines.from, _ref6 = msg.lines.to; _ref5 <= _ref6 ? _m <= _ref6 : _m >= _ref6; n = _ref5 <= _ref6 ? ++_m : --_m) {
             if (msg.lines[n] != null) {
               line = DOM.create(lines, {
                 color: '#eee',
@@ -599,7 +663,7 @@
             }
           }
           line_chars = 0;
-          for (n = _n = _ref6 = msg.lines.from, _ref7 = msg.lines.to; _ref6 <= _ref7 ? _n <= _ref7 : _n >= _ref7; n = _ref6 <= _ref7 ? ++_n : --_n) {
+          for (n = _n = _ref7 = msg.lines.from, _ref8 = msg.lines.to; _ref7 <= _ref8 ? _n <= _ref8 : _n >= _ref8; n = _ref7 <= _ref8 ? ++_n : --_n) {
             if (msg.lines[n] != null) {
               line_chars = Math.max(line_chars, String(n).length);
             }
@@ -611,7 +675,7 @@
             overflow: 'auto',
             zIndex: 2147483646
           });
-          for (n = _o = _ref8 = msg.lines.from, _ref9 = msg.lines.to; _ref8 <= _ref9 ? _o <= _ref9 : _o >= _ref9; n = _ref8 <= _ref9 ? ++_o : --_o) {
+          for (n = _o = _ref9 = msg.lines.from, _ref10 = msg.lines.to; _ref9 <= _ref10 ? _o <= _ref10 : _o >= _ref10; n = _ref9 <= _ref10 ? ++_o : --_o) {
             if ((code = msg.lines[n]) != null) {
               line = DOM.create(node, {
                 color: '#eee',
@@ -627,7 +691,7 @@
               }
               code = code.split('\t').join('    ');
               cut = 0;
-              for (i = _p = _ref10 = code.length - 1; _ref10 <= 0 ? _p <= 0 : _p >= 0; i = _ref10 <= 0 ? ++_p : --_p) {
+              for (i = _p = _ref11 = code.length - 1; _ref11 <= 0 ? _p <= 0 : _p >= 0; i = _ref11 <= 0 ? ++_p : --_p) {
                 if (code[i] === ' ') {
                   cut += 1;
                 } else {

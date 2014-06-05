@@ -1,7 +1,10 @@
 
 class DOM
-  @create: (parent, styles, tag='DIV') ->
+  @create: (parent, styles, tag='DIV', properties={}) ->
     try
+      [tag, type] = tag.split ':'
+      properties.type = type if type
+
       node = document.createElement tag.toUpperCase()
       try
         parent.appendChild node
@@ -13,6 +16,9 @@ class DOM
           processed = true
         document.addEventListener 'DOMContentLoaded', loaded, false
         window.addEventListener 'load', loaded, false
+
+      for name, value of properties
+        try node.setAttribute name, value
 
       DOM.style node,
         border:        '0 solid transparent'

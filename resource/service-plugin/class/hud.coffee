@@ -28,35 +28,37 @@ class HUD
     document.addEventListener 'DOMContentLoaded', loaded, false
     window.addEventListener 'load', loaded, false
 
-    @infoAnimation = []
-    if document.cookie?.indexOf?('uis_info_hidden=1') > -1
-      @infoHidden = true
+    @infoHidden = 0
+    if (pos = document.cookie?.indexOf?('uis_info_hidden=')) > -1
+      @setInfoVisibility Number document.cookie.substr pos + 16, 1
 
-  toggleInfoDisplay: =>
-    while @infoAnimation.length
-      clearTimeout @infoAnimation.pop()
+  hideBin: {warn: 0, err: 1, log: 2}
 
-    if @infoHidden = not @infoHidden
-      year_off = new Date (new Date).getTime() + 365 * 24 * 60 * 60 * 1000
-      document.cookie = 'uis_info_hidden=1; expires=' + year_off.toUTCString()
-      for i in [1 .. 9]
-        do (i) =>
-          @infoAnimation.push setTimeout =>
-            DOM.style @info,
-              left:    (i * 255 / 10) + 'px'
-              opacity: (10 - i) / 10
-              zoom:    (10 - i) / 10
-          , i * 20
-      @infoAnimation.push setTimeout =>
-        DOM.style @info, display: 'none'
-      , 200
-    else
-      document.cookie = 'uis_info_hidden=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-      DOM.style @info,
-        display: 'block'
-        left:    0
-        opacity: 1
-        zoom:    1
+  isHidden: (opt) =>
+    !!((@infoHidden >> @hideBin[opt]) % 2)
+
+  setHidden: (opt, to=true) =>
+    unless !!to is @isHidden opt
+      diff = Math.pow 2, @hideBin[opt]
+      @setInfoVisibility @infoHidden + diff * if to then 1 else -1
+
+      if opt is 'log'
+        DOM.style @msgs, display: if to then 'none' else 'block'
+      else
+        DOM.style @info, display: if @shouldShowInfo() then 'block' else 'none'
+
+  setInfoVisibility: (to) =>
+    to = 0 unless 8 > to > 2 or to is 1 or to is 0
+    @infoHidden = to
+    year_off = new Date (new Date).getTime() + 365 * 24 * 60 * 60 * 1000
+    document.cookie = 'uis_info_hidden=' + to + '; expires=' + year_off.toUTCString()
+
+  shouldShowInfo: =>
+    @hasMsg and (
+     (@msgStatus is 'error' and not @isHidden 'err') or
+     (@msgStatus is 'warn' and not @isHidden 'warn')
+    )
+
 
   render: =>
     unless ready
@@ -80,12 +82,12 @@ class HUD
         borderBottom:  'solid 0px transparent'
         borderRight:   'solid 0px transparent'
         borderRadius:  '32px 0 0 0'
-        bottom:        0
-        height:        '24px'
+        bottom:        '-40px'
+        height:        '64px'
         position:      'fixed'
-        right:         0
+        right:         '-150px'
         verticalAlign: 'bottom'
-        width:         '24px'
+        width:         '174px'
         '-webkit-touch-callout': 'none'
         '-webkit-user-select': 'none'
         '-khtml-user-select': 'none'
@@ -94,23 +96,21 @@ class HUD
         'user-select': 'none'
         'cursor': 'pointer'
       @div.title = 'Toggle info visibility'
-      @div.addEventListener 'click', @toggleInfoDisplay
-      @div.addEventListener 'mousedown', =>
-        DOM.style @div,
-          background: 'linear-gradient(#011, #122, #011)'
-          borderTopWidth: '2px'
-      @div.addEventListener 'mouseup', =>
-        DOM.style @div,
-          background: 'linear-gradient(#122, #233, #122)'
-          borderTopWidth: '1px'
+      @div.addEventListener 'click', =>
+        if String(@div.style?.right).substr(0, 1) is '0'
+          setTimeout =>
+            DOM.style @div, {right: '-150px', bottom: '-40px'}
+          , 10
+        else
+          DOM.style @div, {right: 0, bottom: 0}
 
       @state = DOM.create @div,
         color:        '#0a1616'
         fontSize:     '18px'
         height:       '18px'
+        left:         '5px'
         lineHeight:   '18px'
         position:     'absolute'
-        right:        0
         top:          '4px'
         textAlign:    'center'
         textShadow:   '1px 1px #000'
@@ -118,6 +118,21 @@ class HUD
         '@-moz-keyframes':    'spin{100%{-moz-transform: rotate(360deg);}}'
         '@-webkit-keyframes': 'spin{100%{-webkit-transform: rotate(360deg);}}'
         '@keyframes':         'spin{100%{transform:rotate(360deg);}}'
+
+      @options = DOM.create @div, margin: '6px 0 0 29px'
+      @toggles = {}
+      inline = {display: 'inline', verticalAlign: 'bottom', lineHeight: '17px', cursor: 'pointer'}
+      for toggle, title of {log: 'logs &amp; notifications', warn: 'warnings', err: 'errors'}
+        do (toggle, title) =>
+          chk   = DOM.create @options, inline, 'input:checkbox', id: '___uis_opt_' + toggle
+          label = DOM.create @options, inline, 'label', for: '___uis_opt_' + toggle
+          label.innerHTML = ' ' + title
+          chk.checked = not @isHidden toggle
+          chk.addEventListener 'change', =>
+            @setHidden toggle, not chk.checked
+#             DOM.style @div, {right: '-150px', bottom: '-40px'}
+          br    = DOM.create @options, inline, 'br'
+          @toggles[toggle] = {chk, label, br}
 
     state = stats.state()
     @state.innerHTML = state_symbols[state]
@@ -133,7 +148,10 @@ class HUD
       msg = stats.hasWarning()
       status = 'warn'
 
-    unless msg
+    @hasMsg = !!msg
+    @msgStatus = status
+
+    unless @shouldShowInfo()
       DOM.style @info, display: 'none'
     else
       @info.innerHTML = ''
@@ -141,7 +159,7 @@ class HUD
         background:   '#233'
         borderLeft:   colors[status][0] + ' groove 2px'
         borderRadius: '3px'
-        display:      if @infoHidden then 'none' else 'block'
+        display:      'block'
         left:         0
         margin:       '3px'
         maxHeight:    '250px'
