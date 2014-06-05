@@ -1,6 +1,6 @@
 {
   "name": "uis",
-  "version": "1.9.14",
+  "version": "1.9.15",
   "description": "UI development aid services",
   "bin": {
     "uis": "app.js"
@@ -24,7 +24,7 @@
     "clean-css": "2.1.8",
     "coffee-script": "1.7.1",
     "coffeelint": "1.5.1",
-    "express": "4.3.2",
+    "express": "4.4.1",
     "faye": "1.0.1",
     "gaze": "0.5.1",
     "glob": "4.0.2",
