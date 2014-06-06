@@ -1,12 +1,7 @@
 child_process = require 'child_process'
 fs            = require 'fs'
 path          = require 'path'
-
-try
-  sass = require __dirname + '/node_modules/node-sass'
-catch
-  homedir_key = if process.platform is 'win32' then 'USERPROFILE' else 'HOME'
-  sass = require process.env[homedir_key] + '/.uis/node-sass'
+sass          = require 'node-sass'
 
 FilesCompiler = require '../files-compiler'
 config        = require '../../config'
