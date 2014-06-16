@@ -62,6 +62,14 @@ class Tester extends Task
       return if finished
       finished = true
 
+      get_tabs = (line) ->
+        tab = 0
+        while line.substr(0, 2) is '  '
+          tab += 1
+          line = line.substr 2
+        tab
+
+      titles = []
       for line, i in stdout or []
         if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf ') ERROR') > -1
           if stdout[i + 1].substr(0, 2) is '  '
@@ -79,28 +87,28 @@ class Tester extends Task
             console.log(line) for line in stdout
           return callback()
 
+        if tab = get_tabs line # has at least 1 tab
+          titles = titles[0 ... tab - 1]
+          titles.push line.substr tab * 2
+
         if line.substr(0, 10) is 'PhantomJS ' and (index = line.indexOf '): Executed ') > -1 and
         result = Number line.substr(index + 12).split(' ')[2]
           @result result
-        else if line.substr(0, 6) is '    ✗ '
+        else if tab and titles[titles.length - 1].substr(0, 2) is '✗ '
           @warning(warning) if warning
-          warning =
-            file:  stdout[i - 1].trim()
-            title: line.substr 6
-        else if line.substr(0, 8) is '      ✗ '
-          @warning(warning) if warning
-          warning =
-            file:  stdout[i - 2].trim() + ': ' + stdout[i - 1].trim()
-            title: line.substr 6
+          warning = 
+            file:  titles[0 ... titles.length - 1].join ' / '
+            title: titles.pop().substr 2
         else if line.substr(0, 1) is '\t' and line.trim() and warning
           if warning.description
             warning.description += '\n' + line.trim()
           else
             warning.description = line.trim()
-        else unless line
-          if warning
-            @warning warning
-            warning = null
+        else unless line # skip
+        else if line.substr(0, 9) is 'LOG LOG: '
+          console.log '[test console.log] ' + line.substr 9
+        else if line.substr(0, 11) is 'ERROR LOG: '
+          console.error '[test console.error] ' + line.substr 11
         else if line.substr(0, 29) is 'ERROR [preprocessor.coffee]: '
           inf =
             description: line.substr 29
