@@ -1,9 +1,9 @@
 #!/usr/bin/env coffee
 
-child_process   = require 'child_process'
+child_process = require 'child_process'
 
-config          = require './config'
-stats           = require './stats'
+config        = require './config'
+stats         = require './stats'
 
 
 unless config.output in ['fancy', 'plain']
@@ -11,6 +11,8 @@ unless config.output in ['fancy', 'plain']
 output = require './output/plugin/' + config.output
 
 stats.init {css: {}, html: {}, js: {}, test: {}}, {}
+
+test_exit_code = 0
 
 
 class Child
@@ -119,6 +121,9 @@ if config.service and not config.singleRun
 
 for name in ['js', 'css', 'html', 'test'] when config[name]
   new Child name, (msg) ->
+    if msg?.type is 'testExitCode'
+      test_exit_code = msg.code
+      return
     for msg in stats.incoming msg
       if service
         service.send msg
@@ -131,4 +136,8 @@ for name in ['js', 'css', 'html', 'test'] when config[name]
           output.log msg
 
 Child.onAllDone = ->
-  console.log 'bye! .oOo.'
+  if test_exit_code
+    console.error '\ntest failed, boo'
+    return process.exit 1
+
+  console.log '\nbye! .oOo.'

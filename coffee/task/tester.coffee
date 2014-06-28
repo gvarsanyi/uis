@@ -6,6 +6,7 @@ minimatch     = require 'minimatch'
 
 Task          = require '../task'
 config        = require '../config'
+messenger     = require '../messenger'
 
 
 class Tester extends Task
@@ -56,6 +57,11 @@ class Tester extends Task
       if typeof args[0] is 'object' and args[0].file and @_watched[args[0].file]
         updated_file = args[0].file
 
+    pre_callback = =>
+      code = if @_error?.length or @_warning?.length then 1 else 0
+      messenger.sendTestExitCode code
+      callback()
+
     finished = false
     exited   = false
     finish = =>
@@ -85,7 +91,7 @@ class Tester extends Task
             @error {file: 'PhantomJS error', title: 'Failed to run tests', description: 'Tip: check if all your it() functions are inside a describe() function'}
           if config.test.log
             console.log(line) for line in stdout
-          return callback()
+          return pre_callback()
 
         if tab = get_tabs line # has at least 1 tab
           titles = titles[0 ... tab - 1]
@@ -131,7 +137,7 @@ class Tester extends Task
       @warning(warning) if warning
       unless @_error?.length or @_warning?.length
         @fullTestDone = true
-      callback()
+      pre_callback()
 
     array_match = (matchee) ->
       for file in config.test.files

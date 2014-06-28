@@ -1,3 +1,4 @@
+config = require '../../config'
 ngroup = require '../ngroup'
 types  = require '../stat-types'
 
@@ -125,9 +126,9 @@ info_out = (status, inf) ->
     else
       out += obj_to_str status, block
 
-    if (lines = out.split '\n').length > 11
+    if not config.fullLog and (lines = out.split '\n').length > 11
       out = lines[0 .. 9].join('\n') + '\n  [' + (lines.length - 11) + ' more lines ...]'
-    else if out.length > 1024
+    else if not config.fullLog and out.length > 1024
       out = out.substr(0, 1000) + ' [' + (out.length - 1000)  + ' more characters ...]'
     else
       out = out.substr 0, out.length - 1

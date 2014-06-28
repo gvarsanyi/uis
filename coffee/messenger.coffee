@@ -15,6 +15,9 @@ send = (inf) ->
 module.exports = (_repo) ->
   repo = _repo
 
+module.exports.sendTestExitCode = (code) ->
+  send {type: 'testExitCode', code}
+
 module.exports.sendStat = (task) ->
   stat = {}
   for part in ['count', 'done', 'error', 'warning', 'size', 'status',

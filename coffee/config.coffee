@@ -6,8 +6,16 @@ minimist = require 'minimist'
 argv = minimist process.argv[2 ..]
 
 
-# -v or --version
-if argv.v or argv.version
+for arg in process.argv[2 ..]
+  require_help    = true if arg in ['h', 'help']
+  require_version = true if arg in ['v', 'version']
+
+# h, help, -h or --help
+if require_help or argv.h or argv.help
+  require './output/help'
+
+# v, version, -v or --version
+if require_version or argv.v or argv.version
   pkg = require '../package.json'
   console.log pkg.name, 'v' + pkg.version
   process.exit 0
