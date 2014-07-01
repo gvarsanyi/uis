@@ -43,7 +43,8 @@ class Service
       unless config[repo_name]
         @deployed[repo_name] = true
 
-    app.use bodyparser()
+    app.use bodyparser.urlencoded extended: true
+    app.use bodyparser.json()
 
 #     app.use (req, res, next) -> # log
 #       console.log req.method + ' ' + req.url +
